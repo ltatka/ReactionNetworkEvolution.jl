@@ -1,10 +1,15 @@
 using Random
 using Distributions
-using DifferentialEquations
-using Sundials
+# include("settings.jl")
 
-println("Starting...")
-# Random.seed!(1234)
+Random.seed!(2)
+
+struct ReactionProbabilities
+    uniuni::Float64
+    unibi::Float64
+    biuni::Float64
+    bibi::Float64
+end
 
 mutable struct Reaction
     substrate::Vector{String}
@@ -13,12 +18,12 @@ mutable struct Reaction
 end
 
 
-struct ReactionProbabilities
-    uniuni::Float64
-    unibi::Float64
-    biuni::Float64
-    bibi::Float64
-end
+# struct ReactionProbabilities
+#     uniuni::Float64
+#     unibi::Float64
+#     biuni::Float64
+#     bibi::Float64
+# end
 
 mutable struct ReactionNetwork
     specieslist::Vector{String}
@@ -28,6 +33,11 @@ mutable struct ReactionNetwork
     boundaryspecies::Vector{String}
     float_initialcondition::Vector{Float64}
     boundary_initialcondition::Vector{Float64}
+    # fitness::Float64
+
+    # function ReactionNetwork(specieslist::Vector{String},initialcondition::Vector{Float64},reactionlist::Vector{Reaction},floatingspecies::Vector{String},boundaryspecies::Vector{String},float_initialcondition::Vector{Float64},boundary_initialcondition::Vector{Float64})
+    #     return new(specieslist, initialcondition, floatingspecies, boundaryspecies, float_initialcondition,boundary_initialcondition, 1.0E8)
+    # end
 end
 
 #TODO: floating and boundary species
@@ -68,7 +78,7 @@ function get_random_reaction(ng::NetworkGenerator)
     return reaction
 end
 
-function get_reaction_list(ng::NetworkGenerator)
+function generate_reactions(ng::NetworkGenerator)
     reactionlist = Vector{Reaction}()
     for i in 1:ng.numreactions
         push!(reactionlist, get_random_reaction(ng))
@@ -93,11 +103,11 @@ function get_initialconditions(ng::NetworkGenerator, floatingspecies::Vector{Str
     float_initialcondition = Vector{Float64}()
     boundary_initialcondition = Vector{Float64}()
     for species in floatingspecies
-        idx = get_index(species, ng.specieslist)
+        idx = findfirst(item -> item == species, ng.specieslist)
         push!(float_initialcondition, ng.initialcondition[idx])
     end
     for species in boundaryspecies
-        idx = get_index(species, ng.specieslist)
+        idx = findfirst(item -> item == species, ng.specieslist)
         push!(boundary_initialcondition, ng.initialcondition[idx])
     end
     return float_initialcondition, boundary_initialcondition
@@ -106,7 +116,7 @@ end
 function get_random_network(ng::NetworkGenerator)
     floatingspecies, boundaryspecies = get_boundary_species(ng)
     float_initialcondition, boundary_initialcondition = get_initialconditions(ng, floatingspecies, boundaryspecies)
-    reactionlist = get_reaction_list(ng)
+    reactionlist = generate_reactions(ng)
     return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition)
 end
 
@@ -147,7 +157,7 @@ function get_antimony(network::ReactionNetwork)
             boundarystr *= "$b, "
         end
         #remove the extra ", " from the String
-        chop(boundarystr, tail=2)
+        boundarystr = chop(boundarystr, tail=2)
         initialconditions *= boundarystr
     end
     astr = reactions * rateconstants * initialconditions
@@ -155,87 +165,3 @@ function get_antimony(network::ReactionNetwork)
 end
 
 
-
-
-    
-
-
-
-
-function get_index(species::String, specieslist::Vector{String})
-    # Get the index of a species in a list of species, returns -1 if not in list
-    for i in 1:length(specieslist)
-        if species == specieslist[i]
-            return i
-        end
-    end
-    return  -1
-end
-
-function ode_funct!(du, u, network::ReactionNetwork, t)
-    specieslist = network.specieslist
-    
-    # Reset du
-    for i = 1:length(specieslist)
-        du[i] = 0.0
-    end
-
-    for reaction in network.reactionlist
-        # Get the relevant concentrations
-        dspecies = 1 # Is there a case where this would be wrong?
-        for s in reaction.substrate
-            idx = get_index(s, specieslist)
-            dspecies *= u[idx]
-        end
-        # Multiply by the rate constant to get the rate for *this* reaction
-        dspecies *= reaction.rateconstant
-        # Subtract this rate for substrates
-        for s in reaction.substrate
-            idx = get_index(s, specieslist)
-            du[idx] -= dspecies
-        end
-        # Add this rate for products
-        for p in reaction.product
-            idx = get_index(p, specieslist)
-            du[idx] += dspecies
-        end
-    end
-    # for boundary species, reset the rate of change to 0
-    for s in network.boundaryspecies
-        idx = get_index(s, specieslist)
-        du[idx] = 0.0
-    end
-end
-
-
-
-println("starting test")
-
-
-
-#### TEST
-rn = NetworkGenerator(["S1", "S2", "S3"], [1.0, 2.0, 2.0], 5, ReactionProbabilities(.25, 0.25, 0.25, 0.25), [0.1, 2.0])
-network = get_random_network(rn)
-
-network.reactionlist
-
-
-display(network.reactionlist)
-println(network.boundaryspecies)
-
-astr = get_antimony(network)
-print(astr)
-
-tspan = (0.0, 10)
-
-u0 = network.initialcondition
-ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
-sol = solve(ode_prob, CVODE_BDF())
-
-using Plots
-plot(sol)
-savefig("/home/hellsbells/Desktop/plot1.png")
-
-
-
-println("Success")
