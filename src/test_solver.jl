@@ -12,10 +12,11 @@ settings = UserSettings(["S1", "S2", "S3"], [1.0, 2.0, 2.0], "/home/hellsbells/D
 
 objfunct = get_objectivefunction(settings)
 
-# rn = NetworkGenerator(["S1", "S2", "S3"], [1.0, 2.0, 2.0], 5, ReactionProbabilities(.25, 0.25, 0.25, 0.25), [0.1, 2.0])
-# network = get_random_network(rn)
+rn = NetworkGenerator(["S1", "S2", "S3"], [1.0, 2.0, 2.0], 5, ReactionProbabilities(.25, 0.25, 0.25, 0.25), [0.1, 2.0])
+network = get_random_network(rn)
 
-
+# fitness = evaluate_fitness(objfunct, network)
+# display(fitness)
 
 # df = DataFrame(CSV.File(settings.objectivedatapath))
 
@@ -25,11 +26,29 @@ objfunct = get_objectivefunction(settings)
 
 
 
-# tspan = (0.0, 1)
+tspan = (0.0, 1)
 
 # u0 = network.initialcondition
 # ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
 # sol = solve(ode_prob, CVODE_BDF(), saveat=1.0/9)
+
+# function solve_ode(network)
+#     tspan = (0.0, 1)
+
+#     u0 = network.initialcondition
+#     ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
+#     sol = solve(ode_prob, CVODE_BDF(), saveat=1.0/9)
+#     return sol
+# end
+
+# sol = solve_ode(objfunct, network)
+# for (i,row) in enumerate(sol.u)
+#     println(typeof(row[2]))
+#     println(row[2])
+# end
+
+fitness =evaluate_fitness(objfunct, network)
+print(fitness)
 # # plot(sol)
 # # savefig("/home/hellsbells/Desktop/plot1.png")
 

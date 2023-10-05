@@ -11,7 +11,6 @@ function get_objectivefunction(settings::UserSettings)
     objectivedata = Array{Any}[]
     
     for species in settings.objectivespecies
-        println(typeof(df[!, species]))
         push!(objectivedata, df[!, species])
     end
     return ObjectiveFunction(settings.objectivespecies, objectivedata, time)

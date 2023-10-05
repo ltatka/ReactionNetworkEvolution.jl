@@ -44,6 +44,41 @@ function ode_funct!(du, u, network::ReactionNetwork, t)
     end
 end
 
-function evaluate_fitness(settings::UserSettings, network::ReactionNetwork)
 
+# function solve_ode_prob(objfunct:: ObjectiveFunction, network::ReactionNetwork)
+#     global ode_funct!
+#     # Get time info
+#     t0 = first(objfunct.time)
+#     t_end = last(objfunct.time)
+#     stepsize = objfunct.time[2] - t0 # for now we assume even spacing of time points
+#     tspan = (t0, t_end)
+#     # solve ode problem)
+#     u0 = network.initialcondition
+#     ode_prob = ODEProblem(ode_func!, u0, tspan, network)
+#     sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize)
+#     return sol
+# end
+
+function solve_ode(objfunct, network)
+    # 
+    #Get time info
+    t0 = first(objfunct.time)
+    t_end = last(objfunct.time)
+    stepsize = objfunct.time[2] - t0 # for now we assume even spacing of time points
+    tspan = (t0, t_end)
+
+    u0 = network.initialcondition
+    ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
+    sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize)
+    return sol
+end
+
+function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
+    sol = solve_ode(objfunct, network)
+    idx = findfirst(item -> item == objfunct.objectivespecies[1], network.specieslist)
+    fitness = 0.0
+    for (i, row) in enumerate(sol.u)
+        fitness += abs(objfunct.objectivedata[1][i] - row[idx])
+    end
+    return fitness # Or should this also assign the fitness to the network?
 end
