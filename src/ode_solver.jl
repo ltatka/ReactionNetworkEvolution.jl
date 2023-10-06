@@ -1,7 +1,7 @@
 using DifferentialEquations
 using Sundials
 include("reaction_network.jl")
-include("settings.jl")
+# include("settings.jl")
 
 struct ObjectiveFunction
     objectivespecies::Vector{String} # Can be more than 1
@@ -44,21 +44,6 @@ function ode_funct!(du, u, network::ReactionNetwork, t)
     end
 end
 
-
-# function solve_ode_prob(objfunct:: ObjectiveFunction, network::ReactionNetwork)
-#     global ode_funct!
-#     # Get time info
-#     t0 = first(objfunct.time)
-#     t_end = last(objfunct.time)
-#     stepsize = objfunct.time[2] - t0 # for now we assume even spacing of time points
-#     tspan = (t0, t_end)
-#     # solve ode problem)
-#     u0 = network.initialcondition
-#     ode_prob = ODEProblem(ode_func!, u0, tspan, network)
-#     sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize)
-#     return sol
-# end
-
 function solve_ode(objfunct, network)
     # 
     #Get time info
@@ -81,4 +66,12 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
         fitness += abs(objfunct.objectivedata[1][i] - row[idx])
     end
     return fitness # Or should this also assign the fitness to the network?
+end
+
+function evaluate_population_fitness(objfunct::ObjectiveFunction, population)
+    for network in population
+        fitness = evaluate_fitness(objfunct, network)
+        network.fitness = fitness
+    end
+    return population
 end

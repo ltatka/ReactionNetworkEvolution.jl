@@ -3,17 +3,29 @@ using CSV
 using DataFrames
 include("ode_solver.jl")
 include("evo_utils.jl")
-include("settings.jl")
+# include("settings.jl")
 
 
 
 # #### TEST
-settings = UserSettings(["S1", "S2", "S3"], [1.0, 2.0, 2.0], "/home/hellsbells/Desktop/testtimeseries.csv", ["S2"])
+usersettings = UserSettings(["S1", "S2", "S3"], 
+    [1.0, 2.0, 2.0], 
+    "/home/hellsbells/Desktop/testtimeseries.csv", 
+    ["S2"],
+    10,
+    100)
 
-objfunct = get_objectivefunction(settings)
+objfunct = get_objectivefunction(usersettings)
 
+settings = EvolutionSettings(.1, ReactionProbabilities(0.25, 0.25, 0.25, 0.25), MutationProbabilities(0.5, 0.5), usersettings)
 rn = NetworkGenerator(["S1", "S2", "S3"], [1.0, 2.0, 2.0], 5, ReactionProbabilities(.25, 0.25, 0.25, 0.25), [0.1, 2.0])
-network = get_random_network(rn)
+network = generate_random_network(rn)
+
+
+population = evolve(settings, rn, objfunct)
+
+bestnetwork = population[1]
+println(convert_antimony(bestnetwork))
 
 # fitness = evaluate_fitness(objfunct, network)
 # display(fitness)
@@ -26,7 +38,7 @@ network = get_random_network(rn)
 
 
 
-tspan = (0.0, 1)
+# tspan = (0.0, 1)
 
 # u0 = network.initialcondition
 # ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
@@ -47,9 +59,9 @@ tspan = (0.0, 1)
 #     println(row[2])
 # end
 
-fitness =evaluate_fitness(objfunct, network)
-print(fitness)
-# # plot(sol)
+# fitness =evaluate_fitness(objfunct, network)
+# print(fitness)
+# # # plot(sol)
 # # savefig("/home/hellsbells/Desktop/plot1.png")
 
 # display(sol)

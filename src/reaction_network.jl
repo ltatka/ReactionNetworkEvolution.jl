@@ -1,15 +1,9 @@
 using Random
 using Distributions
-# include("settings.jl")
+include("settings.jl")
 
 Random.seed!(2)
 
-struct ReactionProbabilities
-    uniuni::Float64
-    unibi::Float64
-    biuni::Float64
-    bibi::Float64
-end
 
 mutable struct Reaction
     substrate::Vector{String}
@@ -33,7 +27,7 @@ mutable struct ReactionNetwork
     boundaryspecies::Vector{String}
     float_initialcondition::Vector{Float64}
     boundary_initialcondition::Vector{Float64}
-    # fitness::Float64
+    fitness::Float64
 
     # function ReactionNetwork(specieslist::Vector{String},initialcondition::Vector{Float64},reactionlist::Vector{Reaction},floatingspecies::Vector{String},boundaryspecies::Vector{String},float_initialcondition::Vector{Float64},boundary_initialcondition::Vector{Float64})
     #     return new(specieslist, initialcondition, floatingspecies, boundaryspecies, float_initialcondition,boundary_initialcondition, 1.0E8)
@@ -53,8 +47,12 @@ struct NetworkGenerator
     end
 end
 
+function get_fitness(network::ReactionNetwork)
+    return network.fitness
+end
+
 #TODO: prevent pointless reactions and ensure connectivity
-function get_random_reaction(ng::NetworkGenerator)
+function generate_random_reaction(ng::NetworkGenerator)
     p = rand()
     k = rand(Uniform(ng.rateconstantrange[1], ng.rateconstantrange[2]))
     
@@ -78,17 +76,17 @@ function get_random_reaction(ng::NetworkGenerator)
     return reaction
 end
 
-function generate_reactions(ng::NetworkGenerator)
+function generate_reactionlist(ng::NetworkGenerator)
     reactionlist = Vector{Reaction}()
     for i in 1:ng.numreactions
-        push!(reactionlist, get_random_reaction(ng))
+        push!(reactionlist, generate_random_reaction(ng))
     end
     return reactionlist
 end
 
 #TODO: Make this more realistic? Maybe a poisson distribution? Or maybe in real life the user will know what species are boundaries?
 #TODO: maybe the number of possible boundary species depends on how many species are in the network?
-function get_boundary_species(ng::NetworkGenerator)
+function choose_boundary_species(ng::NetworkGenerator)
     # Decide how many boundary species there will be, 0 to 3, but rarely 3
     weights = [0.6, 0.2, 0.2]
     nboundary = wsample(0:2, weights)
@@ -113,15 +111,15 @@ function get_initialconditions(ng::NetworkGenerator, floatingspecies::Vector{Str
     return float_initialcondition, boundary_initialcondition
 end
 
-function get_random_network(ng::NetworkGenerator)
-    floatingspecies, boundaryspecies = get_boundary_species(ng)
+function generate_random_network(ng::NetworkGenerator)
+    floatingspecies, boundaryspecies = choose_boundary_species(ng)
     float_initialcondition, boundary_initialcondition = get_initialconditions(ng, floatingspecies, boundaryspecies)
-    reactionlist = generate_reactions(ng)
-    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition)
+    reactionlist = generate_reactionlist(ng)
+    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, 10E8)
 end
 
 # TODO: What about boundary species?
-function get_antimony(network::ReactionNetwork)
+function convert_antimony(network::ReactionNetwork)
     reactions = ""
     rateconstants = ""
     initialconditions = ""

@@ -17,11 +17,31 @@
 # Time ranges, step size, number of data points  
 # 
 
-Base.@kwdef mutable struct UserSettings
+struct UserSettings
     specieslist::Vector{String} # Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
     objectivespecies::Vector{String}
+    populationsize::Int
+    ngenerations::Int
+end
+
+struct ReactionProbabilities
+    uniuni::Float64
+    unibi::Float64
+    biuni::Float64
+    bibi::Float64
+end
+
+struct MutationProbabilities
+    rateconstant::Float64
+    adddeletereaction::Float64
 end
 
 
+struct EvolutionSettings
+    portionelite::Float64
+    reactionprobabilities::ReactionProbabilities
+    mutationprobabilities::MutationProbabilities
+    usersettings::UserSettings
+end
