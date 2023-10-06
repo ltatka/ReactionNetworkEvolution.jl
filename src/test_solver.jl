@@ -11,24 +11,21 @@ include("evo_utils.jl")
 usersettings = UserSettings(["S1", "S2", "S3"], 
     [1.0, 2.0, 2.0], 
     "/home/hellsbells/Desktop/testtimeseries.csv", 
-    ["S2"],
+    ["S1","S2", "S3"],
     10,
-    100)
+    200)
 
 objfunct = get_objectivefunction(usersettings)
 
+
 settings = EvolutionSettings(.1, ReactionProbabilities(0.25, 0.25, 0.25, 0.25), MutationProbabilities(0.5, 0.5), usersettings)
 rn = NetworkGenerator(["S1", "S2", "S3"], [1.0, 2.0, 2.0], 5, ReactionProbabilities(.25, 0.25, 0.25, 0.25), [0.1, 2.0])
-network = generate_random_network(rn)
-
+# network = generate_random_network(rn)
 
 population = evolve(settings, rn, objfunct)
 
 bestnetwork = population[1]
 println(convert_antimony(bestnetwork))
-
-# fitness = evaluate_fitness(objfunct, network)
-# display(fitness)
 
 # df = DataFrame(CSV.File(settings.objectivedatapath))
 

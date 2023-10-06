@@ -18,6 +18,7 @@
 # 
 
 struct UserSettings
+    #TODO: extract specieslist from df?
     specieslist::Vector{String} # Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String

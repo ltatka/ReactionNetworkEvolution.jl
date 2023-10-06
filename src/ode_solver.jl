@@ -5,8 +5,20 @@ include("reaction_network.jl")
 
 struct ObjectiveFunction
     objectivespecies::Vector{String} # Can be more than 1
-    objectivedata:: Array{Any} 
+    objectivedata:: DataFrame 
     time::Vector{Float64}
+    indexbyspecies::Dict
+end
+
+function get_objectivefunction(settings::UserSettings)
+    objectivedata = DataFrame(CSV.File(settings.objectivedatapath))
+    time = objectivedata[!, "time"]
+    indexbyspecies = Dict()
+    for s in settings.objectivespecies
+        idx = findfirst(item -> item == s, settings.specieslist)
+        indexbyspecies[s] = idx
+    end
+    return ObjectiveFunction(settings.objectivespecies, objectivedata, time, indexbyspecies)
 end
 
 function ode_funct!(du, u, network::ReactionNetwork, t)
@@ -58,12 +70,24 @@ function solve_ode(objfunct, network)
     return sol
 end
 
+# function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
+#     sol = solve_ode(objfunct, network)
+#     idx = findfirst(item -> item == objfunct.objectivespecies[1], network.specieslist)
+#     fitness = 0.0
+#     for (i, row) in enumerate(sol.u)
+#         fitness += abs(objfunct.objectivedata[1][i] - row[idx])
+#     end
+#     return fitness # Or should this also assign the fitness to the network?
+# end
+
 function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
     sol = solve_ode(objfunct, network)
-    idx = findfirst(item -> item == objfunct.objectivespecies[1], network.specieslist)
     fitness = 0.0
     for (i, row) in enumerate(sol.u)
-        fitness += abs(objfunct.objectivedata[1][i] - row[idx])
+        for s in objfunct.objectivespecies
+            idx = objfunct.indexbyspecies[s]
+            fitness += abs(objfunct.objectivedata[!, s][i] - row[idx])
+        end
     end
     return fitness # Or should this also assign the fitness to the network?
 end

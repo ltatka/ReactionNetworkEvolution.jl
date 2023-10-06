@@ -11,14 +11,6 @@ mutable struct Reaction
     rateconstant::Float64
 end
 
-
-# struct ReactionProbabilities
-#     uniuni::Float64
-#     unibi::Float64
-#     biuni::Float64
-#     bibi::Float64
-# end
-
 mutable struct ReactionNetwork
     specieslist::Vector{String}
     initialcondition::Vector{Float64}
@@ -117,6 +109,28 @@ function generate_random_network(ng::NetworkGenerator)
     reactionlist = generate_reactionlist(ng)
     return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, 10E8)
 end
+
+function reactants_isequal(reactants1, reactants2)
+    if length(reactants1) != length(reactants2)
+        return false
+    elseif length(reactants1) == 1
+        return reactants1 == reactants2
+    else
+        return (reactants1[1] == reactants2[1] && reactants1[2] == reactants2[2]) ||
+            (reactants1[1] == reactants2[2] && reactants1[2] == reactants2[1])
+
+    end
+end
+
+function reaction_isnull(reaction)
+    # returns true is reaction is pointless, eg. S1 -> S1
+    return reactants_isequal(reaction.substrate, reaction.product)
+end
+
+function reaction_isequal(reaction1::Reaction, reaction2::Reaction)
+    return reactants_isequal(reaction1.substrate, reaction2.substrate) &&
+        reactantants_isequal(reaction1.product, reaction2.product)    
+end 
 
 # TODO: What about boundary species?
 function convert_antimony(network::ReactionNetwork)

@@ -1,20 +1,11 @@
 # include("reaction_network.jl")
-# include("settings.jl")
+include("settings.jl")
 using Distributions
 using CSV
 using DataFrames
 
 
-function get_objectivefunction(settings::UserSettings)
-    df = DataFrame(CSV.File(settings.objectivedatapath))
-    time = df[!, "time"]
-    objectivedata = Array{Any}[]
-    
-    for species in settings.objectivespecies
-        push!(objectivedata, df[!, species])
-    end
-    return ObjectiveFunction(settings.objectivespecies, objectivedata, time)
-end
+
 
 
 
