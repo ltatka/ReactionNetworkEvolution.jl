@@ -2,7 +2,7 @@ using Random
 using Distributions
 include("settings.jl")
 
-Random.seed!(2)
+Random.seed!(3)
 
 
 mutable struct Reaction
@@ -37,6 +37,15 @@ struct NetworkGenerator
     function NetworkGenerator(specieslist::Vector{String}, initialcondition::Vector{Float64}, numreactions::Int, reactionprobabilities::ReactionProbabilities, rateconstantrange::Vector{Float64})
         new(specieslist, initialcondition, numreactions, reactionprobabilities, rateconstantrange)
     end
+end
+
+function get_networkgenerator(settings::Settings)::NetworkGenerator
+    specieslist = settings.specieslist
+    initialconditions = settings.initialconditions
+    nreactions = settings.nreactions
+    reactionprobabilities = settings.reactionprobabilities
+    rateconstantrange = settings.rateconstantrange
+    return NetworkGenerator(specieslist, initialconditions, nreactions, reactionprobabilities, rateconstantrange)
 end
 
 function get_fitness(network::ReactionNetwork)

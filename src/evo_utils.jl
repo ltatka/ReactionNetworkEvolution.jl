@@ -39,7 +39,7 @@ function mutaterateconstant(network::ReactionNetwork)
     return network
 end
 
-function mutatenetwork(settings::EvolutionSettings, ng::NetworkGenerator, network::ReactionNetwork)
+function mutatenetwork(settings::Settings, ng::NetworkGenerator, network::ReactionNetwork)
     p = rand()
     if p < settings.mutationprobabilities.adddeletereaction
         network = adddeletereaction(ng, network)
@@ -49,7 +49,7 @@ function mutatenetwork(settings::EvolutionSettings, ng::NetworkGenerator, networ
     return network
 end
 
-function mutate_nonelite_population(settings::EvolutionSettings, ng::NetworkGenerator, population)
+function mutate_nonelite_population(settings::Settings, ng::NetworkGenerator, population)
     nelite = Int(floor(settings.portionelite*length(population)))
     for i in (nelite+1):length(population)
         population[i] = mutatenetwork(settings, ng, population[i])
@@ -57,7 +57,7 @@ function mutate_nonelite_population(settings::EvolutionSettings, ng::NetworkGene
     return population
 end
 
-function generate_network_population(settings::EvolutionSettings, ng::NetworkGenerator)
+function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = []
     for i in 1:settings.usersettings.populationsize
         network = generate_random_network(ng)
@@ -72,7 +72,7 @@ function sortbyfitness(population)
 end
 
 
-function eliteselect(settings::EvolutionSettings, population)
+function eliteselect(settings::Settings, population)
     nelite = Int(floor(settings.portionelite*length(population)))
     newpopulation = []
     for i in 1:nelite
@@ -82,7 +82,7 @@ function eliteselect(settings::EvolutionSettings, population)
 end
 
 
-function tournamentselect(settings::EvolutionSettings, population, newpopulation)
+function tournamentselect(settings::Settings, population, newpopulation)
     #For now, this is only going to select networks and put them in the new population. Will mutate them later
     nelite = Int(floor(settings.portionelite*length(population)))
     for i in 1:(settings.usersettings.populationsize - nelite)
@@ -100,7 +100,7 @@ function tournamentselect(settings::EvolutionSettings, population, newpopulation
     return newpopulation
 end
 
-function select_new_population(settings::EvolutionSettings, population)
+function select_new_population(settings::Settings, population)
     population = sortbyfitness(population)
     newpopulation = eliteselect(settings, population)
     newpopulation  = tournamentselect(settings, population, newpopulation)
@@ -116,7 +116,7 @@ function print_top_fitness(n::Int, population)
 end
 
 
-function evolve(settings::EvolutionSettings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
+function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
     population = generate_network_population(settings, ng)
     for i in 1:settings.usersettings.ngenerations
         population = sortbyfitness(population)

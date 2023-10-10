@@ -16,33 +16,81 @@
 # Things we can caclulate/get
 # Time ranges, step size, number of data points  
 # 
-
-struct UserSettings
-    #TODO: extract specieslist from df?
-    specieslist::Vector{String} # Maybe they don't need to define this if it's in the data?
-    initialconditions::Vector{Float64}
-    objectivedatapath::String
-    objectivespecies::Vector{String}
-    populationsize::Int
-    ngenerations::Int
-end
+import JSON
 
 struct ReactionProbabilities
     uniuni::Float64
     unibi::Float64
     biuni::Float64
     bibi::Float64
+
+    function ReactionProbabilities(p::Vector{Any})
+        new(p[1], p[2], p[3], p[4])
+    end
+
+    function ReactionProbabilities(p1, p2, p3, p4)
+        new(p1, p2, p3, p4)
+    end
 end
 
 struct MutationProbabilities
     rateconstant::Float64
     adddeletereaction::Float64
+
+    function MutationProbabilities(p::Vector{Float64})
+        new(p[1], p[2])
+    end
+
+    function MutationProbabilities(p1::Float64, p2::Float64)
+        new(p1, p2)
+    end
 end
 
 
-struct EvolutionSettings
+struct Settings
     portionelite::Float64
     reactionprobabilities::ReactionProbabilities
     mutationprobabilities::MutationProbabilities
-    usersettings::UserSettings
+    specieslist::Vector{String} # Maybe they don't need to define this if it's in the data?
+    initialconditions::Vector{Float64}
+    objectivedatapath::String
+    objectivespecies::Vector{String}
+    populationsize::Int
+    ngenerations::Int
+    nreactions::Int
+    rateconstantrange::Vector{Float64}
+end
+
+
+settings = Dict(
+    "populationsize" => 100,
+    "ngenerations" => 400,
+    "reactionprobabilities" => [.2, .3, .3, .2],
+    "mutationprobabilities" => [.5, .5],
+    "portionelite" => .1,
+    "nreactions" => 5,
+    "rateconstantrange" => [0.1, 3.0]
+)
+
+function read_usersettings(path::String)
+    j = JSON.parsefile(path)
+    # Parse required settings
+    specieslist = j["specieslist"]
+    initialconditions = j["initialconditions"]
+    objectivedatapath = j["objectivedatapath"]
+    objectivespecies = j["objectivespecies"]
+    # Check for any optional args, use defaults if none 
+    # If there are user specified args, replace value 
+    for k in keys(settings)
+        if k in keys(j)
+            settings[k] = j[k]
+        end
+    end
+    # Create settings object
+    mutationprobabilities = MutationProbabilities(settings["mutationprobabilities"])
+    reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
+    usersettings = Settings(settings["portionelite"], reactionprobabilities, mutationprobabilities,
+        specieslist,initialconditions, objectivedatapath, objectivespecies, settings["populationsize"],
+        settings["ngenerations"], settings["nreactions"], settings["rateconstantrange"])
+    return usersettings   
 end

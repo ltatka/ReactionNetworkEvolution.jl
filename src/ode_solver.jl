@@ -10,7 +10,7 @@ struct ObjectiveFunction
     indexbyspecies::Dict
 end
 
-function get_objectivefunction(settings::UserSettings)
+function get_objectivefunction(settings::Settings)
     objectivedata = DataFrame(CSV.File(settings.objectivedatapath))
     time = objectivedata[!, "time"]
     indexbyspecies = Dict()

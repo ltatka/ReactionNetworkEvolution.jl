@@ -1,31 +1,37 @@
 using Plots
 using CSV
 using DataFrames
+using JSON
 include("ode_solver.jl")
 include("evo_utils.jl")
 # include("settings.jl")
 
+pathtosettings = "/home/hellsbells/Desktop/networkEv/src/test.json"
+
+settings = read_usersettings(pathtosettings)
+
+println(settings.reactionprobabilities)
 
 
-# #### TEST
-usersettings = UserSettings(["S1", "S2", "S3"], 
-    [1.0, 2.0, 2.0], 
-    "/home/hellsbells/Desktop/testtimeseries.csv", 
-    ["S1","S2", "S3"],
-    10,
-    200)
+# # #### TEST
+# usersettings = UserSettings(["S1", "S2", "S3"], 
+#     [1.0, 2.0, 2.0], 
+#     "/home/hellsbells/Desktop/testtimeseries.csv", 
+#     ["S1","S2", "S3"],
+#     10,
+#     200)
 
-objfunct = get_objectivefunction(usersettings)
+objfunct = get_objectivefunction(settings)
+ng = get_networkgenerator(settings)
 
+# settings = Settings(.1, ReactionProbabilities(0.25, 0.25, 0.25, 0.25), MutationProbabilities(0.5, 0.5), usersettings)
+# rn = NetworkGenerator(["S1", "S2", "S3"], [1.0, 2.0, 2.0], 5, ReactionProbabilities(.25, 0.25, 0.25, 0.25), [0.1, 2.0])
+# # network = generate_random_network(rn)
 
-settings = EvolutionSettings(.1, ReactionProbabilities(0.25, 0.25, 0.25, 0.25), MutationProbabilities(0.5, 0.5), usersettings)
-rn = NetworkGenerator(["S1", "S2", "S3"], [1.0, 2.0, 2.0], 5, ReactionProbabilities(.25, 0.25, 0.25, 0.25), [0.1, 2.0])
-# network = generate_random_network(rn)
+# population = evolve(settings, rn, objfunct)
 
-population = evolve(settings, rn, objfunct)
-
-bestnetwork = population[1]
-println(convert_antimony(bestnetwork))
+# bestnetwork = population[1]
+# println(convert_antimony(bestnetwork))
 
 # df = DataFrame(CSV.File(settings.objectivedatapath))
 
