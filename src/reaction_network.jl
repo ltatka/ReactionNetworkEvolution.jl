@@ -20,6 +20,7 @@ mutable struct ReactionNetwork
     float_initialcondition::Vector{Float64}
     boundary_initialcondition::Vector{Float64}
     fitness::Float64
+    ID::String # This is for development
 
     # function ReactionNetwork(specieslist::Vector{String},initialcondition::Vector{Float64},reactionlist::Vector{Reaction},floatingspecies::Vector{String},boundaryspecies::Vector{String},float_initialcondition::Vector{Float64},boundary_initialcondition::Vector{Float64})
     #     return new(specieslist, initialcondition, floatingspecies, boundaryspecies, float_initialcondition,boundary_initialcondition, 1.0E8)
@@ -89,7 +90,7 @@ end
 #TODO: maybe the number of possible boundary species depends on how many species are in the network?
 function choose_boundary_species(ng::NetworkGenerator)
     # Decide how many boundary species there will be, 0 to 3, but rarely 3
-    weights = [0.6, 0.2, 0.2]
+    weights = [1, 0, 0]
     nboundary = wsample(0:2, weights)
     # Decide which will be the boundary species
     boundaryspecies = sample(ng.specieslist, nboundary, replace=false)
@@ -116,7 +117,8 @@ function generate_random_network(ng::NetworkGenerator)
     floatingspecies, boundaryspecies = choose_boundary_species(ng)
     float_initialcondition, boundary_initialcondition = get_initialconditions(ng, floatingspecies, boundaryspecies)
     reactionlist = generate_reactionlist(ng)
-    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, 10E8)
+    ID = randstring(10)
+    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, 10E8, ID)
 end
 
 function reactants_isequal(reactants1, reactants2)
@@ -138,8 +140,41 @@ end
 
 function reaction_isequal(reaction1::Reaction, reaction2::Reaction)
     return reactants_isequal(reaction1.substrate, reaction2.substrate) &&
-        reactantants_isequal(reaction1.product, reaction2.product)    
+        reactants_isequal(reaction1.product, reaction2.product)    
 end 
+
+function removenullreactions(network::ReactionNetwork)
+    newreactionlist = []
+    for reaction in network.reactionlist
+        if !reaction_isnull(reaction)
+            push!(newreactionlist, reaction)
+        end
+    end
+    network.reactionlist = newreactionlist
+    return network
+end
+
+struct ReactionSet
+    reactionlist:: Vector{Reaction}
+    
+    function ReactionSet()
+        new([])
+    end
+
+end
+
+function pushreaction(reactionset::ReactionSet, reaction; addrateconstants=true)
+    for r in reactionset.reactionlist
+        if reaction_isequal(r, reaction)
+            if addrateconstants
+                r.rateconstant += reaction.rateconstant
+            end
+            return reactionset
+        end
+    end
+    push!(reactionset.reactionlist, reaction)
+    return reactionset
+end
 
 # TODO: What about boundary species?
 function convert_antimony(network::ReactionNetwork)

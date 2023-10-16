@@ -1,6 +1,7 @@
 {"specieslist": ["S1", "S2", "S3"],
 "initialconditions": [1.0, 2.0, 2.0],
-"objectivedatapath": "/home/hellsbells/Desktop/testtimeseries.csv",
-"objectivespecies": ["S2"],
-"reactionprobabilities": [0.1, 0.4, 0.4, 0.1]
+"objectivedatapath": "/home/hellsbells/Desktop/testcsv.csv",
+"objectivespecies": ["S1"],
+"reactionprobabilities": [0.1, 0.4, 0.4, 0.1],
+"ngenerations": 1000
 }

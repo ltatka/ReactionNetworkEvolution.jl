@@ -3,6 +3,7 @@ include("settings.jl")
 using Distributions
 using CSV
 using DataFrames
+using Dates
 
 
 
@@ -16,6 +17,9 @@ function addreaction(ng::NetworkGenerator, network::ReactionNetwork)
 end
 
 function deletereaction(network::ReactionNetwork)
+    if length(network.reactionlist) <= 2 # Maintain a minimum of 2 reactions
+        return network
+    end
     idx = sample(1:length(network.reactionlist), 1)
     deleteat!(network.reactionlist, idx)
     return network
@@ -59,7 +63,7 @@ end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = []
-    for i in 1:settings.usersettings.populationsize
+    for i in 1:settings.populationsize
         network = generate_random_network(ng)
         push!(population, network)
     end
@@ -85,10 +89,14 @@ end
 function tournamentselect(settings::Settings, population, newpopulation)
     #For now, this is only going to select networks and put them in the new population. Will mutate them later
     nelite = Int(floor(settings.portionelite*length(population)))
-    for i in 1:(settings.usersettings.populationsize - nelite)
+    for i in 1:(settings.populationsize - nelite)
         # This will allow elites to be selected and they might dominate
         # What if we mutate only the elites first?
-        idx1, idx2 = sample(1:settings.usersettings.populationsize, 2)
+        if i < settings.populationsize/2 #for first half, allow elite selection
+            idx1, idx2 = sample(1:settings.populationsize, 2)
+        else # for second half, select only from non-elites
+            idx1, idx2 = sample(nelite:settings.populationsize, 2)
+        end
         network1 = population[idx1]
         network2 = population[idx2]
         if network1.fitness < network2.fitness
@@ -116,15 +124,51 @@ function print_top_fitness(n::Int, population)
 end
 
 
-function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
+function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
+
     population = generate_network_population(settings, ng)
-    for i in 1:settings.usersettings.ngenerations
+    for i in 1:settings.ngenerations
         population = sortbyfitness(population)
+        # println(last(population).fitness)
         population = mutate_nonelite_population(settings, ng, population)
         population = evaluate_population_fitness(objfunct, population)
-        print_top_fitness(1, population)
         population = select_new_population(settings, population)
+        if i%10 == 0
+            print_top_fitness(1, population)
+        end
+        if writeout
+            fname = "generation_$i.txt"
+            open(fname, "a") do file
+                for model in population
+                    write(file, "$(model.ID)\n")
+                end
+            close(file)
+            end
+            fname = "generation_$(i)_fitness"
+            open(fname, "a") do file
+                for model in population
+                    write(file, "$(model.fitness)\n")
+                end
+            close(file)
+            end
+        end
+
     end
     population = sortbyfitness(population)
     return population
 end
+
+
+
+function cleanupreactions(network::ReactionNetwork)
+    network = removenullreactions(network)
+    reactionset = ReactionSet()
+    for reaction in network.reactionlist
+        reactionset = pushreaction(reactionset, reaction)
+    end
+    network.reactionlist = reactionset.reactionlist
+    return network
+end
+
+# function writeoutpopids(population)
+#     mkdir()
