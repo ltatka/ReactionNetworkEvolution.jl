@@ -16,9 +16,9 @@ ng = get_networkgenerator(settings)
 population = evolve(settings, ng, objfunct)
 
 bestnetwork = population[1]
-println(convert_antimony(bestnetwork))
+println(convert_to_antimony(bestnetwork))
 bestnetwork = cleanupreactions(bestnetwork)
-println(convert_antimony(bestnetwork))
+println(convert_to_antimony(bestnetwork))
 
 solution = solve_ode(objfunct, bestnetwork)
 

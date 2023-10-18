@@ -1,5 +1,6 @@
 using DifferentialEquations
 using Sundials
+using Plots
 include("reaction_network.jl")
 # include("settings.jl")
 
@@ -99,3 +100,14 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, population)
     end
     return population
 end
+
+function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path=nothing)
+    solution = solve_ode(objfunct, network)
+    plt = plot(solution)
+    if isnothing(path)
+        path = dirname(pwd()) * "$(network.ID).png"
+    end
+    savefig(plt, path)
+    return plt
+end
+
