@@ -16,7 +16,16 @@
 # Things we can caclulate/get
 # Time ranges, step size, number of data points  
 # 
+using Random
 import JSON
+
+DEFAULT_FITNESS = 1E16
+MAX_TIME = 10000
+MIN_NREACTIONS = 3
+MAX_NREACTIONS = 12
+SEED = 3
+
+Random.seed!(SEED)
 
 struct ReactionProbabilities
     uniuni::Float64
@@ -51,7 +60,7 @@ struct Settings
     portionelite::Float64
     reactionprobabilities::ReactionProbabilities
     mutationprobabilities::MutationProbabilities
-    specieslist::Vector{String} # Maybe they don't need to define this if it's in the data?
+    specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
     objectivespecies::Vector{String}
@@ -68,8 +77,8 @@ settings = Dict(
     "reactionprobabilities" => [.2, .3, .3, .2],
     "mutationprobabilities" => [.5, .5],
     "portionelite" => .1,
-    "nreactions" => 5,
-    "rateconstantrange" => [0.1, 3.0]
+    "nreactions" => 8,
+    "rateconstantrange" => [0.1, 3.0],
 )
 
 function read_usersettings(path::String)

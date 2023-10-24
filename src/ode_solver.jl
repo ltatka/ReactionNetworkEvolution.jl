@@ -1,8 +1,26 @@
 using DifferentialEquations
 using Sundials
 using Plots
+using BenchmarkTools
 include("reaction_network.jl")
-# include("settings.jl")
+
+# # This is a macro that will kill a function if it takes too long. Useful 
+# # for troublesome differential equations
+# macro timeout(seconds, expr, fail)
+#     quote
+#         tsk = @task $expr
+#         schedule(tsk)
+#         Timer($seconds) do timer
+#             istaskdone(tsk) || Base.throwto(tsk, InterruptException())
+#         end
+#         try
+#             fetch(tsk)
+#         catch _;
+#             println("we got to the fail macro")
+#             $fail
+#         end
+#     end
+# end
 
 struct ObjectiveFunction
     objectivespecies::Vector{String} # Can be more than 1
@@ -67,30 +85,32 @@ function solve_ode(objfunct, network)
 
     u0 = network.initialcondition
     ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
-    sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize)
+    sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize, verbose=false)
+    # sol = @timeout MAX_TIME begin
+    #     println(MAX_TIME)
+    #     solve(ode_prob, CVODE_BDF(), saveat=stepsize, verbose=false)
+    #     println("succss")
+    # end println("fail")
     return sol
+    
 end
 
-# function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
-#     sol = solve_ode(objfunct, network)
-#     idx = findfirst(item -> item == objfunct.objectivespecies[1], network.specieslist)
-#     fitness = 0.0
-#     for (i, row) in enumerate(sol.u)
-#         fitness += abs(objfunct.objectivedata[1][i] - row[idx])
-#     end
-#     return fitness # Or should this also assign the fitness to the network?
-# end
 
 function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
-    sol = solve_ode(objfunct, network)
-    fitness = 0.0
-    for (i, row) in enumerate(sol.u)
-        for s in objfunct.objectivespecies
-            idx = objfunct.indexbyspecies[s]
-            fitness += abs(objfunct.objectivedata[!, s][i] - row[idx])
+    try
+        sol = solve_ode(objfunct, network)
+        fitness = 0.0
+        for (i, row) in enumerate(sol.u)
+            for s in objfunct.objectivespecies
+                idx = objfunct.indexbyspecies[s]
+                fitness += abs(objfunct.objectivedata[!, s][i] - row[idx])
+            end
         end
+        return fitness # Or should this also assign the fitness to the network?
+    catch e
+        println(e)
+        return DEFAULT_FITNESS
     end
-    return fitness # Or should this also assign the fitness to the network?
 end
 
 function evaluate_population_fitness(objfunct::ObjectiveFunction, population)

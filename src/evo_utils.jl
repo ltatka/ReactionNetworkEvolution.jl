@@ -11,13 +11,16 @@ using Dates
 
 
 function addreaction(ng::NetworkGenerator, network::ReactionNetwork)
+    if length(network.reactionlist) >= MAX_NREACTIONS
+        return network
+    end
     reaction = generate_random_reaction(ng)
     push!(network.reactionlist, reaction)
     return network
 end
 
 function deletereaction(network::ReactionNetwork)
-    if length(network.reactionlist) <= 2 # Maintain a minimum of 2 reactions
+    if length(network.reactionlist) <= MIN_NREACTIONS # Maintain a minimum of 2 reactions
         return network
     end
     idx = sample(1:length(network.reactionlist), 1)
@@ -67,6 +70,10 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
         network = generate_random_network(ng)
         push!(population, network)
     end
+    # Replace first network with seed network if applicable
+    if ng.seedmodel != Nothing #!isnothing(ng.seedmodel)
+        population[1] = ng.seedmodel
+    end
     return population
 end
 
@@ -95,6 +102,9 @@ function tournamentselect(settings::Settings, population, newpopulation)
         if i < settings.populationsize/2 #for first half, allow elite selection
             idx1, idx2 = sample(1:settings.populationsize, 2)
         else # for second half, select only from non-elites
+            if nelite == 0
+                nelite = 1
+            end
             idx1, idx2 = sample(nelite:settings.populationsize, 2)
         end
         network1 = population[idx1]
@@ -129,13 +139,22 @@ function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFun
     population = generate_network_population(settings, ng)
     for i in 1:settings.ngenerations
         population = sortbyfitness(population)
+        originset = Set()
+        for model in population
+            push!(originset, model.ID)
+        end
+        # if length(originset) < 4
+        #     return nothing
+        # end
+        if i%10 == 0
+            print_top_fitness(1, population)
+            println("set size: $(length(originset))")
+        end
         # println(last(population).fitness)
         population = mutate_nonelite_population(settings, ng, population)
         population = evaluate_population_fitness(objfunct, population)
         population = select_new_population(settings, population)
-        if i%10 == 0
-            print_top_fitness(1, population)
-        end
+        
         if writeout
             fname = "generation_$i.txt"
             open(fname, "a") do file

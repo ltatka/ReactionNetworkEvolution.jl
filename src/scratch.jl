@@ -31,36 +31,43 @@ include("reaction_network.jl")
 # S2 = 2.0
 # S3 = 2.0"""
 
-using RoadRunner
 
-filepath = "/home/hellsbells/Desktop/test_ant.txt"
 
-network = convert_from_antimony(filepath)
+# filepath = "/home/hellsbells/Desktop/test_ant.txt"
 
-display(network)
+# network = convert_from_antimony(filepath)
 
-# f = open(filepath)
-# str = read(f, String)
-# close(f)
+# display(network)
 
-# println(str)
-# println(typeof(str))
+# specieslist = network.specieslist
+# initialcondition = network.initial_conditions
+# numreactions = 6
 
-# print(str)
-# # # rr = RoadRunner.loada(str)
 
-# # # println(RoadRunner.getAvailableSteadyStateSymbols(rr))
+# ng = NetworkGenerator(specieslist, initialcondition, numreactions, reactionprobabilities, rateconstantrange)
 
-# # # RoadRunner.getAntimonyString(str)
 
-# using PyCall
+macro timeout(seconds, expr, fail)
+    quote
+        tsk = @task $expr
+        schedule(tsk)
+        Timer($seconds) do timer
+            istaskdone(tsk) || Base.throwto(tsk, InterruptException())
+        end
+        try
+            fetch(tsk)
+        catch _
+            $fail
+        end
+    end
+end
 
-# te = pyimport("tellurium")
+x = @timeout 1 begin
+    sleep(0.1)
+    println("done")
+    1
+end "failed"
 
-# r = te.loada(str)
+println(x)
 
-# s = r.getCurrentAntimony()
-
-# all_arrays = separate_antimony_elements(s)
-
-# display(all_arrays)
+println("Done")
