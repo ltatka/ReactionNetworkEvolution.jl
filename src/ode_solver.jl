@@ -49,6 +49,9 @@ function ode_funct!(du, u, network::ReactionNetwork, t)
     end
 
     for reaction in network.reactionlist
+        if !reaction.isactive
+            continue
+        end
         # Get the relevant concentrations
         dspecies = 1 # Is there a case where this would be wrong?
         for s in reaction.substrate
@@ -113,13 +116,7 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
     end
 end
 
-function evaluate_population_fitness(objfunct::ObjectiveFunction, population)
-    for network in population
-        fitness = evaluate_fitness(objfunct, network)
-        network.fitness = fitness
-    end
-    return population
-end
+
 
 function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path=nothing)
     solution = solve_ode(objfunct, network)

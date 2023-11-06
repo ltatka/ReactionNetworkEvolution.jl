@@ -7,7 +7,7 @@ using Dates
 
 
 
-
+NUM_VARIANTS = [] 
 
 
 function addreaction(ng::NetworkGenerator, network::ReactionNetwork)
@@ -24,7 +24,8 @@ function deletereaction(network::ReactionNetwork)
         return network
     end
     idx = sample(1:length(network.reactionlist), 1)
-    deleteat!(network.reactionlist, idx)
+    #TODO: should reactions that are already inactive be excluded from this?
+    network.reactionlist[idx].isactive = false
     return network
 end
 
@@ -66,14 +67,18 @@ end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = []
+    starternetwork = generate_random_network(ng)
     for i in 1:settings.populationsize
-        network = generate_random_network(ng)
-        push!(population, network)
+        push!(population, deepcopy(starternetwork))
     end
-    # Replace first network with seed network if applicable
-    if ng.seedmodel != Nothing #!isnothing(ng.seedmodel)
-        population[1] = ng.seedmodel
-    end
+    # for i in 1:settings.populationsize
+    #     network = generate_random_network(ng)
+    #     push!(population, network)
+    # end
+    # # Replace first network with seed network if applicable
+    # if ng.seedmodel != Nothing #!isnothing(ng.seedmodel)
+    #     population[1] = ng.seedmodel
+    # end
     return population
 end
 
@@ -133,6 +138,24 @@ function print_top_fitness(n::Int, population)
     return nothing
 end
 
+function evaluate_population_fitness(objfunct::ObjectiveFunction, population)
+    counts_by_originID = Dict()
+    for network in population
+        # Create a dictionary tracking how many networks are descended from each origin model
+        if network.ID in keys(counts_by_originID)
+            counts_by_originID[network.ID] += 1
+        else
+            counts_by_originID[network.ID] = 1
+        end
+        fitness = evaluate_fitness(objfunct, network)
+        network.fitness = fitness
+    end
+    # Add penalty if model has lots of siblings from same origin model
+    for network in population
+        network.fitness = network.fitness * (1 + .5*counts_by_originID[network.ID]/length(population))
+    end
+    return population
+end
 
 function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
 
@@ -146,10 +169,11 @@ function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFun
         # if length(originset) < 4
         #     return nothing
         # end
-        if i%10 == 0
-            print_top_fitness(1, population)
-            println("set size: $(length(originset))")
-        end
+        push!(NUM_VARIANTS, length(originset))
+        # if i%10 == 0
+        #     print_top_fitness(1, population)
+        #     println("set size: $(length(originset))")
+        # end
         # println(last(population).fitness)
         population = mutate_nonelite_population(settings, ng, population)
         population = evaluate_population_fitness(objfunct, population)

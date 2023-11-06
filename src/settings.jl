@@ -22,8 +22,11 @@ import JSON
 DEFAULT_FITNESS = 1E16
 MAX_TIME = 10000
 MIN_NREACTIONS = 3
-MAX_NREACTIONS = 12
-SEED = 3
+MAX_NREACTIONS = 100
+SEED = 4
+
+global global_innovation_number = 0 #TODO: don't use global vars
+global current_innovation_num_by_reaction = Dict()
 
 Random.seed!(SEED)
 

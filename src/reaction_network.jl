@@ -8,7 +8,28 @@ mutable struct Reaction
     substrate::Vector{String}
     product::Vector{String}
     rateconstant::Float64
+    innovationnumber:: Int64
+    isactive::Bool
+    key::Vector{Vector{String}}
+    
+    # function Reaction(substrate, product, rateconstant, -1, true)
+    #     substrate = sort(substrate)
+    #     product = sort(product)
+    #     return new(substrate, product, rateconstant, -1, true)
+    # end
+
+    function Reaction(substrate, product, rateconstant)
+        substrate = sort(substrate)
+        product = sort(product)
+        return new(substrate, product, rateconstant, -1, true, [substrate, product])
+    end
+
 end
+
+function get_reaction_key(reaction::Reaction)
+    return [substrate, product]
+end
+
 
 mutable struct ReactionNetwork
     specieslist::Vector{String}
@@ -85,9 +106,19 @@ function generate_random_reaction(ng::NetworkGenerator)
 end
 
 function generate_reactionlist(ng::NetworkGenerator)
+    global global_innovation_number
     reactionlist = Vector{Reaction}()
     for i in 1:ng.numreactions
-        push!(reactionlist, generate_random_reaction(ng))
+        reaction = generate_random_reaction(ng)
+        if reaction.key in keys(current_innovation_num_by_reaction)
+            reaction.innovationnumber = current_innovation_num_by_reaction[reaction.key]
+        else
+            reaction.innovationnumber = global_innovation_number
+            global_innovation_number += 1
+            current_innovation_num_by_reaction[reaction.key] = reaction.innovationnumber
+        end
+
+        push!(reactionlist, reaction)
     end
     return reactionlist
 end
