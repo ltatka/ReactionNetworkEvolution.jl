@@ -48,7 +48,8 @@ function ode_funct!(du, u, network::ReactionNetwork, t)
         du[i] = 0.0
     end
 
-    for reaction in network.reactionlist
+    for key in keys(network.reactionlist)
+        reaction = network.reactionlist[key]
         if !reaction.isactive
             continue
         end

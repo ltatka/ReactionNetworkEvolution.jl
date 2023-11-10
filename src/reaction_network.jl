@@ -34,7 +34,7 @@ end
 mutable struct ReactionNetwork
     specieslist::Vector{String}
     initialcondition::Vector{Float64}
-    reactionlist::Vector{Reaction}
+    reactionlist::Dict{Any,Any}
     floatingspecies::Vector{String}
     boundaryspecies::Vector{String}
     float_initialcondition::Vector{Float64}
@@ -42,6 +42,7 @@ mutable struct ReactionNetwork
      # This is for development
     fitness::Float64
     ID::String
+    species::String
 
     # function ReactionNetwork(specieslist::Vector{String},initialcondition::Vector{Float64},reactionlist::Vector{Reaction},floatingspecies::Vector{String},boundaryspecies::Vector{String},float_initialcondition::Vector{Float64},boundary_initialcondition::Vector{Float64})
     #     return new(specieslist, initialcondition, floatingspecies, boundaryspecies, float_initialcondition,boundary_initialcondition, 1.0E8)
@@ -107,7 +108,8 @@ end
 
 function generate_reactionlist(ng::NetworkGenerator)
     global global_innovation_number
-    reactionlist = Vector{Reaction}()
+    reactionlist = Dict()
+    #reactionlist = Vector{Reaction}()
     for i in 1:ng.numreactions
         reaction = generate_random_reaction(ng)
         if reaction.key in keys(current_innovation_num_by_reaction)
@@ -117,8 +119,12 @@ function generate_reactionlist(ng::NetworkGenerator)
             global_innovation_number += 1
             current_innovation_num_by_reaction[reaction.key] = reaction.innovationnumber
         end
-
-        push!(reactionlist, reaction)
+        if reaction.key in keys(reactionlist)
+            reactionlist[reaction.key].rateconstant += reaction.rateconstant
+        else
+            reactionlist[reaction.key] = reaction
+        end
+        #push!(reactionlist, reaction)
     end
     return reactionlist
 end
@@ -155,5 +161,5 @@ function generate_random_network(ng::NetworkGenerator)
     float_initialcondition, boundary_initialcondition = get_initialconditions(ng, floatingspecies, boundaryspecies)
     reactionlist = generate_reactionlist(ng)
     ID = randstring(10)
-    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, DEFAULT_FITNESS, ID)
+    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, DEFAULT_FITNESS, ID, "0")
 end

@@ -9,13 +9,30 @@ using Dates
 
 NUM_VARIANTS = [] 
 
+function getrandomkey(d::Dict)
+    i = rand(1:length(keys(d)))
+    return collect(keys(d))[i]
+end
+
 
 function addreaction(ng::NetworkGenerator, network::ReactionNetwork)
+    global global_innovation_number
     if length(network.reactionlist) >= MAX_NREACTIONS
         return network
     end
     reaction = generate_random_reaction(ng)
-    push!(network.reactionlist, reaction)
+    if reaction.key in keys(current_innovation_num_by_reaction)
+        reaction.innovationnumber = current_innovation_num_by_reaction[reaction.key]
+    else
+        reaction.innovationnumber = global_innovation_number
+        current_innovation_num_by_reaction[reaction.key] = global_innovation_number
+        global_innovation_number += 1
+    end
+    if reaction.key in keys(network.reactionlist)
+        network.reactionlist[reaction.key].rateconstant += reaction.rateconstant 
+    else
+        network.reactionlist[reaction.key] = reaction
+    end
     return network
 end
 
@@ -23,9 +40,9 @@ function deletereaction(network::ReactionNetwork)
     if length(network.reactionlist) <= MIN_NREACTIONS # Maintain a minimum of 2 reactions
         return network
     end
-    idx = sample(1:length(network.reactionlist), 1)
+    key = getrandomkey(network.reactionlist)
     #TODO: should reactions that are already inactive be excluded from this?
-    network.reactionlist[idx].isactive = false
+    network.reactionlist[key].isactive = false
     return network
 end
 
@@ -41,9 +58,9 @@ end
 
 
 function mutaterateconstant(network::ReactionNetwork)
-    idx = sample(1:length(network.reactionlist), 1)
+    key = getrandomkey(network.reactionlist)
     percentchange = rand(Uniform(.8, 1.2))
-    network.reactionlist[idx][1].rateconstant *= percentchange
+    network.reactionlist[key].rateconstant *= percentchange
     return network
 end
 
@@ -162,14 +179,14 @@ function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFun
     population = generate_network_population(settings, ng)
     for i in 1:settings.ngenerations
         population = sortbyfitness(population)
-        originset = Set()
-        for model in population
-            push!(originset, model.ID)
-        end
+        # originset = Set()
+        # for model in population
+        #     push!(originset, model.ID)
+        # end
         # if length(originset) < 4
         #     return nothing
         # end
-        push!(NUM_VARIANTS, length(originset))
+        # push!(NUM_VARIANTS, length(originset))
         # if i%10 == 0
         #     print_top_fitness(1, population)
         #     println("set size: $(length(originset))")
@@ -215,3 +232,8 @@ end
 
 # function writeoutpopids(population)
 #     mkdir()
+
+function calculate_distance(network1, network2)
+
+
+end

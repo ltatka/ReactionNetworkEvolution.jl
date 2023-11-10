@@ -18,9 +18,9 @@ r = generate_random_reaction(ng)
 print(r)
 l = generate_reactionlist(ng)
 println(l)
-print(current_innovation_num_by_reaction)
-# population = evolve(settings, ng, objfunct)
-
+# print(current_innovation_num_by_reaction)
+population = evolve(settings, ng, objfunct)
+print("done")
 
 
 # # ng2 = NetworkGenerator(settings.specieslist, settings.initialconditions, settings.nreactions,

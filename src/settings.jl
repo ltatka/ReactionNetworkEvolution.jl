@@ -27,6 +27,7 @@ SEED = 4
 
 global global_innovation_number = 0 #TODO: don't use global vars
 global current_innovation_num_by_reaction = Dict()
+delta = 500 #????
 
 Random.seed!(SEED)
 
