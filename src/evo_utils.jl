@@ -155,28 +155,30 @@ function print_top_fitness(n::Int, population)
     return nothing
 end
 
-function evaluate_population_fitness(objfunct::ObjectiveFunction, population)
-    counts_by_originID = Dict()
-    for network in population
-        # Create a dictionary tracking how many networks are descended from each origin model
-        if network.ID in keys(counts_by_originID)
-            counts_by_originID[network.ID] += 1
-        else
-            counts_by_originID[network.ID] = 1
+function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_species)
+    # Evaluates the entire populations fitness as well as the fintess for each species, per the NEAT algo
+    total_fitness = 0
+    fitness_by_species = Dict()
+    for species in keys(networks_by_species)
+        species_fitness = 0
+        N = length(networks_by_species[species])
+        for network in networks_by_species[species]
+            fitness = 1/(N*evaluate_fitness(objfunct, network))
+            total_fitness += fitness
+            species_fitness += fitness
+            network.fitness = fitness
         end
-        fitness = evaluate_fitness(objfunct, network)
-        network.fitness = fitness
+        fitness_by_species[species] = species_fitness
     end
-    # Add penalty if model has lots of siblings from same origin model
-    for network in population
-        network.fitness = network.fitness * (1 + .5*counts_by_originID[network.ID]/length(population))
-    end
-    return population
+    return networks_by_species, fitness_by_species, total_fitness
 end
 
-function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
 
+function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
+    # Generate a population consisting of single random network
     population = generate_network_population(settings, ng)
+    # Make a dictionary of the networks by their species ID
+    networks_by_species = Dict(population[1].ID => population)
     for i in 1:settings.ngenerations
         population = sortbyfitness(population)
         # originset = Set()
@@ -218,7 +220,36 @@ function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFun
     return population
 end
 
-
+function speciate(networks_by_species, population, delta)
+    #global delta
+    new_networks_by_species = Dict()
+    for network in population
+        species_assigned = false
+        for species in keys(networks_by_species)
+            network2 = rand(networks_by_species[species])
+            distance = calculate_distance(network, network2)
+            if distance <= delta
+                network.ID = species
+                if species in keys(new_networks_by_species)
+                    push!(new_networks_by_species[species], network)
+                else
+                    new_networks_by_species[species] = [network]
+                end
+                species_assigned = true
+                break
+            end
+        end
+        # If we've gone through all existing species and none are close enough
+        # to the network, then create a new species#TODO WHat if there are two species
+        # that are close to one another, but not any existing species? In this case, they will each be species_assigned
+        # a new species number. But I can't think of a way to avoid this...
+        if !species_assigned
+            new_ID = randstring(10)
+            new_networks_by_species[new_ID] = [network]
+        end
+    end
+    return new_networks_by_species
+end
 
 function cleanupreactions(network::ReactionNetwork)
     network = removenullreactions(network)
@@ -230,10 +261,77 @@ function cleanupreactions(network::ReactionNetwork)
     return network
 end
 
-# function writeoutpopids(population)
-#     mkdir()
 
 function calculate_distance(network1, network2)
+    W = 0
+    num_diff = 0
+    c1 = 1
+    c2 = 1 
+    if length(network1.reactionlist) > length(network2.reactionlist)
+        N = length(network1.reactionlist)
+    else
+        N = length(network2.reactionlist)
+    end
 
+    for key in keys(network1.reactionlist)
+        if key in keys(network2.reactionlist)
+            W += abs(network2.reactionlist[key].rateconstant - network1.reactionlist[key].rateconstant)
+        else
+            num_diff += 1
+        end
+    end
+
+    return c1*(num_diff)/N + c2*W/N
+end
+
+function crossover(network1, network2)
+    newreactiondict = Dict()
+    if network1.fitness > network2.fitness
+        morefitnetwork = network1
+        lessfitnetwork = network2
+    elseif network1.fitness < network2.fitness
+        morefitnetwork = network2
+        lessfitnetwork = network1
+    else #If equal fitness, randomly assign roles  
+        p = rand()
+        if p < 0.5
+            morefitnetwork = network1
+            lessfitnetwork = network2
+        else
+            morefitnetwork = network2
+            lessfitnetwork = network1
+        end
+    end
+    # We are going to look through the genes in the more fit network. If there is a gene in the 
+    # less fit network that is not in the more fit one, we don't care. But if there is an unmatched gene in the more
+    # fit network, we want to keep it
+    for key in keys(morefitnetwork.reactionlist)
+        # If the reaction is in both networks, randomly copy it from either network
+        if key in keys(lessfitnetwork.reactionlist)
+            p = rand()
+            if p < 0.5
+                newreaction = morefitnetwork.reactionlist[key]
+            else
+                newreaction = lessfitnetwork.reactionlist[key]
+            end
+            
+        else # If the reaction is NOT in the less fit network, copy it over
+            newreaction = morefitnetwork.reactionlist[key]
+        end
+        # If the selected reaction is inactive, 25% of it being reactivated
+        if !newreaction.isactive
+            p = rand()
+            if p < 0.25
+                newreaction.isactive = true
+            end
+        end
+        newreactiondict[key] = newreaction
+    end
+
+    newnetwork = deepcopy(morefitnetwork)
+    newnetwork.reactionlist = newreactiondict
+
+    #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
+    return newnetwork
 
 end

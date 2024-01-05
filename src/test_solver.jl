@@ -14,13 +14,52 @@ settings = read_usersettings(pathtosettings)
 objfunct = get_objectivefunction(settings)
 ng = get_networkgenerator(settings)
 
-r = generate_random_reaction(ng)
-print(r)
-l = generate_reactionlist(ng)
-println(l)
+# r = generate_random_reaction(ng)
+# print(r)
+# l = generate_reactionlist(ng)
+# println(l)
 # print(current_innovation_num_by_reaction)
-population = evolve(settings, ng, objfunct)
-print("done")
+# population = evolve(settings, ng, objfunct)
+
+
+population = generate_network_population(settings, ng)
+networks_by_species = Dict(population[1].ID => population)
+
+newpopulation = []
+for network in population
+    network = mutatenetwork(settings, ng, network)
+    push!(newpopulation, network)
+end
+
+population2 = generate_network_population(settings, ng)
+print(population2[1])
+
+network1 = population[1]
+network2 = population2[1]
+
+for r in network1.reactionlist
+    println(r)
+end
+println("*********************")
+
+for r in network2.reactionlist
+    println(r)
+end
+
+newreactions = crossover(network1, network2)
+println("******")
+for r in newreactions
+    println(r)
+end
+
+
+# deltas = [0.1, .15: 1/2 ]
+
+# for delta in deltas
+#     new_networks_by_species = speciate(networks_by_species, newpopulation, delta)
+#     println("$delta: $(length(new_networks_by_species))")
+
+# end
 
 
 # # ng2 = NetworkGenerator(settings.specieslist, settings.initialconditions, settings.nreactions,
@@ -43,3 +82,6 @@ print("done")
 # println(NUM_VARIANTS)
 # plt2 = plot(NUM_VARIANTS)
 # savefig(plt2, "/home/hellsbells/Desktop/variants.png")
+
+
+print("done")
