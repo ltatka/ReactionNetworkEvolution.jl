@@ -157,13 +157,17 @@ end
 
 function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_species)
     # Evaluates the entire populations fitness as well as the fintess for each species, per the NEAT algo
+    # Assigns each individual its fitness score
+    # total_fitness = sum of all fitness scores across the entire population, float
+    # fitness_by_species = tracks fitness sum of all individuals within a single species, 
+    #   hashmap(key, val)= speciesID, float
     total_fitness = 0
     fitness_by_species = Dict()
     for species in keys(networks_by_species)
         species_fitness = 0
         N = length(networks_by_species[species])
         for network in networks_by_species[species]
-            fitness = 1/(N*evaluate_fitness(objfunct, network))
+            fitness = (1/N)*(1/evaluate_fitness(objfunct, network)) # Invert the fitness to make it larger=better
             total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
@@ -171,6 +175,23 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_sp
         fitness_by_species[species] = species_fitness
     end
     return networks_by_species, fitness_by_species, total_fitness
+end
+
+function calculate_num_offspring(fitness_by_species, total_fitness, settings::Settings)
+    # Calculates how many offspring each species gets based on its share of the total fitness (sum of all individuals)
+    # Returns a hashmap key, val = speciesID, float, number of offspring for that species
+    total = settings.populationsize
+    total_calculated = 0
+    numoffspring_by_species = Dict()
+    for species in keys(fitness_by_species)
+        numoffspring = round(fitnress_by_species[species]/total_fitness)
+        total_calculated += numoffspring
+        numoffspring_by_species[species] = numoffspring
+    end
+    if total_calculated != total
+        println("calculated $total_calculated not eqault to popsize of $total")
+    end
+    return numoffspring_by_species
 end
 
 
