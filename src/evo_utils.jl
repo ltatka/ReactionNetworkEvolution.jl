@@ -282,6 +282,71 @@ function cleanupreactions(network::ReactionNetwork)
     return network
 end
 
+function reproduce_networks(networks_by_species, numoffspring_by_species, settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
+    CHANCE_MUTATION = 0.5 #Chance of mutating network (vs crossover)
+    WORST_PORTION = 0.1 # The portion of each species to drop
+    ELITE_PORTION = 0.1 # The portion of each species to be copied over unchanged
+    newpopulation = []
+    for species in keys(networks_by_species)
+        networks = sort(networks_by_species[species], by=fitness, rev=true)
+        totaloffspringadded = 0
+        totaloffspring = numoffspring_by_species[species]
+        # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
+        # mutated network or the original, whichever is more fit
+        if totaloffspring == 1
+            newnetwork = deepcopy(networks[1])
+            newnetwork = mutatenetwork(settings, ng, newnetwork)
+            newfitness = 1/evaluate_fitness(objfunct, newnetwork)
+            if newfitness > network.Fitness
+                push!(newpopulation, newnetwork)
+            else
+                push!(newpopulation, network)
+            end
+            continue
+        end
+        # If the species is allowed more than 1 offspring:
+        # Directly copy the best network(s)
+        num_to_keep = floor(length(keys(networks_by_species[species]))*ELITE_PORTION)
+        if num_to_keep == 0
+            num_to_keep = 1
+        end
+        push!(newpopulation, deepcopy(networks[1:num_to_keep]))
+        totaloffspringadded += num_to_keep
+        # Get rid of the worst networks in the species
+        num_to_remove = floor(length(keys(networks_by_species[species]))*WORST_PORTION)
+        networks = networks[1:end - num_to_remove]
+        # For the rest of the new population:
+        for network in networks[num_to_remove:end]
+            p = rand(1) # get single random number
+            if p < CHANCE_MUTATION
+                mutate_nonelite_population(settings, ng, network)
+                push!(newpopulation, network)
+                totaloffspringadded += 1
+            else # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
+                idx = rand(1:length(networks))
+                network2 = networks[idx]
+                newnetwork = crossover(network, network2)
+                push!(newpopulation, newnetwork)
+                totaloffspringadded += 1
+            end
+            # Check if we've met the number of offspring alotted to this species and continue if so
+            if totaloffspringadded == totaloffspring
+                break
+            end
+        end
+    end
+    if length(newpopulation) != settings.populationsize
+        println("Something went wrong in reproduce_networks function. New population size is $(length(newpopulation)) but should be $(settings.populationsize)")
+    end
+    return newpopulation
+end
+
+
+
+
+            
+
+
 
 function calculate_distance(network1, network2)
     W = 0

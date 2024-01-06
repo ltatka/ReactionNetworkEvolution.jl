@@ -101,6 +101,8 @@ end
 
 
 function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
+    # This function evaluates the fitness of an individual based on how well the timeseries of the 
+    # target species matches that of the target timeseries. In this case a smaller fitness is better
     try
         sol = solve_ode(objfunct, network)
         fitness = 0.0
@@ -112,7 +114,7 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
         end
         return fitness # Or should this also assign the fitness to the network?
     catch e
-        println(e)
+        #println(e)
         return DEFAULT_FITNESS
     end
 end
