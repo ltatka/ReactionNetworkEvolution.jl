@@ -1,5 +1,6 @@
 # include("reaction_network.jl")
 include("settings.jl")
+include("reaction_network.jl")
 using Distributions
 using CSV
 using DataFrames
@@ -64,7 +65,7 @@ function mutaterateconstant(network::ReactionNetwork)
     return network
 end
 
-function mutatenetwork(settings::Settings, ng::NetworkGenerator, network::ReactionNetwork)
+function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::ReactionNetwork)
     p = rand()
     if p < settings.mutationprobabilities.adddeletereaction
         network = adddeletereaction(ng, network)
@@ -77,7 +78,7 @@ end
 function mutate_nonelite_population(settings::Settings, ng::NetworkGenerator, population)
     nelite = Int(floor(settings.portionelite*length(population)))
     for i in (nelite+1):length(population)
-        population[i] = mutatenetwork(settings, ng, population[i])
+        population[i] = mutatenetwork!(settings, ng, population[i])
     end
     return population
 end
@@ -99,8 +100,10 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
     return population
 end
 
-function sortbyfitness(population)
-    sort!(population, by=get_fitness)
+function sortbyfitness!(population, rev=true)
+    # If rev = true, sorts by descending
+    # Use rev = true if large fitness = better
+    sort!(population, by=get_fitness, rev=rev)
     return population
 end
 
@@ -161,6 +164,8 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_sp
     # total_fitness = sum of all fitness scores across the entire population, float
     # fitness_by_species = tracks fitness sum of all individuals within a single species, 
     #   hashmap(key, val)= speciesID, float
+    # NOTE: The reason this also returns networks_by_species this hashmap is modified, the fitness score is 
+    # added to each network
     total_fitness = 0
     fitness_by_species = Dict()
     for species in keys(networks_by_species)
@@ -184,62 +189,64 @@ function calculate_num_offspring(fitness_by_species, total_fitness, settings::Se
     total_calculated = 0
     numoffspring_by_species = Dict()
     for species in keys(fitness_by_species)
-        numoffspring = round(fitnress_by_species[species]/total_fitness)
+        portion_offspring = fitness_by_species[species]/total_fitness # The percent of the next generation this species gets to produce
+        numoffspring = round(portion_offspring * total) # The number of offspring this species gets to produce
         total_calculated += numoffspring
         numoffspring_by_species[species] = numoffspring
     end
+    println("calculate_num_offspring: sum is $total_calculated")
     if total_calculated != total
-        println("calculated $total_calculated not eqault to popsize of $total")
+        println("calculated $total_calculated not eqaul to popsize of $total")
     end
     return numoffspring_by_species
 end
 
 
-function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
-    # Generate a population consisting of single random network
-    population = generate_network_population(settings, ng)
-    # Make a dictionary of the networks by their species ID
-    networks_by_species = Dict(population[1].ID => population)
-    for i in 1:settings.ngenerations
-        population = sortbyfitness(population)
-        # originset = Set()
-        # for model in population
-        #     push!(originset, model.ID)
-        # end
-        # if length(originset) < 4
-        #     return nothing
-        # end
-        # push!(NUM_VARIANTS, length(originset))
-        # if i%10 == 0
-        #     print_top_fitness(1, population)
-        #     println("set size: $(length(originset))")
-        # end
-        # println(last(population).fitness)
-        population = mutate_nonelite_population(settings, ng, population)
-        population = evaluate_population_fitness(objfunct, population)
-        population = select_new_population(settings, population)
+# function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
+#     # Generate a population consisting of single random network
+#     population = generate_network_population(settings, ng)
+#     # Make a dictionary of the networks by their species ID
+#     networks_by_species = Dict(population[1].ID => population)
+#     for i in 1:settings.ngenerations
+#         population = sortbyfitness(population)
+#         # originset = Set()
+#         # for model in population
+#         #     push!(originset, model.ID)
+#         # end
+#         # if length(originset) < 4
+#         #     return nothing
+#         # end
+#         # push!(NUM_VARIANTS, length(originset))
+#         # if i%10 == 0
+#         #     print_top_fitness(1, population)
+#         #     println("set size: $(length(originset))")
+#         # end
+#         # println(last(population).fitness)
+#         population = mutate_nonelite_population(settings, ng, population)
+#         population = evaluate_population_fitness(objfunct, population)
+#         population = select_new_population(settings, population)
         
-        if writeout
-            fname = "generation_$i.txt"
-            open(fname, "a") do file
-                for model in population
-                    write(file, "$(model.ID)\n")
-                end
-            close(file)
-            end
-            fname = "generation_$(i)_fitness"
-            open(fname, "a") do file
-                for model in population
-                    write(file, "$(model.fitness)\n")
-                end
-            close(file)
-            end
-        end
+#         if writeout
+#             fname = "generation_$i.txt"
+#             open(fname, "a") do file
+#                 for model in population
+#                     write(file, "$(model.ID)\n")
+#                 end
+#             close(file)
+#             end
+#             fname = "generation_$(i)_fitness"
+#             open(fname, "a") do file
+#                 for model in population
+#                     write(file, "$(model.fitness)\n")
+#                 end
+#             close(file)
+#             end
+#         end
 
-    end
-    population = sortbyfitness(population)
-    return population
-end
+#     end
+#     population = sortbyfitness(population)
+#     return population
+# end
 
 function speciate(networks_by_species, population, delta)
     #global delta
@@ -288,14 +295,14 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
     ELITE_PORTION = 0.1 # The portion of each species to be copied over unchanged
     newpopulation = []
     for species in keys(networks_by_species)
-        networks = sort(networks_by_species[species], by=fitness, rev=true)
+        networks = sortbyfitness!(networks_by_species[species])
         totaloffspringadded = 0
         totaloffspring = numoffspring_by_species[species]
         # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
         # mutated network or the original, whichever is more fit
         if totaloffspring == 1
             newnetwork = deepcopy(networks[1])
-            newnetwork = mutatenetwork(settings, ng, newnetwork)
+            newnetwork = mutatenetwork!(settings, ng, newnetwork)
             newfitness = 1/evaluate_fitness(objfunct, newnetwork)
             if newfitness > network.Fitness
                 push!(newpopulation, newnetwork)
@@ -306,32 +313,33 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
         end
         # If the species is allowed more than 1 offspring:
         # Directly copy the best network(s)
-        num_to_keep = floor(length(keys(networks_by_species[species]))*ELITE_PORTION)
+        num_to_keep = Int64(floor(length(keys(networks_by_species[species]))*ELITE_PORTION))
         if num_to_keep == 0
             num_to_keep = 1
         end
-        push!(newpopulation, deepcopy(networks[1:num_to_keep]))
+        for i in 1:num_to_keep
+            push!(newpopulation, deepcopy(networks[i]))
+        end
         totaloffspringadded += num_to_keep
         # Get rid of the worst networks in the species
-        num_to_remove = floor(length(keys(networks_by_species[species]))*WORST_PORTION)
-        networks = networks[1:end - num_to_remove]
+        num_to_remove = Int64(floor(length(keys(networks_by_species[species]))*WORST_PORTION))
+        networks = networks[num_to_keep:end - num_to_remove]
         # For the rest of the new population:
-        for network in networks[num_to_remove:end]
-            p = rand(1) # get single random number
+        while totaloffspringadded != totaloffspring
+            #select 2 random networks (second will be if we want to cross it over)
+            idx1, idx2 = rand(1:length(networks), 2) #TODO: this does NOT prevent same network from being selected twice, which might be good if we only have one more slot to fill
+            network = networks[idx1]
+            # Decide to mutate it or cross it over
+            p = rand()
             if p < CHANCE_MUTATION
-                mutate_nonelite_population(settings, ng, network)
+                mutatenetwork!(settings, ng, network)
                 push!(newpopulation, network)
                 totaloffspringadded += 1
             else # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
-                idx = rand(1:length(networks))
-                network2 = networks[idx]
+                network2 = networks[idx2]
                 newnetwork = crossover(network, network2)
                 push!(newpopulation, newnetwork)
                 totaloffspringadded += 1
-            end
-            # Check if we've met the number of offspring alotted to this species and continue if so
-            if totaloffspringadded == totaloffspring
-                break
             end
         end
     end

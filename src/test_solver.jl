@@ -21,36 +21,53 @@ ng = get_networkgenerator(settings)
 # print(current_innovation_num_by_reaction)
 # population = evolve(settings, ng, objfunct)
 
+DELTA = 0.2
 
 population = generate_network_population(settings, ng)
 networks_by_species = Dict(population[1].ID => population)
+println(keys(networks_by_species))
 
-newpopulation = []
-for network in population
-    network = mutatenetwork(settings, ng, network)
-    push!(newpopulation, network)
-end
+networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
+numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
 
-population2 = generate_network_population(settings, ng)
-print(population2[1])
 
-network1 = population[1]
-network2 = population2[1]
+newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct)
 
-for r in network1.reactionlist
-    println(r)
-end
-println("*********************")
+new_networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
+println(keys(new_networks_by_species))
 
-for r in network2.reactionlist
-    println(r)
-end
+# newpopulation = []
+# for network in population
+#     network = mutatenetwork(settings, ng, network)
+#     push!(newpopulation, network)
+# end
 
-newreactions = crossover(network1, network2)
-println("******")
-for r in newreactions
-    println(r)
-end
+# networks_by_species = speciate(networks_by_species, newpopulation, 0.2)
+# println(keys(networks_by_species))
+
+# for species in keys(networks_by_species)
+#     a = sort(networks_by_species, by=fitness)
+
+# population2 = generate_network_population(settings, ng)
+# print(population2[1])
+
+# network1 = population[1]
+# network2 = population2[1]
+
+# for r in network1.reactionlist
+#     println(r)
+# end
+# println("*********************")
+
+# for r in network2.reactionlist
+#     println(r)
+# end
+
+# newreactions = crossover(network1, network2)
+# println("******")
+# for r in newreactions
+#     println(r)
+# end
 
 
 # deltas = [0.1, .15: 1/2 ]
