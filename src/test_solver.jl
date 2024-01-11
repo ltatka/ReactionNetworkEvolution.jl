@@ -21,12 +21,12 @@ ng = get_networkgenerator(settings)
 # print(current_innovation_num_by_reaction)
 # population = evolve(settings, ng, objfunct)
 
-DELTA = 0.2
-NUM_GENERATION = 10
+DELTA = 0.3
+NUM_GENERATION = 25
 
 population = generate_network_population(settings, ng)
 networks_by_species = Dict(population[1].ID => population)
-println(keys(networks_by_species))
+# println(keys(networks_by_species))
 
 networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
 numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
@@ -35,18 +35,29 @@ numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitn
 newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct)
 
 networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
-println(keys(networks_by_species))
+# println(keys(networks_by_species))
 
+populationsizes = []
 for i in 1:NUM_GENERATION
+    if i == 21
+        print("gotem")
+    end
+    # fitness_by_species
+    global networks_by_species
+    # global total_fitness
+    # global numoffspring_by_species
+    # global newpopulation
     networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
     numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
     
     
-    newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct)
+    newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct,)
+    push!(populationsizes, length(newpopulation))
     
     networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
     println("This is generation $i and there are $(length(keys(networks_by_species)))")
 end
+println(populationsizes)
 
 # newpopulation = []
 # for network in population

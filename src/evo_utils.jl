@@ -194,10 +194,10 @@ function calculate_num_offspring(fitness_by_species, total_fitness, settings::Se
         total_calculated += numoffspring
         numoffspring_by_species[species] = numoffspring
     end
-    println("calculate_num_offspring: sum is $total_calculated")
-    if total_calculated != total
-        println("calculated $total_calculated not eqaul to popsize of $total")
-    end
+    
+    # if total_calculated != total
+    #     println("calculated $total_calculated not eqaul to popsize of $total")
+    # end
     return numoffspring_by_species
 end
 
@@ -300,11 +300,15 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
         totaloffspring = numoffspring_by_species[species]
         # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
         # mutated network or the original, whichever is more fit
-        if totaloffspring == 1
-            newnetwork = deepcopy(networks[1])
+        if totaloffspring == 0
+            println("total offspring was 0")
+            continue
+        elseif totaloffspring == 1
+            network = networks[1]
+            newnetwork = deepcopy(network)
             newnetwork = mutatenetwork!(settings, ng, newnetwork)
             newfitness = 1/evaluate_fitness(objfunct, newnetwork)
-            if newfitness > network.Fitness
+            if newfitness > network.fitness
                 push!(newpopulation, newnetwork)
             else
                 push!(newpopulation, network)
@@ -343,9 +347,9 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
             end
         end
     end
-    if length(newpopulation) != settings.populationsize
-        println("Something went wrong in reproduce_networks function. New population size is $(length(newpopulation)) but should be $(settings.populationsize)")
-    end
+    # if length(newpopulation) != settings.populationsize
+    #     println("Something went wrong in reproduce_networks function. New population size is $(length(newpopulation)) but should be $(settings.populationsize)")
+    # end
     return newpopulation
 end
 
