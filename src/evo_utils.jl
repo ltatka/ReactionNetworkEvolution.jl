@@ -58,10 +58,17 @@ function adddeletereaction(ng:: NetworkGenerator, network::ReactionNetwork)
 end
 
 
-function mutaterateconstant(network::ReactionNetwork)
-    key = getrandomkey(network.reactionlist)
-    percentchange = rand(Uniform(.8, 1.2))
-    network.reactionlist[key].rateconstant *= percentchange
+function mutaterateconstant(network::ReactionNetwork, settings::Settings)
+    # 90% chance of perturbing existing value, 10% chance of new random value
+    key = getrandomkey(network.reactionlist) # Decide which reaction to change
+    p = rand()
+    if p < 0.9
+        percentchange = rand(Uniform(.8, 1.2))
+        network.reactionlist[key].rateconstant *= percentchange
+    else
+        newrateconstant = rand(Uniform(settings.rateconstantrange[1], settings.rateconstantrange[2]))
+        network.reactionlist[key].rateconstant = newrateconstant
+    end
     return network
 end
 
@@ -70,7 +77,7 @@ function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::React
     if p < settings.mutationprobabilities.adddeletereaction
         network = adddeletereaction(ng, network)
     else
-        mutaterateconstant(network)
+        mutaterateconstant(network, settings)
     end
     return network
 end
@@ -85,14 +92,14 @@ end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = []
-    starternetwork = generate_random_network(ng)
-    for i in 1:settings.populationsize
-        push!(population, deepcopy(starternetwork))
-    end
+    # starternetwork = generate_random_network(ng)
     # for i in 1:settings.populationsize
-    #     network = generate_random_network(ng)
-    #     push!(population, network)
+    #     push!(population, deepcopy(starternetwork))
     # end
+    for i in 1:settings.populationsize
+        network = generate_random_network(ng)
+        push!(population, network)
+    end
     # # Replace first network with seed network if applicable
     # if ng.seedmodel != Nothing #!isnothing(ng.seedmodel)
     #     population[1] = ng.seedmodel
@@ -173,6 +180,15 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_sp
         N = length(networks_by_species[species])
         for network in networks_by_species[species]
             fitness = (1/N)*(1/evaluate_fitness(objfunct, network)) # Invert the fitness to make it larger=better
+            ## TRYING TO PENALIZE LARGE NETWORKS 
+            # Take off some percentage of the total fitness according to how large the network is?
+            numreactions = length(keys(network.reactionlist))
+            penalty = numreactions - 5
+            if penalty < 0
+                penalty = 0
+            end
+            fitness = fitness - (10e-7*penalty)
+            #####
             total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
@@ -290,9 +306,9 @@ function cleanupreactions(network::ReactionNetwork)
 end
 
 function reproduce_networks(networks_by_species, numoffspring_by_species, settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
-    CHANCE_MUTATION = 0.5 #Chance of mutating network (vs crossover)
+    CHANCE_MUTATION = 0.8 #Chance of mutating network (vs crossover)
     WORST_PORTION = 0.1 # The portion of each species to drop
-    ELITE_PORTION = 0.1 # The portion of each species to be copied over unchanged
+
     newpopulation = []
     for species in keys(networks_by_species)
         networks = sortbyfitness!(networks_by_species[species])
@@ -300,10 +316,7 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
         totaloffspring = numoffspring_by_species[species]
         # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
         # mutated network or the original, whichever is more fit
-        if totaloffspring == 0
-            println("total offspring was 0")
-            continue
-        elseif totaloffspring == 1
+        if totaloffspring == 1
             network = networks[1]
             newnetwork = deepcopy(network)
             newnetwork = mutatenetwork!(settings, ng, newnetwork)
@@ -313,43 +326,33 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
             else
                 push!(newpopulation, network)
             end
-            continue
-        end
-        # If the species is allowed more than 1 offspring:
-        # Directly copy the best network(s)
-        num_to_keep = Int64(floor(length(keys(networks_by_species[species]))*ELITE_PORTION))
-        if num_to_keep == 0
-            num_to_keep = 1
-        end
-        for i in 1:num_to_keep
-            push!(newpopulation, deepcopy(networks[i]))
-        end
-        totaloffspringadded += num_to_keep
-        # Get rid of the worst networks in the species
-        num_to_remove = Int64(floor(length(keys(networks_by_species[species]))*WORST_PORTION))
-        networks = networks[num_to_keep:end - num_to_remove]
-        # For the rest of the new population:
-        while totaloffspringadded != totaloffspring
-            #select 2 random networks (second will be if we want to cross it over)
-            idx1, idx2 = rand(1:length(networks), 2) #TODO: this does NOT prevent same network from being selected twice, which might be good if we only have one more slot to fill
-            network = networks[idx1]
-            # Decide to mutate it or cross it over
-            p = rand()
-            if p < CHANCE_MUTATION
-                mutatenetwork!(settings, ng, network)
-                push!(newpopulation, network)
+        elseif totaloffspring > 1 # Total offspring greater than 1
+            # Directly copy the best network if there are five or more individuals in the species
+            if length(keys(networks_by_species[species])) >= 5
+                push!(newpopulation, deepcopy(networks[1]))
                 totaloffspringadded += 1
-            else # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
-                network2 = networks[idx2]
-                newnetwork = crossover(network, network2)
-                push!(newpopulation, newnetwork)
-                totaloffspringadded += 1
+            end
+            # Get rid of the worst networks in the species
+            num_to_remove = Int64(floor(length(keys(networks_by_species[species]))*WORST_PORTION))
+            networks = networks[totaloffspringadded+1:end - num_to_remove] # If we copied over an elite network already, skip it
+            # For the rest of the new population:
+            offspring_to_add = totaloffspring - totaloffspringadded
+            for i in 1:offspring_to_add
+                idx1, idx2 = rand(1:length(networks), 2) #TODO: this does NOT prevent same network from being selected twice, which might be good if we only have one more slot to fill
+                network = networks[idx1]
+                # Decide to mutate it or cross it over
+                p = rand()
+                if p < CHANCE_MUTATION
+                    mutatenetwork!(settings, ng, network)
+                    push!(newpopulation, network)
+                else # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
+                    network2 = networks[idx2]
+                    newnetwork = crossover(network, network2)
+                    push!(newpopulation, newnetwork)
+                end
             end
         end
     end
-    # if length(newpopulation) != settings.populationsize
-    #     println("Something went wrong in reproduce_networks function. New population size is $(length(newpopulation)) but should be $(settings.populationsize)")
-    # end
     return newpopulation
 end
 
@@ -363,8 +366,8 @@ end
 function calculate_distance(network1, network2)
     W = 0
     num_diff = 0
-    c1 = 1
-    c2 = 1 
+    c1 = 1 # Value from paper
+    c2 = 0.4 # Value from paper (as C3 in the paper) 
     if length(network1.reactionlist) > length(network2.reactionlist)
         N = length(network1.reactionlist)
     else

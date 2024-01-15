@@ -60,29 +60,36 @@ function convert_to_antimony(network::ReactionNetwork)
     reactions = ""
     rateconstants = ""
     initialconditions = ""
-    for (i, reaction) in enumerate(network.reactionlist)
-        rxnstring = ""
-        ratelawstring = ""
-        if length(reaction.substrate) == 1
-            rxnstring *= "$(reaction.substrate[1]) -> "
-            ratelawstring *= "k$i*$(reaction.substrate[1])"
-        elseif length(reaction.substrate) == 2
-            rxnstring *= "$(reaction.substrate[1]) + $(reaction.substrate[2]) -> "
-            ratelawstring *= "k$i*$(reaction.substrate[1])*$(reaction.substrate[2])"
-        else
-            rxnstring *= "-> "
+    i = 1 # This will keep track of the reaction number for the purposes of naming the rate constants, e.g. k1
+    for k in keys(network.reactionlist)
+        reaction = network.reactionlist[k]
+        if reaction.isactive
+            # Look at substrate(s) and  begin construction of reaction string and rate law string
+            # For now this assumes that there are always either 1 or 2 substrates
+            rxnstring = ""
+            ratelawstring = ""
+            if length(reaction.substrate) == 1
+                rxnstring *= "$(reaction.substrate[1]) -> "
+                ratelawstring *= "k$i*$(reaction.substrate[1])"
+            elseif length(reaction.substrate) == 2
+                rxnstring *= "$(reaction.substrate[1]) + $(reaction.substrate[2]) -> "
+                ratelawstring *= "k$i*$(reaction.substrate[1])*$(reaction.substrate[2])"
+            end
+            # Finish the reaction and rate law strings by looking at the products
+            # Again, this assumes that there are always either 1 or 2 products
+            if length(reaction.product) == 1
+                rxnstring *= "$(reaction.product[1]); "
+            elseif length(reaction.product) == 2
+                rxnstring *= "$(reaction.product[1]) + $(reaction.product[2]); "
+            end
+            rxnstring *= ratelawstring # Add the rate law string to the reaction string
+            reactions *= "$rxnstring\n" # Add the reaction string to the string of ALL reactions
+            rateconstants *= "k$i = $(reaction.rateconstant)\n" # Add rate constant to string of ALL rate constants
+            i += 1
         end
-        if length(reaction.product) == 1
-            rxnstring *= "$(reaction.product[1]); "
-        elseif length(reaction.product) == 2
-            rxnstring *= "$(reaction.product[1]) + $(reaction.product[2]); "
-        else
-            rxnstring *= "; "
-        end
-        rxnstring *= ratelawstring
-        reactions *= "$rxnstring\n"
-        rateconstants *= "k$i = $(reaction.rateconstant)\n"
     end
+    
+    # Now look at the species list and initial conditions to create a string of initial conditions
     for (i, s) in enumerate(network.specieslist)
         initialconditions *= "$s = $(network.initialcondition[i])\n"
     end
@@ -95,7 +102,7 @@ function convert_to_antimony(network::ReactionNetwork)
         boundarystr = chop(boundarystr, tail=2)
         initialconditions *= boundarystr
     end
-    astr = reactions * rateconstants * initialconditions
+    astr = reactions * rateconstants * initialconditions # Concatenate all strings together
     return astr
 end
 

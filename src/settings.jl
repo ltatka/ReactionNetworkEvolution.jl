@@ -19,7 +19,7 @@
 using Random
 import JSON
 
-DEFAULT_FITNESS = 1E16
+DEFAULT_FITNESS = -1
 MAX_TIME = 10000
 MIN_NREACTIONS = 3
 MAX_NREACTIONS = 100
@@ -79,9 +79,9 @@ settings = Dict(
     "populationsize" => 100,
     "ngenerations" => 400,
     "reactionprobabilities" => [.2, .3, .3, .2],
-    "mutationprobabilities" => [.5, .5],
+    "mutationprobabilities" => [.8, .2],
     "portionelite" => .1,
-    "nreactions" => 5,
+    "nreactions" => 3,
     "rateconstantrange" => [0.1, 3.0],
 )
 
