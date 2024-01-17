@@ -179,16 +179,8 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_sp
         species_fitness = 0
         N = length(networks_by_species[species])
         for network in networks_by_species[species]
-            fitness = (1/N)*(1/evaluate_fitness(objfunct, network)) # Invert the fitness to make it larger=better
-            ## TRYING TO PENALIZE LARGE NETWORKS 
-            # Take off some percentage of the total fitness according to how large the network is?
-            numreactions = length(keys(network.reactionlist))
-            penalty = numreactions - 5
-            if penalty < 0
-                penalty = 0
-            end
-            fitness = fitness - (10e-7*penalty)
-            #####
+            fitness = (1/N)*(evaluate_fitness(objfunct, network)) 
+
             total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
@@ -206,6 +198,9 @@ function calculate_num_offspring(fitness_by_species, total_fitness, settings::Se
     numoffspring_by_species = Dict()
     for species in keys(fitness_by_species)
         portion_offspring = fitness_by_species[species]/total_fitness # The percent of the next generation this species gets to produce
+        if portion_offspring > 0.5
+            println("danger: offspring portion is $portion_offspring")
+        end
         numoffspring = round(portion_offspring * total) # The number of offspring this species gets to produce
         total_calculated += numoffspring
         numoffspring_by_species[species] = numoffspring
@@ -265,8 +260,13 @@ end
 # end
 
 function speciate(networks_by_species, population, delta)
-    #global delta
     new_networks_by_species = Dict()
+    """
+    For each network, compare it to the species in the previous generation by 
+    #randomly picking a network in that species. If it is close enough, then it is a
+    member of that species. Otherwise keep looking. If we have checked every species and it is not 
+    close enough to any of them, then create a new species for it
+    """
     for network in population
         species_assigned = false
         for species in keys(networks_by_species)
@@ -274,6 +274,8 @@ function speciate(networks_by_species, population, delta)
             distance = calculate_distance(network, network2)
             if distance <= delta
                 network.ID = species
+                # If we've already assigned a network to this species, just add it to the list 
+                # Otherwise create a new entry in the hashmap and stop comparing it to existing species (break)
                 if species in keys(new_networks_by_species)
                     push!(new_networks_by_species[species], network)
                 else
@@ -310,8 +312,12 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
     WORST_PORTION = 0.1 # The portion of each species to drop
 
     newpopulation = []
+
+    # println("there are $(length(keys(networks_by_species)))species")
+
     for species in keys(networks_by_species)
         networks = sortbyfitness!(networks_by_species[species])
+        # println("species $species top fitness is $(networks[1].fitness)")
         totaloffspringadded = 0
         totaloffspring = numoffspring_by_species[species]
         # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
@@ -320,7 +326,7 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
             network = networks[1]
             newnetwork = deepcopy(network)
             newnetwork = mutatenetwork!(settings, ng, newnetwork)
-            newfitness = 1/evaluate_fitness(objfunct, newnetwork)
+            newfitness = evaluate_fitness(objfunct, newnetwork)
             if newfitness > network.fitness
                 push!(newpopulation, newnetwork)
             else
@@ -343,8 +349,9 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
                 # Decide to mutate it or cross it over
                 p = rand()
                 if p < CHANCE_MUTATION
-                    mutatenetwork!(settings, ng, network)
-                    push!(newpopulation, network)
+                    newnetwork = deepcopy(network)
+                    mutatenetwork!(settings, ng, newnetwork)
+                    push!(newpopulation, newnetwork)
                 else # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
                     network2 = networks[idx2]
                     newnetwork = crossover(network, network2)
@@ -357,13 +364,8 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
 end
 
 
-
-
-            
-
-
-
 function calculate_distance(network1, network2)
+    # If every single reaction is different, then the distance will be 1
     W = 0
     num_diff = 0
     c1 = 1 # Value from paper

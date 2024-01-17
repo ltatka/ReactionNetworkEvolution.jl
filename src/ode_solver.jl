@@ -100,9 +100,12 @@ function solve_ode(objfunct, network)
 end
 
 
-function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
+function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork; sizepenalty=true)
     # This function evaluates the fitness of an individual based on how well the timeseries of the 
-    # target species matches that of the target timeseries. In this case a smaller fitness is better
+    # target species matches that of the target timeseries. 
+    # Changing all fitness stuff here from now on
+    TARGET_NETWORK_SIZE = 5 # Trying to encourage networks to be this size
+    PENALTY_MULTIPLIER = 0.95
     try
         sol = solve_ode(objfunct, network)
         fitness = 0.0
@@ -112,6 +115,21 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
                 fitness += abs(objfunct.objectivedata[!, s][i] - row[idx])
             end
         end
+        if sizepenalty
+            ## TRYING TO PENALIZE LARGE NETWORKS 
+            # Take off some percentage of the total fitness according to how large the network is?
+            numreactions = length(keys(network.reactionlist))
+            excessreactions = numreactions - TARGET_NETWORK_SIZE 
+            if excessreactions < 0 # We don't care if the network is too small
+                excessreactions = 0
+            end
+            penalty = (1 - excessreactions/numreactions)*PENALTY_MULTIPLIER
+        else
+            penalty = 1
+        end
+        fitness = 1/fitness # Make larger fitness = better
+        fitness = fitness*penalty
+
         return fitness # Or should this also assign the fitness to the network?
     catch e
         #println(e)

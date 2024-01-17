@@ -7,85 +7,95 @@ include("evo_utils.jl")
 include("network_cleanup.jl")
 # include("settings.jl")
 
-pathtosettings = "/home/hellsbells/Desktop/networkEv/src/test.json"
+function main()
+    pathtosettings = "/home/hellsbells/Desktop/networkEv/src/test.json"
 
-settings = read_usersettings(pathtosettings)
+    settings = read_usersettings(pathtosettings)
 
-objfunct = get_objectivefunction(settings)
-ng = get_networkgenerator(settings)
+    objfunct = get_objectivefunction(settings)
+    ng = get_networkgenerator(settings)
 
-# r = generate_random_reaction(ng)
-# print(r)
-# l = generate_reactionlist(ng)
-# println(l)
-# print(current_innovation_num_by_reaction)
-# population = evolve(settings, ng, objfunct)
+    # r = generate_random_reaction(ng)
+    # print(r)
+    # l = generate_reactionlist(ng)
+    # println(l)
+    # print(current_innovation_num_by_reaction)
+    # population = evolve(settings, ng, objfunct)
 
-DELTA = 1
-NUM_GENERATION = 100
+    DELTA = .95
+    NUM_GENERATION = 100
 
-population = generate_network_population(settings, ng)
-networks_by_species = Dict(population[1].ID => population)
-# println(keys(networks_by_species))
+    population = generate_network_population(settings, ng)
+    networks_by_species = Dict(population[1].ID => population)
+    # println(keys(networks_by_species))
+    networks_by_species = speciate(networks_by_species, population, DELTA)
+
+    networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
+    println(length(keys(networks_by_species)))
+    numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
 
 
-networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
-numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
+    newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct)
+    # global networks_by_species
+    networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
+    # println(keys(networks_by_species))
 
-
-newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct)
-
-networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
-# println(keys(networks_by_species))
-
-function get_top_model(networks_by_species, objfunct)
-    maxfitness = 0
-    bestnetwork = nothing
-    for species in keys(networks_by_species)
-        for network in networks_by_species[species]
-            fitness = 1/evaluate_fitness(objfunct, network)
-            if fitness > maxfitness
-                maxfitness = fitness
-                bestnetwork = network
+    function get_top_model(networks_by_species, objfunct)
+        maxfitness = 0
+        bestnetwork = nothing
+        for species in keys(networks_by_species)
+            for network in networks_by_species[species]
+                fitness = evaluate_fitness(objfunct, network)
+                if fitness > maxfitness
+                    maxfitness = fitness
+                    bestnetwork = network
+                end
             end
         end
+        return bestnetwork, maxfitness
     end
-    return bestnetwork, maxfitness
+
+    populationsizes = []
+    for i in 1:NUM_GENERATION
+        # fitness_by_species
+
+        # global total_fitness
+        # global numoffspring_by_species
+        # global newpopulation
+
+        println("starting generation $i")
+        if i == 3
+            println("work damn you")
+        end
+        networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
+        numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
+        
+
+        newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct,)
+        if i%10 == 0
+            println("gen $i: num species $(length(keys(networks_by_species))) and pop size $(length(newpopulation))")
+            bestnetwork, maxfitness = get_top_model(networks_by_species, objfunct)
+            println("maxfitness: $maxfitness")
+            astr =convert_to_antimony(bestnetwork)
+            println(astr)
+
+        end
+        push!(populationsizes, length(newpopulation))
+        
+        networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
+        # println("This is generation $i and there are $(length(keys(networks_by_species)))")
+    end
+
+    (bestnetwork, maxfitness) = get_top_model(networks_by_species, objfunct)
+
+
+    println("Best fitness: $maxfitness")
+    astr = convert_to_antimony(bestnetwork)
+    println(astr)
 end
 
-populationsizes = []
-for i in 1:NUM_GENERATION
-    # fitness_by_species
-    global networks_by_species
-    # global total_fitness
-    # global numoffspring_by_species
-    # global newpopulation
-    networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
-    numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
-    
-    println("starting generation $i")
 
-    newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct,)
-    if i%100 == 0
-        println("gen $i: num species $(length(keys(networks_by_species))) and pop size $(length(newpopulation))")
-        bestnetwork, maxfitness = get_top_model(networks_by_species, objfunct)
-        println("maxfitness: $maxfitness")
-        astr =convert_to_antimony(bestnetwork)
-        println(astr)
-
-    end
-    push!(populationsizes, length(newpopulation))
-    
-    networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
-    # println("This is generation $i and there are $(length(keys(networks_by_species)))")
-end
-
-(bestnetwork, maxfitness) = get_top_model(networks_by_species, objfunct)
-
-
-println("Best fitness: $maxfitness")
-astr = convert_to_antimony(bestnetwork)
-println(astr)
+main()
 
 
 # println(populationsizes)
