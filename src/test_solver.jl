@@ -22,7 +22,7 @@ function main()
     # print(current_innovation_num_by_reaction)
     # population = evolve(settings, ng, objfunct)
 
-    DELTA = .95
+    DELTA = .5
     NUM_GENERATION = 100
 
     population = generate_network_population(settings, ng)

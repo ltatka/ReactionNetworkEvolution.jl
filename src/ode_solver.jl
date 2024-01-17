@@ -100,7 +100,7 @@ function solve_ode(objfunct, network)
 end
 
 
-function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork; sizepenalty=true)
+function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork; sizepenalty=false)
     # This function evaluates the fitness of an individual based on how well the timeseries of the 
     # target species matches that of the target timeseries. 
     # Changing all fitness stuff here from now on
