@@ -5,10 +5,116 @@ using Distributions
 using CSV
 using DataFrames
 using Dates
-
+using Random
 
 
 NUM_VARIANTS = [] 
+
+mutable struct Species
+    networks::Vector{ReactionNetwork}
+    ID::String
+    numoffspring::Int64
+    speciesfitness::Float64
+    topfitness::Float64
+    topnetwork::ReactionNetwork
+    numstagnations::Int64
+    
+    
+    function Species(network::ReactionNetwork)
+        # Start a new species with a single network
+        networks = [network]
+        ID = randstring(12)
+        numoffspring = 0
+        speciesfitness = 0
+        topnetwork = network
+        topfitness = 0
+        numstagnations = 0
+        return new(networks, ID, numoffspring, speciesfitness, topfitness, topnetwork, numstagnations)
+    end
+
+    function Species(network::ReactionNetwork, ID::String)
+        # Start a new species with a single network and known ID
+        networks = [network]
+        numoffspring = 0
+        speciesfitness = 0
+        topnetwork = network
+        topfitness = 0
+        numstagnations = 0
+        return new(networks, ID, numoffspring, speciesfitness, topfitness, topnetwork, numstagnations)
+    end
+
+
+    function Species(listofnetworks::Vector{ReactionNetwork})
+        # Start a new species with a list of networks
+        networks = listofnetworks
+        ID = randstring(12)
+        numoffspring = 0
+        speciesfitness = 0
+        topnetwork = listofnetworks[1] # Obviously this probably isn't going to be the top network at first
+        topfitness = 0
+        numstagnations = 0
+        return new(networks, ID, numoffspring, speciesfitness, topfitness, topnetwork, numstagnations)
+    end
+end
+
+#TODO: Is this necessary? I thought it would be more complicated.
+function initialize_species_by_IDs(population)
+    """
+    This function is for creating the first species list. It takes a population of networks and assigns them 
+    all to the same species. It returns a Species object."""
+    species = Species(population)
+    ID = species.ID
+    return Dict(ID => species)
+end
+
+function speciate(species_by_IDs, population, delta)
+    """
+    For each network, compare it to the species in the previous generation by 
+    randomly picking a network in that species. If it is close enough, then it is a
+    member of that species. Otherwise keep looking. If we have checked every species and it is not 
+    close enough to any of them, then create a new species for it.
+
+    If there are 2+ network that are similar to each other but dissimilar to any existing species, they will
+    each be assigned to a new species. 
+    """
+    new_species_by_IDs = Dict{String, Species}()
+    for network in population
+        species_assigned = false
+        for speciesID in keys(species_by_IDs)
+            network2 = rand(species_by_IDs[speciesID].networks)
+            distance = calculate_distance(network, network2)
+            if distance <= delta
+                network.ID = speciesID
+                # If we've already assigned a network to this species, just add it to the list 
+                # Otherwise create a new entry in the hashmap and stop comparing it to existing species (break)
+                if speciesID in keys(new_species_by_IDs)
+                    push!(new_species_by_IDs[speciesID].networks, network)
+                else
+                    species = Species(network, speciesID)
+                    new_species_by_IDs[speciesID]  = species
+                end
+                # Once we've assigned a species, stop looking through the old species for a match
+                species_assigned = true
+                break
+            end
+        end
+        """
+        At this point there are two possible states:
+            1. We have looked through the previous species, found a match, assigned the new network to it, 
+            and broken the loop to land here. In this case, we just want to move onto the next network
+            2. We have looked through ALL the previous species and have not found a match. The network has not bestnetwork
+            assigned to a species from the previous generation and we must create a new species for it.
+        """
+        if !species_assigned
+            newspecies = Species(network)
+            new_species_by_IDs[newspecies.ID] = newspecies
+        end
+    end
+
+    return new_species_by_IDs
+end
+
+
 
 function getrandomkey(d::Dict)
     i = rand(1:length(keys(d)))
@@ -91,7 +197,7 @@ function mutate_nonelite_population(settings::Settings, ng::NetworkGenerator, po
 end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
-    population = []
+    population = Vector{ReactionNetwork}()
     # starternetwork = generate_random_network(ng)
     # for i in 1:settings.populationsize
     #     push!(population, deepcopy(starternetwork))
@@ -115,47 +221,47 @@ function sortbyfitness!(population, rev=true)
 end
 
 
-function eliteselect(settings::Settings, population)
-    nelite = Int(floor(settings.portionelite*length(population)))
-    newpopulation = []
-    for i in 1:nelite
-        push!(newpopulation, deepcopy(population[i]))
-    end
-    return newpopulation
-end
+# function eliteselect(settings::Settings, population)
+#     nelite = Int(floor(settings.portionelite*length(population)))
+#     newpopulation = []
+#     for i in 1:nelite
+#         push!(newpopulation, deepcopy(population[i]))
+#     end
+#     return newpopulation
+# end
 
 
-function tournamentselect(settings::Settings, population, newpopulation)
-    #For now, this is only going to select networks and put them in the new population. Will mutate them later
-    nelite = Int(floor(settings.portionelite*length(population)))
-    for i in 1:(settings.populationsize - nelite)
-        # This will allow elites to be selected and they might dominate
-        # What if we mutate only the elites first?
-        if i < settings.populationsize/2 #for first half, allow elite selection
-            idx1, idx2 = sample(1:settings.populationsize, 2)
-        else # for second half, select only from non-elites
-            if nelite == 0
-                nelite = 1
-            end
-            idx1, idx2 = sample(nelite:settings.populationsize, 2)
-        end
-        network1 = population[idx1]
-        network2 = population[idx2]
-        if network1.fitness < network2.fitness
-            push!(newpopulation, deepcopy(network1))
-        else
-            push!(newpopulation, deepcopy(network2))
-        end
-    end
-    return newpopulation
-end
+# function tournamentselect(settings::Settings, population, newpopulation)
+#     #For now, this is only going to select networks and put them in the new population. Will mutate them later
+#     nelite = Int(floor(settings.portionelite*length(population)))
+#     for i in 1:(settings.populationsize - nelite)
+#         # This will allow elites to be selected and they might dominate
+#         # What if we mutate only the elites first?
+#         if i < settings.populationsize/2 #for first half, allow elite selection
+#             idx1, idx2 = sample(1:settings.populationsize, 2)
+#         else # for second half, select only from non-elites
+#             if nelite == 0
+#                 nelite = 1
+#             end
+#             idx1, idx2 = sample(nelite:settings.populationsize, 2)
+#         end
+#         network1 = population[idx1]
+#         network2 = population[idx2]
+#         if network1.fitness < network2.fitness
+#             push!(newpopulation, deepcopy(network1))
+#         else
+#             push!(newpopulation, deepcopy(network2))
+#         end
+#     end
+#     return newpopulation
+# end
 
-function select_new_population(settings::Settings, population)
-    population = sortbyfitness(population)
-    newpopulation = eliteselect(settings, population)
-    newpopulation  = tournamentselect(settings, population, newpopulation)
-    return newpopulation
-end
+# function select_new_population(settings::Settings, population)
+#     population = sortbyfitness(population)
+#     newpopulation = eliteselect(settings, population)
+#     newpopulation  = tournamentselect(settings, population, newpopulation)
+#     return newpopulation
+# end
 
 # This is for debugging mostly
 function print_top_fitness(n::Int, population)
@@ -165,7 +271,7 @@ function print_top_fitness(n::Int, population)
     return nothing
 end
 
-function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_species)
+function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs)
     # Evaluates the entire populations fitness as well as the fintess for each species, per the NEAT algo
     # Assigns each individual its fitness score
     # total_fitness = sum of all fitness scores across the entire population, float
@@ -174,128 +280,65 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, networks_by_sp
     # NOTE: The reason this also returns networks_by_species this hashmap is modified, the fitness score is 
     # added to each network
     total_fitness = 0
-    fitness_by_species = Dict()
-    for species in keys(networks_by_species)
-        species_fitness = 0
-        N = length(networks_by_species[species])
-        for network in networks_by_species[species]
-            fitness = (1/N)*(evaluate_fitness(objfunct, network)) 
 
+    for speciesID in keys(species_by_IDs)
+        species = species_by_IDs[speciesID]
+        species_fitness = 0
+        N = length(species.networks)
+        topfitness = 0
+        topnetwork = nothing
+        for network in species.networks
+            fitness = (1/N)*(evaluate_fitness(objfunct, network))
             total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
+            # Check if it is the best fitness
+            if fitness > topfitness
+                topfitness = fitness
+                topnetwork = network
+            end
         end
-        fitness_by_species[species] = species_fitness
+        oldfitness = species.topfitness
+        species.topfitness = topfitness
+        species.topnetwork = topnetwork
+        species.speciesfitness = species_fitness
+        # If the previous top fitness is the same as this one, increment the stagnation counter by one. Otherwise, reset it to 0
+        if oldfitness == topfitness
+            species.numstagnations += 1
+        else
+            species.numstagnations = 0
+        end
     end
-    return networks_by_species, fitness_by_species, total_fitness
+    return species_by_IDs, total_fitness
 end
 
-function calculate_num_offspring(fitness_by_species, total_fitness, settings::Settings)
+
+ 
+
+function calculate_num_offspring(species_by_IDs, total_fitness, settings::Settings)
     # Calculates how many offspring each species gets based on its share of the total fitness (sum of all individuals)
     # Returns a hashmap key, val = speciesID, float, number of offspring for that species
     total = settings.populationsize
-    total_calculated = 0
-    numoffspring_by_species = Dict()
-    for species in keys(fitness_by_species)
-        portion_offspring = fitness_by_species[species]/total_fitness # The percent of the next generation this species gets to produce
-        if portion_offspring > 0.5
-            println("danger: offspring portion is $portion_offspring")
-        end
-        numoffspring = round(portion_offspring * total) # The number of offspring this species gets to produce
-        total_calculated += numoffspring
-        numoffspring_by_species[species] = numoffspring
-    end
-    
-    # if total_calculated != total
-    #     println("calculated $total_calculated not eqaul to popsize of $total")
-    # end
-    return numoffspring_by_species
-end
-
-
-# function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
-#     # Generate a population consisting of single random network
-#     population = generate_network_population(settings, ng)
-#     # Make a dictionary of the networks by their species ID
-#     networks_by_species = Dict(population[1].ID => population)
-#     for i in 1:settings.ngenerations
-#         population = sortbyfitness(population)
-#         # originset = Set()
-#         # for model in population
-#         #     push!(originset, model.ID)
-#         # end
-#         # if length(originset) < 4
-#         #     return nothing
-#         # end
-#         # push!(NUM_VARIANTS, length(originset))
-#         # if i%10 == 0
-#         #     print_top_fitness(1, population)
-#         #     println("set size: $(length(originset))")
-#         # end
-#         # println(last(population).fitness)
-#         population = mutate_nonelite_population(settings, ng, population)
-#         population = evaluate_population_fitness(objfunct, population)
-#         population = select_new_population(settings, population)
-        
-#         if writeout
-#             fname = "generation_$i.txt"
-#             open(fname, "a") do file
-#                 for model in population
-#                     write(file, "$(model.ID)\n")
-#                 end
-#             close(file)
-#             end
-#             fname = "generation_$(i)_fitness"
-#             open(fname, "a") do file
-#                 for model in population
-#                     write(file, "$(model.fitness)\n")
-#                 end
-#             close(file)
-#             end
-#         end
-
-#     end
-#     population = sortbyfitness(population)
-#     return population
-# end
-
-function speciate(networks_by_species, population, delta)
-    new_networks_by_species = Dict()
-    """
-    For each network, compare it to the species in the previous generation by 
-    #randomly picking a network in that species. If it is close enough, then it is a
-    member of that species. Otherwise keep looking. If we have checked every species and it is not 
-    close enough to any of them, then create a new species for it
-    """
-    for network in population
-        species_assigned = false
-        for species in keys(networks_by_species)
-            network2 = rand(networks_by_species[species])
-            distance = calculate_distance(network, network2)
-            if distance <= delta
-                network.ID = species
-                # If we've already assigned a network to this species, just add it to the list 
-                # Otherwise create a new entry in the hashmap and stop comparing it to existing species (break)
-                if species in keys(new_networks_by_species)
-                    push!(new_networks_by_species[species], network)
-                else
-                    new_networks_by_species[species] = [network]
-                end
-                species_assigned = true
-                break
+    for speciesID in keys(species_by_IDs)
+        species = species_by_IDs[speciesID]
+        # If the champion of the species has stagnated for more than 15 generations, it won't be allowed to reproduce
+        if species.numstagnations >=15
+            species.numoffspring = 0
+            writeoutnetwork(networks[1], "$(netowork.ID).txt")
+        else
+            portion_offspring = species.speciesfitness/total_fitness  # The portion of the next generation this species gets to produce
+            if portion_offspring > 0.5
+                println("danger: offspring portion is $portion_offspring")
             end
-        end
-        # If we've gone through all existing species and none are close enough
-        # to the network, then create a new species#TODO WHat if there are two species
-        # that are close to one another, but not any existing species? In this case, they will each be species_assigned
-        # a new species number. But I can't think of a way to avoid this...
-        if !species_assigned
-            new_ID = randstring(10)
-            new_networks_by_species[new_ID] = [network]
+            numoffspring = round(portion_offspring * total) # The number of offspring this species gets to produce
+            species.numoffspring = numoffspring # The number of offspring this species gets to produce
         end
     end
-    return new_networks_by_species
+    return species_by_IDs
 end
+
+
+
 
 function cleanupreactions(network::ReactionNetwork)
     network = removenullreactions(network)
@@ -307,7 +350,7 @@ function cleanupreactions(network::ReactionNetwork)
     return network
 end
 
-function reproduce_networks(networks_by_species, numoffspring_by_species, settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
+function reproduce_networks(species_by_IDs, settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
     CHANCE_MUTATION = 0.8 #Chance of mutating network (vs crossover)
     WORST_PORTION = 0.1 # The portion of each species to drop
 
@@ -315,11 +358,12 @@ function reproduce_networks(networks_by_species, numoffspring_by_species, settin
 
     # println("there are $(length(keys(networks_by_species)))species")
 
-    for species in keys(networks_by_species)
-        networks = sortbyfitness!(networks_by_species[species])
+    for speciesID in keys(species_by_IDs)
+        species = species_by_IDs[speciesID]
+        networks = sortbyfitness!(species.networks)
         # println("species $species top fitness is $(networks[1].fitness)")
         totaloffspringadded = 0
-        totaloffspring = numoffspring_by_species[species]
+        totaloffspring = species.numoffspring
         # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
         # mutated network or the original, whichever is more fit
         if totaloffspring == 1
@@ -438,3 +482,60 @@ function crossover(network1, network2)
     return newnetwork
 
 end
+
+function writeoutnetwork(network::ReactionNetwork, filename::String)
+    astr = convert_to_antimony(network)
+    astr *= "\nfitness: $(network.fitness)"
+    open(filename, "a") do file
+        write(file, astr)
+    close(file)
+    end
+end
+
+
+
+# function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
+#     # Generate a population consisting of single random network
+#     population = generate_network_population(settings, ng)
+#     # Make a dictionary of the networks by their species ID
+#     networks_by_species = Dict(population[1].ID => population)
+#     for i in 1:settings.ngenerations
+#         population = sortbyfitness(population)
+#         # originset = Set()
+#         # for model in population
+#         #     push!(originset, model.ID)
+#         # end
+#         # if length(originset) < 4
+#         #     return nothing
+#         # end
+#         # push!(NUM_VARIANTS, length(originset))
+#         # if i%10 == 0
+#         #     print_top_fitness(1, population)
+#         #     println("set size: $(length(originset))")
+#         # end
+#         # println(last(population).fitness)
+#         population = mutate_nonelite_population(settings, ng, population)
+#         population = evaluate_population_fitness(objfunct, population)
+#         population = select_new_population(settings, population)
+        
+#         if writeout
+#             fname = "generation_$i.txt"
+#             open(fname, "a") do file
+#                 for model in population
+#                     write(file, "$(model.ID)\n")
+#                 end
+#             close(file)
+#             end
+#             fname = "generation_$(i)_fitness"
+#             open(fname, "a") do file
+#                 for model in population
+#                     write(file, "$(model.fitness)\n")
+#                 end
+#             close(file)
+#             end
+#         end
+
+#     end
+#     population = sortbyfitness(population)
+#     return population
+# end

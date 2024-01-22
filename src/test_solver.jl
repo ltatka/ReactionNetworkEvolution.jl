@@ -7,8 +7,22 @@ include("evo_utils.jl")
 include("network_cleanup.jl")
 # include("settings.jl")
 
+function gettopmodel(species_by_IDs)
+    maxfitness = 0
+    topnetwork = nothing
+    for speciesID in keys(species_by_IDs)
+        species = species_by_IDs[speciesID]
+        if species.topfitness > maxfitness
+            maxfitness = species.topfitness
+            topnetwork = species.topnetwork
+        end
+    end
+    return topnetwork, topfitness
+end
+
+
 function main()
-    pathtosettings = "/home/hellsbells/Desktop/networkEv/src/test.json"
+    pathtosettings = "/home/hellsbells/Desktop/networkEv/src/oscillator.json"
 
     settings = read_usersettings(pathtosettings)
 
@@ -23,39 +37,18 @@ function main()
     # population = evolve(settings, ng, objfunct)
 
     DELTA = .5
-    NUM_GENERATION = 100
+    NUM_GENERATION = 2
 
     population = generate_network_population(settings, ng)
-    networks_by_species = Dict(population[1].ID => population)
-    # println(keys(networks_by_species))
-    networks_by_species = speciate(networks_by_species, population, DELTA)
 
-    networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
-    println(length(keys(networks_by_species)))
-    numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
+    species_by_IDs = initialize_species_by_IDs(population)
+    species_by_IDs = speciate(species_by_IDs, population, DELTA)
+
+    species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+    species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
 
-    newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct)
-    # global networks_by_species
-    networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
-    # println(keys(networks_by_species))
-
-    function get_top_model(networks_by_species, objfunct)
-        maxfitness = 0
-        bestnetwork = nothing
-        for species in keys(networks_by_species)
-            for network in networks_by_species[species]
-                fitness = evaluate_fitness(objfunct, network)
-                if fitness > maxfitness
-                    maxfitness = fitness
-                    bestnetwork = network
-                end
-            end
-        end
-        return bestnetwork, maxfitness
-    end
-
-    populationsizes = []
+    # populationsizes = []
     for i in 1:NUM_GENERATION
         # fitness_by_species
 
@@ -64,29 +57,29 @@ function main()
         # global newpopulation
 
         println("starting generation $i")
-        if i == 3
-            println("work damn you")
-        end
-        networks_by_species, fitness_by_species, total_fitness = evaluate_population_fitness(objfunct, networks_by_species)
-        numoffspring_by_species = calculate_num_offspring(fitness_by_species, total_fitness, settings)
+        species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+        species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
         
 
-        newpopulation = reproduce_networks(networks_by_species, numoffspring_by_species, settings, ng, objfunct,)
-        if i%10 == 0
-            println("gen $i: num species $(length(keys(networks_by_species))) and pop size $(length(newpopulation))")
-            bestnetwork, maxfitness = get_top_model(networks_by_species, objfunct)
-            println("maxfitness: $maxfitness")
-            astr =convert_to_antimony(bestnetwork)
-            println(astr)
+        population = reproduce_networks(species_by_IDs, settings, ng, objfunct,)
+        # if i%10 == 0
+        #     println("gen $i: num species $(length(keys(networks_by_species))) and pop size $(length(newpopulation))")
+        #     bestnetwork, maxfitness = get_top_model(networks_by_species, objfunct)
+        #     println("maxfitness: $maxfitness")
+        #     astr =convert_to_antimony(bestnetwork)
+        #     println(astr)
 
-        end
-        push!(populationsizes, length(newpopulation))
+        # end
+        # push!(populationsizes, length(newpopulation))
         
-        networks_by_species = speciate(networks_by_species, newpopulation, DELTA)
+
+        species_by_IDs = speciate(species_by_IDs, population, DELTA)
+
         # println("This is generation $i and there are $(length(keys(networks_by_species)))")
     end
-
-    (bestnetwork, maxfitness) = get_top_model(networks_by_species, objfunct)
+    println(species_by_IDs)
+    species_by_IDs = evaluate_population_fitness(objfunct, species_by_IDs)
+    (bestnetwork, maxfitness) = gettopmodel(species_by_IDs)
 
 
     println("Best fitness: $maxfitness")
