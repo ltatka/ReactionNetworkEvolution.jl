@@ -32,6 +32,7 @@ end
 function get_objectivefunction(settings::Settings)
     objectivedata = DataFrame(CSV.File(settings.objectivedatapath))
     time = objectivedata[!, "time"]
+    println("in get_objectivefunction: timepts: $(length(time))")
     indexbyspecies = Dict()
     for s in settings.objectivespecies
         idx = findfirst(item -> item == s, settings.specieslist)
@@ -132,7 +133,7 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
 
         return fitness # Or should this also assign the fitness to the network?
     catch e
-        #println(e)
+        println(e)
         return DEFAULT_FITNESS
     end
 end

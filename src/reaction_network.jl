@@ -107,6 +107,7 @@ function generate_random_reaction(ng::NetworkGenerator)
 end
 
 function generate_reactionlist(ng::NetworkGenerator)
+    #TODO: What is going on here with global innovation number 
     global global_innovation_number
     reactionlist = Dict()
     #reactionlist = Vector{Reaction}()

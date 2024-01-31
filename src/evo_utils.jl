@@ -19,7 +19,8 @@ mutable struct Species
     topnetwork::ReactionNetwork
     numstagnations::Int64
     
-    
+    #TODO: Now that we've changed the speciate function, these shouldn't all be necessary
+
     function Species(network::ReactionNetwork)
         # Start a new species with a single network
         networks = [network]
@@ -40,6 +41,15 @@ mutable struct Species
         topnetwork = network
         topfitness = 0
         numstagnations = 0
+        return new(networks, ID, numoffspring, speciesfitness, topfitness, topnetwork, numstagnations)
+    end
+
+    function Species(network::ReactionNetwork, ID::String, numstagnations::Int64)
+        networks = [network]
+        numoffspring = 0
+        speciesfitness = 0
+        topnetwork = network
+        topfitness = 0
         return new(networks, ID, numoffspring, speciesfitness, topfitness, topnetwork, numstagnations)
     end
 
@@ -90,7 +100,8 @@ function speciate(species_by_IDs, population, delta)
                 if speciesID in keys(new_species_by_IDs)
                     push!(new_species_by_IDs[speciesID].networks, network)
                 else
-                    species = Species(network, speciesID)
+                    species = deepcopy(species_by_IDs[speciesID]) # Deepcopy the existing species to retain its data
+                    species.networks = [network] # Replace the copies species networks with the new network
                     new_species_by_IDs[speciesID]  = species
                 end
                 # Once we've assigned a species, stop looking through the old species for a match
@@ -288,7 +299,7 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
         topfitness = 0
         topnetwork = nothing
         for network in species.networks
-            fitness = (1/N)*(evaluate_fitness(objfunct, network))
+            fitness = (evaluate_fitness(objfunct, network))#*(1/N)
             total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
@@ -324,8 +335,13 @@ function calculate_num_offspring(species_by_IDs, total_fitness, settings::Settin
         # If the champion of the species has stagnated for more than 15 generations, it won't be allowed to reproduce
         if species.numstagnations >=15
             species.numoffspring = 0
-            writeoutnetwork(networks[1], "$(netowork.ID).txt")
+            networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
+            writeoutnetwork(networks[1], "$(networks[1].ID).txt")
+            println("Writing out a network")
         else
+            # if species.numstagnations != 0
+            #     println("calculate_num_offspring, stagnation count is $(species.numstagnations)")
+            # end
             portion_offspring = species.speciesfitness/total_fitness  # The portion of the next generation this species gets to produce
             if portion_offspring > 0.5
                 println("danger: offspring portion is $portion_offspring")
@@ -350,7 +366,7 @@ function cleanupreactions(network::ReactionNetwork)
     return network
 end
 
-function reproduce_networks(species_by_IDs, settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction)
+function reproduce_networks(species_by_IDs, settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; generation=0)
     CHANCE_MUTATION = 0.8 #Chance of mutating network (vs crossover)
     WORST_PORTION = 0.1 # The portion of each species to drop
 
@@ -359,6 +375,8 @@ function reproduce_networks(species_by_IDs, settings::Settings, ng::NetworkGener
     # println("there are $(length(keys(networks_by_species)))species")
 
     for speciesID in keys(species_by_IDs)
+
+
         species = species_by_IDs[speciesID]
         networks = sortbyfitness!(species.networks)
         # println("species $species top fitness is $(networks[1].fitness)")
@@ -378,12 +396,13 @@ function reproduce_networks(species_by_IDs, settings::Settings, ng::NetworkGener
             end
         elseif totaloffspring > 1 # Total offspring greater than 1
             # Directly copy the best network if there are five or more individuals in the species
-            if length(keys(networks_by_species[species])) >= 5
+            if length(networks) >= 5
                 push!(newpopulation, deepcopy(networks[1]))
                 totaloffspringadded += 1
             end
             # Get rid of the worst networks in the species
-            num_to_remove = Int64(floor(length(keys(networks_by_species[species]))*WORST_PORTION))
+            #TODO: Take a look at this if stuff doesn't seem to be working:
+            num_to_remove = Int64(floor(length(networks)*WORST_PORTION))
             networks = networks[totaloffspringadded+1:end - num_to_remove] # If we copied over an elite network already, skip it
             # For the rest of the new population:
             offspring_to_add = totaloffspring - totaloffspringadded
@@ -486,7 +505,14 @@ end
 function writeoutnetwork(network::ReactionNetwork, filename::String)
     astr = convert_to_antimony(network)
     astr *= "\nfitness: $(network.fitness)"
-    open(filename, "a") do file
+
+    if !isdir("stalled_models")
+        mkdir("stalled_models")
+    end
+
+    path = joinpath("stalled_models", filename)
+
+    open(path, "a") do file
         write(file, astr)
     close(file)
     end

@@ -10,19 +10,23 @@ include("network_cleanup.jl")
 function gettopmodel(species_by_IDs)
     maxfitness = 0
     topnetwork = nothing
+    topspecies = nothing
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
         if species.topfitness > maxfitness
             maxfitness = species.topfitness
             topnetwork = species.topnetwork
+            topspecies = species
         end
     end
-    return topnetwork, topfitness
+    #println("species: $(topspecies.ID)")
+    #println("num offspring: $(topspecies.numoffspring)")
+    return topnetwork, maxfitness
 end
 
 
 function main()
-    pathtosettings = "/home/hellsbells/Desktop/networkEv/src/oscillator.json"
+    pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/oscillator1.json"
 
     settings = read_usersettings(pathtosettings)
 
@@ -37,7 +41,7 @@ function main()
     # population = evolve(settings, ng, objfunct)
 
     DELTA = .5
-    NUM_GENERATION = 2
+    NUM_GENERATION = 150
 
     population = generate_network_population(settings, ng)
 
@@ -47,7 +51,7 @@ function main()
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
-
+    fitnesses = []
     # populationsizes = []
     for i in 1:NUM_GENERATION
         # fitness_by_species
@@ -55,13 +59,22 @@ function main()
         # global total_fitness
         # global numoffspring_by_species
         # global newpopulation
+        if i%10 == 0
+            println("starting generation $i")
+        end
 
-        println("starting generation $i")
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
+
+        bestnetwork, maxfitness = gettopmodel(species_by_IDs)
+
+        push!(fitnesses, maxfitness)
+        # println(maxfitness)
+        
         
 
-        population = reproduce_networks(species_by_IDs, settings, ng, objfunct,)
+        population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
+        
         # if i%10 == 0
         #     println("gen $i: num species $(length(keys(networks_by_species))) and pop size $(length(newpopulation))")
         #     bestnetwork, maxfitness = get_top_model(networks_by_species, objfunct)
@@ -71,15 +84,16 @@ function main()
 
         # end
         # push!(populationsizes, length(newpopulation))
-        
+
 
         species_by_IDs = speciate(species_by_IDs, population, DELTA)
 
+
         # println("This is generation $i and there are $(length(keys(networks_by_species)))")
     end
-    println(species_by_IDs)
-    species_by_IDs = evaluate_population_fitness(objfunct, species_by_IDs)
-    (bestnetwork, maxfitness) = gettopmodel(species_by_IDs)
+    # println(species_by_IDs)
+    species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+    bestnetwork, maxfitness = gettopmodel(species_by_IDs)
 
 
     println("Best fitness: $maxfitness")
@@ -88,8 +102,35 @@ function main()
 end
 
 
-main()
+# main()
 
+astr = "S0 -> S0 + S0; k1*S0
+S0 -> S2 + S2; k2*S0
+S0 + S2 -> S0; k3*S0*S2
+k1 = 146.49479609999202
+k2 = 37.73881143052887
+k3 = 132.0990695275749
+S0 = 1.0
+S1 = 5.0
+S2 = 9.0"
+
+model = convert_from_antimony_string(astr)
+println(model.boundaryspecies)
+
+pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/oscillator1.json"
+
+settings = read_usersettings(pathtosettings)
+
+objfunct = get_objectivefunction(settings)
+
+sol = solve_ode(objfunct, model)
+
+print(sol.t)
+
+# using Plots
+# plot(sol)
+
+# savefig("plot.png")
 
 # println(populationsizes)
 
