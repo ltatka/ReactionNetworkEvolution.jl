@@ -293,18 +293,21 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
     total_fitness = 0
 
     for speciesID in keys(species_by_IDs)
+        if speciesID == "1e6woq2yhLLt"
+            println("here")
+        end
         species = species_by_IDs[speciesID]
         species_fitness = 0
         N = length(species.networks)
         topfitness = 0
-        topnetwork = nothing
+        topnetwork = species.networks[1]
         for network in species.networks
             fitness = (evaluate_fitness(objfunct, network))#*(1/N)
             total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
             # Check if it is the best fitness
-            if fitness > topfitness
+            if fitness >= topfitness
                 topfitness = fitness
                 topnetwork = network
             end

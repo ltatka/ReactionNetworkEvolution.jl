@@ -30,6 +30,7 @@ struct ObjectiveFunction
 end
 
 function get_objectivefunction(settings::Settings)
+
     objectivedata = DataFrame(CSV.File(settings.objectivedatapath))
     time = objectivedata[!, "time"]
     println("in get_objectivefunction: timepts: $(length(time))")
@@ -109,6 +110,9 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
     PENALTY_MULTIPLIER = 0.95
     try
         sol = solve_ode(objfunct, network)
+        if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
+            return DEFAULT_FITNESS
+        end
         fitness = 0.0
         for (i, row) in enumerate(sol.u)
             for s in objfunct.objectivespecies

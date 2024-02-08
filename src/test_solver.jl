@@ -62,7 +62,7 @@ function main()
         if i%10 == 0
             println("starting generation $i")
         end
-
+        println("starting generation $i")
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
@@ -102,30 +102,30 @@ function main()
 end
 
 
-# main()
+main()
 
-astr = "S0 -> S0 + S0; k1*S0
-S0 -> S2 + S2; k2*S0
-S0 + S2 -> S0; k3*S0*S2
-k1 = 146.49479609999202
-k2 = 37.73881143052887
-k3 = 132.0990695275749
-S0 = 1.0
-S1 = 5.0
-S2 = 9.0"
+# astr = "S0 -> S0 + S0; k1*S0
+# S0 -> S2 + S2; k2*S0
+# S0 + S2 -> S0; k3*S0*S2
+# k1 = 146.49479609999202
+# k2 = 37.73881143052887
+# k3 = 132.0990695275749
+# S0 = 1.0h
+# S1 = 5.0
+# S2 = 9.0"
 
-model = convert_from_antimony_string(astr)
-println(model.boundaryspecies)
+# model = convert_from_antimony_string(astr)
+# println(model.boundaryspecies)
 
-pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/oscillator1.json"
+# pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/oscillator1.json"
 
-settings = read_usersettings(pathtosettings)
+# settings = read_usersettings(pathtosettings)
 
-objfunct = get_objectivefunction(settings)
+# objfunct = get_objectivefunction(settings)
 
-sol = solve_ode(objfunct, model)
+# sol = solve_ode(objfunct, model)
 
-print(sol.t)
+# print(sol.t)
 
 # using Plots
 # plot(sol)
