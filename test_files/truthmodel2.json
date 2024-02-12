@@ -1,0 +1,8 @@
+{"specieslist": ["S0", "S1", "S2"],
+"initialconditions": [1.0, 2.0, 2.0],
+"objectivedatapath": "/home/hellsbells/Desktop/networkEv/test_files/truthmodel2.csv",
+"objectivespecies": ["S1", "S0"],
+"reactionprobabilities": [0.1, 0.4, 0.4, 0.1],
+"ngenerations": 1000,
+"populationsize": 150,
+"portionelite": 0.0}
