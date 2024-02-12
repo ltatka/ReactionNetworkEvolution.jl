@@ -293,9 +293,6 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
     total_fitness = 0
 
     for speciesID in keys(species_by_IDs)
-        if speciesID == "1e6woq2yhLLt"
-            println("here")
-        end
         species = species_by_IDs[speciesID]
         species_fitness = 0
         N = length(species.networks)
@@ -336,22 +333,22 @@ function calculate_num_offspring(species_by_IDs, total_fitness, settings::Settin
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
         # If the champion of the species has stagnated for more than 15 generations, it won't be allowed to reproduce
-        if species.numstagnations >=15
-            species.numoffspring = 0
-            networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
-            writeoutnetwork(networks[1], "$(networks[1].ID).txt")
-            println("Writing out a network")
-        else
+        # if species.numstagnations >=15
+        #     species.numoffspring = 0
+        #     networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
+        #     writeoutnetwork(networks[1], "$(networks[1].ID).txt")
+        #     # println("Writing out a network")
+        # else
             # if species.numstagnations != 0
             #     println("calculate_num_offspring, stagnation count is $(species.numstagnations)")
             # end
             portion_offspring = species.speciesfitness/total_fitness  # The portion of the next generation this species gets to produce
-            if portion_offspring > 0.5
-                println("danger: offspring portion is $portion_offspring")
-            end
+            # if portion_offspring > 0.5
+            #     println("danger: offspring portion is $portion_offspring")
+            # end
             numoffspring = round(portion_offspring * total) # The number of offspring this species gets to produce
             species.numoffspring = numoffspring # The number of offspring this species gets to produce
-        end
+        # end
     end
     return species_by_IDs
 end
@@ -505,15 +502,15 @@ function crossover(network1, network2)
 
 end
 
-function writeoutnetwork(network::ReactionNetwork, filename::String)
+function writeoutnetwork(network::ReactionNetwork, filename::String; directory="stalled_models")
     astr = convert_to_antimony(network)
-    astr *= "\nfitness: $(network.fitness)"
+    astr *= "\n#fitness: $(network.fitness)"
 
-    if !isdir("stalled_models")
-        mkdir("stalled_models")
+    if !isdir(directory)
+        mkdir(directory)
     end
 
-    path = joinpath("stalled_models", filename)
+    path = joinpath(directory, filename)
 
     open(path, "a") do file
         write(file, astr)

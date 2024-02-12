@@ -2,6 +2,7 @@ using DifferentialEquations
 using Sundials
 using Plots
 using BenchmarkTools
+using FindPeaks1D
 include("reaction_network.jl")
 
 # # This is a macro that will kill a function if it takes too long. Useful 
@@ -24,21 +25,24 @@ include("reaction_network.jl")
 
 struct ObjectiveFunction
     objectivespecies::Vector{String} # Can be more than 1
-    objectivedata:: DataFrame 
+    objectivedata:: Any#DataFrame #TODO: Change this back?
     time::Vector{Float64}
     indexbyspecies::Dict
 end
 
 function get_objectivefunction(settings::Settings)
 
-    objectivedata = DataFrame(CSV.File(settings.objectivedatapath))
-    time = objectivedata[!, "time"]
-    println("in get_objectivefunction: timepts: $(length(time))")
+    objectivedataframe = DataFrame(CSV.File(settings.objectivedatapath))
+    objectivedata = objectivedataframe[!, "S"]
+    time = objectivedataframe[!, "time"]
+    # objectivedata = DataFrame(CSV.File(settings.objectivedatapath))
+    # time = objectivedata[!, "time"]
+
     indexbyspecies = Dict()
-    for s in settings.objectivespecies
-        idx = findfirst(item -> item == s, settings.specieslist)
-        indexbyspecies[s] = idx
-    end
+    # for s in settings.objectivespecies
+    #     idx = findfirst(item -> item == s, settings.specieslist)
+    #     indexbyspecies[s] = idx
+    # end
     return ObjectiveFunction(settings.objectivespecies, objectivedata, time, indexbyspecies)
 end
 
@@ -103,43 +107,88 @@ end
 
 
 function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork; sizepenalty=false)
-    # This function evaluates the fitness of an individual based on how well the timeseries of the 
-    # target species matches that of the target timeseries. 
-    # Changing all fitness stuff here from now on
-    TARGET_NETWORK_SIZE = 5 # Trying to encourage networks to be this size
-    PENALTY_MULTIPLIER = 0.95
-    try
+    try 
         sol = solve_ode(objfunct, network)
         if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
             return DEFAULT_FITNESS
         end
         fitness = 0.0
-        for (i, row) in enumerate(sol.u)
-            for s in objfunct.objectivespecies
-                idx = objfunct.indexbyspecies[s]
-                fitness += abs(objfunct.objectivedata[!, s][i] - row[idx])
+        for i in 1:3
+            timeseries = sol[i,:]
+            tempfitness = 0.0
+            for (j, pt) in enumerate(timeseries)
+                tempfitness += abs(pt - objfunct.objectivedata[j])
+            end
+            if 1/tempfitness > fitness
+                fitness = 1/tempfitness
             end
         end
-        if sizepenalty
-            ## TRYING TO PENALIZE LARGE NETWORKS 
-            # Take off some percentage of the total fitness according to how large the network is?
-            numreactions = length(keys(network.reactionlist))
-            excessreactions = numreactions - TARGET_NETWORK_SIZE 
-            if excessreactions < 0 # We don't care if the network is too small
-                excessreactions = 0
-            end
-            penalty = (1 - excessreactions/numreactions)*PENALTY_MULTIPLIER
-        else
-            penalty = 1
-        end
-        fitness = 1/fitness # Make larger fitness = better
-        fitness = fitness*penalty
-
-        return fitness # Or should this also assign the fitness to the network?
+        return fitness
     catch e
-        println(e)
         return DEFAULT_FITNESS
+
+
+
+
+    # try
+    #     sol = solve_ode(objfunct, network)
+    #     if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
+    #         return DEFAULT_FITNESS
+    #     end
+    #     fitness = 0.0
+
+    #     for i in 1:3
+    #         timeseries = sol[i, :]
+    #         index, prop = findpeaks1d(timeseries)
+    #         numpeaks = length(index)
+    #         if numpeaks > fitness
+    #             fitness = numpeaks
+    #         end
+    #     end
+    #     return fitness
+    # catch e
+    #     return DEFAULT_FITNESS
     end
+    
+    
+    
+    # # This function evaluates the fitness of an individual based on how well the timeseries of the 
+    # # target species matches that of the target timeseries. 
+    # # Changing all fitness stuff here from now on
+    # TARGET_NETWORK_SIZE = 5 # Trying to encourage networks to be this size
+    # PENALTY_MULTIPLIER = 0.95
+    # try
+    #     sol = solve_ode(objfunct, network)
+    #     if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
+    #         return DEFAULT_FITNESS
+    #     end
+    #     fitness = 0.0
+    #     for (i, row) in enumerate(sol.u)
+    #         for s in objfunct.objectivespecies
+    #             idx = objfunct.indexbyspecies[s]
+    #             fitness += abs(objfunct.objectivedata[!, s][i] - row[idx])
+    #         end
+    #     end
+    #     if sizepenalty
+    #         ## TRYING TO PENALIZE LARGE NETWORKS 
+    #         # Take off some percentage of the total fitness according to how large the network is?
+    #         numreactions = length(keys(network.reactionlist))
+    #         excessreactions = numreactions - TARGET_NETWORK_SIZE 
+    #         if excessreactions < 0 # We don't care if the network is too small
+    #             excessreactions = 0
+    #         end
+    #         penalty = (1 - excessreactions/numreactions)*PENALTY_MULTIPLIER
+    #     else
+    #         penalty = 1
+    #     end
+    #     fitness = 1/fitness # Make larger fitness = better
+    #     fitness = fitness*penalty
+
+    #     return fitness # Or should this also assign the fitness to the network?
+    # catch e
+    #     println(e)
+    #     return DEFAULT_FITNESS
+    # end
 end
 
 

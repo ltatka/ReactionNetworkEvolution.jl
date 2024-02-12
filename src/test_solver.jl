@@ -26,7 +26,7 @@ end
 
 
 function main()
-    pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/oscillator1.json"
+    pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.json"
 
     settings = read_usersettings(pathtosettings)
 
@@ -41,7 +41,7 @@ function main()
     # population = evolve(settings, ng, objfunct)
 
     DELTA = .5
-    NUM_GENERATION = 150
+    NUM_GENERATION = 400
 
     population = generate_network_population(settings, ng)
 
@@ -59,10 +59,9 @@ function main()
         # global total_fitness
         # global numoffspring_by_species
         # global newpopulation
-        if i%10 == 0
+        if i%100 == 0
             println("starting generation $i")
         end
-        println("starting generation $i")
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
@@ -98,11 +97,12 @@ function main()
 
     println("Best fitness: $maxfitness")
     astr = convert_to_antimony(bestnetwork)
-    println(astr)
+    writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)", directory="final_models")
 end
 
-
-main()
+for i in 1:10
+    main()
+end
 
 # astr = "S0 -> S0 + S0; k1*S0
 # S0 -> S2 + S2; k2*S0
