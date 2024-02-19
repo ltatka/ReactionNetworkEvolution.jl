@@ -7,8 +7,11 @@ using DataFrames
 using Dates
 using Random
 
+using Statistics #This is for calculating the mean distance for debugging
+using Combinatorics # This is for looking at distances again for debugging
 
 NUM_VARIANTS = [] 
+MAX_STALLS = 50
 
 mutable struct Species
     networks::Vector{ReactionNetwork}
@@ -77,7 +80,24 @@ function initialize_species_by_IDs(population)
     return Dict(ID => species)
 end
 
-function speciate(species_by_IDs, population, delta)
+
+function get_diversity_stats(species_by_IDs)
+    # I want to look at average distance between species and maybe also min and max.
+    # I'm going to compare every species to every other species 
+    all_species = collect(keys(species_by_IDs))
+    combo_indices = collect(combinations(1:length(all_species),2))
+    distances = []
+    for combo in combo_indices
+        network1 = species_by_IDs[all_species[combo[1]]].topnetwork
+        network2 = species_by_IDs[all_species[combo[2]]].topnetwork
+        d = calculate_distance(network1, network2)
+        push!(distances, d)
+    end
+    return mean(distances), minimum(distances), maximum(distances)
+end
+
+
+function speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
     """
     For each network, compare it to the species in the previous generation by 
     randomly picking a network in that species. If it is close enough, then it is a
@@ -87,13 +107,22 @@ function speciate(species_by_IDs, population, delta)
     If there are 2+ network that are similar to each other but dissimilar to any existing species, they will
     each be assigned to a new species. 
     """
+    println("old delta: $DELTA")
+    num_species = length(keys(species_by_IDs))
+    if num_species > TARGET_NUM_SPECIES
+        DELTA += SPECIES_MOD_STEP
+    elseif num_species < TARGET_NUM_SPECIES
+        DELTA -= SPECIES_MOD_STEP
+    end
+    println("num species: $num_species")
+    println("new delta: $DELTA")
     new_species_by_IDs = Dict{String, Species}()
     for network in population
         species_assigned = false
         for speciesID in keys(species_by_IDs)
             network2 = rand(species_by_IDs[speciesID].networks)
             distance = calculate_distance(network, network2)
-            if distance <= delta
+            if distance <= DELTA
                 network.ID = speciesID
                 # If we've already assigned a network to this species, just add it to the list 
                 # Otherwise create a new entry in the hashmap and stop comparing it to existing species (break)
@@ -121,8 +150,7 @@ function speciate(species_by_IDs, population, delta)
             new_species_by_IDs[newspecies.ID] = newspecies
         end
     end
-
-    return new_species_by_IDs
+    return new_species_by_IDs, DELTA
 end
 
 
@@ -299,8 +327,8 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
         topfitness = 0
         topnetwork = species.networks[1]
         for network in species.networks
-            fitness = (evaluate_fitness(objfunct, network))#*(1/N)
-            total_fitness += fitness
+            fitness = (evaluate_fitness(objfunct, network))
+            # total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
             # Check if it is the best fitness
@@ -309,10 +337,11 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
                 topnetwork = network
             end
         end
+        total_fitness += species_fitness/N
         oldfitness = species.topfitness
         species.topfitness = topfitness
         species.topnetwork = topnetwork
-        species.speciesfitness = species_fitness
+        species.speciesfitness = species_fitness/N #species fitness is now going to be the average fitness of member species
         # If the previous top fitness is the same as this one, increment the stagnation counter by one. Otherwise, reset it to 0
         if oldfitness == topfitness
             species.numstagnations += 1
@@ -330,26 +359,41 @@ function calculate_num_offspring(species_by_IDs, total_fitness, settings::Settin
     # Calculates how many offspring each species gets based on its share of the total fitness (sum of all individuals)
     # Returns a hashmap key, val = speciesID, float, number of offspring for that species
     total = settings.populationsize
+    total_offspring = 0 #This is how many offspring we calculate here, for debugging
+
+    # NEW: cap number of offspring to 10% of population
+    MAX_OFFSPRING = round(0.1*total)
+
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
-        # If the champion of the species has stagnated for more than 15 generations, it won't be allowed to reproduce
-        # if species.numstagnations >=15
-        #     species.numoffspring = 0
-        #     networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
-        #     writeoutnetwork(networks[1], "$(networks[1].ID).txt")
-        #     # println("Writing out a network")
-        # else
+        ##If the champion of the species has stagnated for more than 15 generations, it won't be allowed to reproduce
+        if species.numstagnations >= 50
+            species.numoffspring = 0
+            networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
+            writeoutnetwork(networks[1], "$(networks[1].ID).txt")
+            if networks[1].fitness > 0.01
+                println("high fitness network writeout: $(networks[1].ID)")
+            end
+            
+            # println("Writing out a network")
+        else
             # if species.numstagnations != 0
             #     println("calculate_num_offspring, stagnation count is $(species.numstagnations)")
             # end
             portion_offspring = species.speciesfitness/total_fitness  # The portion of the next generation this species gets to produce
-            # if portion_offspring > 0.5
-            #     println("danger: offspring portion is $portion_offspring")
-            # end
             numoffspring = round(portion_offspring * total) # The number of offspring this species gets to produce
+
+            # Cap number of offspring
+            if numoffspring > MAX_OFFSPRING
+                numoffspring = MAX_OFFSPRING
+            end
+            total_offspring += numoffspring
+
+
             species.numoffspring = numoffspring # The number of offspring this species gets to produce
-        # end
+        end
     end
+    # println("total offspring: $total_offspring")
     return species_by_IDs
 end
 
@@ -433,21 +477,33 @@ function calculate_distance(network1, network2)
     num_diff = 0
     c1 = 1 # Value from paper
     c2 = 0.4 # Value from paper (as C3 in the paper) 
-    if length(network1.reactionlist) > length(network2.reactionlist)
-        N = length(network1.reactionlist)
+    if length(network1.reactionlist) >= length(network2.reactionlist)
+        largernetwork = network1
+        smallernetwork = network2
     else
-        N = length(network2.reactionlist)
+        largernetwork = network2
+        smallernetwork = network1
     end
 
-    for key in keys(network1.reactionlist)
-        if key in keys(network2.reactionlist)
-            W += abs(network2.reactionlist[key].rateconstant - network1.reactionlist[key].rateconstant)
-        else
+    N = length(largernetwork.reactionlist)
+
+    for key in keys(largernetwork.reactionlist)
+        if key ∉ keys(smallernetwork.reactionlist)
             num_diff += 1
         end
     end
+    
+    return num_diff/N
 
-    return c1*(num_diff)/N + c2*W/N
+    # for key in keys(network1.reactionlist)
+    #     if key in keys(network2.reactionlist)
+    #         W += abs(network2.reactionlist[key].rateconstant - network1.reactionlist[key].rateconstant)
+    #     else
+    #         num_diff += 1
+    #     end
+    # end
+
+    # return c1*(num_diff)/N + c2*W/N
 end
 
 function crossover(network1, network2)
@@ -512,7 +568,7 @@ function writeoutnetwork(network::ReactionNetwork, filename::String; directory="
 
     path = joinpath(directory, filename)
 
-    open(path, "a") do file
+    open(path, "w") do file
         write(file, astr)
     close(file)
     end

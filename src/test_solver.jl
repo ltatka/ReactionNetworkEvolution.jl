@@ -40,32 +40,49 @@ function main()
     # print(current_innovation_num_by_reaction)
     # population = evolve(settings, ng, objfunct)
 
-    DELTA = .5
-    NUM_GENERATION = 400
+    DELTA = .65
+    TARGET_NUM_SPECIES = 10
+    SPECIES_MOD_STEP = 0.1
+    NUM_GENERATION = 100
 
     population = generate_network_population(settings, ng)
 
     species_by_IDs = initialize_species_by_IDs(population)
-    species_by_IDs = speciate(species_by_IDs, population, DELTA)
+    species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
     fitnesses = []
+    println("starting")
     # populationsizes = []
     for i in 1:NUM_GENERATION
+
         # fitness_by_species
 
         # global total_fitness
         # global numoffspring_by_species
         # global newpopulation
-        if i%100 == 0
-            println("starting generation $i")
-        end
+        # if i%50 == 0
+        #     avg, min, max = get_diversity_stats(species_by_IDs)
+        #     println("starting generation $i")
+        #     println("avg: $avg, min: $min, max: $max")
+        # end
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
+        L = length(keys(species_by_IDs))
+        # println("$L species")
+        # if L <=1
+        #     println("generation $i: $L")
+        # end
+        
 
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
+        if maxfitness > 0.009
+            println("generation $i and model $(bestnetwork.ID), $(maxfitness)")
+            writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)_writeout", directory="final_models")
+
+        end
 
         push!(fitnesses, maxfitness)
         # println(maxfitness)
@@ -85,7 +102,7 @@ function main()
         # push!(populationsizes, length(newpopulation))
 
 
-        species_by_IDs = speciate(species_by_IDs, population, DELTA)
+        species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
 
         # println("This is generation $i and there are $(length(keys(networks_by_species)))")
@@ -98,10 +115,15 @@ function main()
     println("Best fitness: $maxfitness")
     astr = convert_to_antimony(bestnetwork)
     writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)", directory="final_models")
+    # return fitnesses
 end
+
+
+
 
 for i in 1:10
     main()
+    
 end
 
 # astr = "S0 -> S0 + S0; k1*S0

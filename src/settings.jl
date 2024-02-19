@@ -79,9 +79,9 @@ settings = Dict(
     "populationsize" => 100,
     "ngenerations" => 400,
     "reactionprobabilities" => [.2, .3, .3, .2],
-    "mutationprobabilities" => [.8, .2],
+    "mutationprobabilities" => [.6, .4],
     "portionelite" => .1,
-    "nreactions" => 3,
+    "nreactions" => 5,
     "rateconstantrange" => [0.1, 3.0],
 )
 
