@@ -96,6 +96,23 @@ function get_diversity_stats(species_by_IDs)
     return mean(distances), minimum(distances), maximum(distances)
 end
 
+function get_diversity_stats_from_list(networklist)
+    combo_indices = collect(combinations(1:length(networklist),2))
+    distances = []
+    duplicates = []
+    for combo in combo_indices
+        network1 = networklist[combo[1]]
+        network2 = networklist[combo[2]]
+        d = calculate_distance(network1, network2)
+        push!(distances, d)
+        if d == 0
+            push!(duplicates, combo[2])
+        end
+    end
+    duplicates = union(duplicates)
+    return mean(distances), minimum(distances), maximum(distances), duplicates
+end
+
 
 function speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
     """
@@ -107,15 +124,13 @@ function speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES
     If there are 2+ network that are similar to each other but dissimilar to any existing species, they will
     each be assigned to a new species. 
     """
-    println("old delta: $DELTA")
     num_species = length(keys(species_by_IDs))
     if num_species > TARGET_NUM_SPECIES
         DELTA += SPECIES_MOD_STEP
     elseif num_species < TARGET_NUM_SPECIES
         DELTA -= SPECIES_MOD_STEP
     end
-    println("num species: $num_species")
-    println("new delta: $DELTA")
+
     new_species_by_IDs = Dict{String, Species}()
     for network in population
         species_assigned = false
@@ -162,18 +177,17 @@ end
 
 
 function addreaction(ng::NetworkGenerator, network::ReactionNetwork)
-    global global_innovation_number
-    if length(network.reactionlist) >= MAX_NREACTIONS
-        return network
-    end
+    # if length(network.reactionlist) >= MAX_NREACTIONS
+    #     return network
+    # end
     reaction = generate_random_reaction(ng)
-    if reaction.key in keys(current_innovation_num_by_reaction)
-        reaction.innovationnumber = current_innovation_num_by_reaction[reaction.key]
-    else
-        reaction.innovationnumber = global_innovation_number
-        current_innovation_num_by_reaction[reaction.key] = global_innovation_number
-        global_innovation_number += 1
-    end
+    # if reaction.key in keys(current_innovation_num_by_reaction)
+    #     reaction.innovationnumber = current_innovation_num_by_reaction[reaction.key]
+    # else
+    #     reaction.innovationnumber = global_innovation_number
+    #     current_innovation_num_by_reaction[reaction.key] = global_innovation_number
+    #     global_innovation_number += 1
+    # end
     if reaction.key in keys(network.reactionlist)
         network.reactionlist[reaction.key].rateconstant += reaction.rateconstant 
     else
@@ -219,7 +233,7 @@ end
 
 function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::ReactionNetwork)
     p = rand()
-    if p < settings.mutationprobabilities.adddeletereaction
+    if p > settings.mutationprobabilities
         network = adddeletereaction(ng, network)
     else
         mutaterateconstant(network, settings)

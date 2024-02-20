@@ -33,17 +33,11 @@ function main()
     objfunct = get_objectivefunction(settings)
     ng = get_networkgenerator(settings)
 
-    # r = generate_random_reaction(ng)
-    # print(r)
-    # l = generate_reactionlist(ng)
-    # println(l)
-    # print(current_innovation_num_by_reaction)
-    # population = evolve(settings, ng, objfunct)
-
     DELTA = .65
     TARGET_NUM_SPECIES = 10
     SPECIES_MOD_STEP = 0.1
-    NUM_GENERATION = 100
+    NUM_GENERATION = 2
+    break_gen = 100
 
     population = generate_network_population(settings, ng)
 
@@ -78,11 +72,11 @@ function main()
         
 
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
-        if maxfitness > 0.009
-            println("generation $i and model $(bestnetwork.ID), $(maxfitness)")
-            writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)_writeout", directory="final_models")
+        # if maxfitness > 0.009
+        #     println("generation $i and model $(bestnetwork.ID), $(maxfitness)")
+        #     writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)_writeout", directory="final_models")
 
-        end
+        # end
 
         push!(fitnesses, maxfitness)
         # println(maxfitness)
@@ -91,12 +85,16 @@ function main()
 
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
         
-        # if i%10 == 0
-        #     println("gen $i: num species $(length(keys(networks_by_species))) and pop size $(length(newpopulation))")
-        #     bestnetwork, maxfitness = get_top_model(networks_by_species, objfunct)
-        #     println("maxfitness: $maxfitness")
-        #     astr =convert_to_antimony(bestnetwork)
-        #     println(astr)
+        # if i == break_gen
+            
+        #     bestnetwork, maxfitness = gettopmodel(species_by_IDs)
+        #     # println("maxfitness: $maxfitness")
+        #     # astr =convert_to_antimony(bestnetwork)
+        #     # println(astr)
+        #     if maxfitness < 0.009
+        #         println("evolution failed")
+        #         break
+        #     end
 
         # end
         # push!(populationsizes, length(newpopulation))
@@ -113,18 +111,19 @@ function main()
 
 
     println("Best fitness: $maxfitness")
+    
     astr = convert_to_antimony(bestnetwork)
     writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)", directory="final_models")
     # return fitnesses
 end
 
 
+main()
 
-
-for i in 1:10
-    main()
+# for i in 1:10
+#     @time main()
     
-end
+# end
 
 # astr = "S0 -> S0 + S0; k1*S0
 # S0 -> S2 + S2; k2*S0

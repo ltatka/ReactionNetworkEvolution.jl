@@ -196,7 +196,7 @@ function process_reaction_lines(reactionlines)
 end
 
 function process_initialcondition_lines(iclines)
-    initial_conditions = Vector{Float64}[]
+    initial_conditions = Vector{Float64}()
     for line in iclines
         line = replace(line, ";"=>"")
         line = replace(line, " "=>"")

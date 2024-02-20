@@ -63,7 +63,7 @@ end
 struct Settings
     portionelite::Float64
     reactionprobabilities::ReactionProbabilities
-    mutationprobabilities::MutationProbabilities
+    mutationprobabilities::Float64
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
@@ -79,7 +79,7 @@ settings = Dict(
     "populationsize" => 100,
     "ngenerations" => 400,
     "reactionprobabilities" => [.2, .3, .3, .2],
-    "mutationprobabilities" => [.6, .4],
+    "mutationprobabilities" => .6,#[.6, .4], # Probability of changning rate constant vs reaection
     "portionelite" => .1,
     "nreactions" => 5,
     "rateconstantrange" => [0.1, 3.0],
@@ -100,9 +100,9 @@ function read_usersettings(path::String)
         end
     end
     # Create settings object
-    mutationprobabilities = MutationProbabilities(settings["mutationprobabilities"])
+    # mutationprobabilities = MutationProbabilities(settings["mutationprobabilities"])
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
-    usersettings = Settings(settings["portionelite"], reactionprobabilities, mutationprobabilities,
+    usersettings = Settings(settings["portionelite"], reactionprobabilities, settings["mutationprobabilities"],
         specieslist,initialconditions, objectivedatapath, objectivespecies, settings["populationsize"],
         settings["ngenerations"], settings["nreactions"], settings["rateconstantrange"])
     return usersettings   
