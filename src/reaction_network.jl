@@ -108,18 +108,18 @@ end
 
 function generate_reactionlist(ng::NetworkGenerator)
     #TODO: What is going on here with global innovation number 
-    global global_innovation_number
+    # global global_innovation_number
     reactionlist = Dict()
     #reactionlist = Vector{Reaction}()
     for i in 1:ng.numreactions
         reaction = generate_random_reaction(ng)
-        if reaction.key in keys(current_innovation_num_by_reaction)
-            reaction.innovationnumber = current_innovation_num_by_reaction[reaction.key]
-        else
-            reaction.innovationnumber = global_innovation_number
-            global_innovation_number += 1
-            current_innovation_num_by_reaction[reaction.key] = reaction.innovationnumber
-        end
+        # if reaction.key in keys(current_innovation_num_by_reaction)
+        #     reaction.innovationnumber = current_innovation_num_by_reaction[reaction.key]
+        # else
+        #     reaction.innovationnumber = global_innovation_number
+        #     global_innovation_number += 1
+        #     current_innovation_num_by_reaction[reaction.key] = reaction.innovationnumber
+        # end
         if reaction.key in keys(reactionlist)
             reactionlist[reaction.key].rateconstant += reaction.rateconstant
         else

@@ -25,9 +25,9 @@ MIN_NREACTIONS = 3
 MAX_NREACTIONS = 100
 SEED = 3
 
-global global_innovation_number = 0 #TODO: don't use global vars
-global current_innovation_num_by_reaction = Dict()
-delta = 500 #????
+# global global_innovation_number = 0 #TODO: don't use global vars
+# global current_innovation_num_by_reaction = Dict()
+# delta = 500 #????
 
 Random.seed!(SEED)
 
@@ -46,43 +46,37 @@ struct ReactionProbabilities
     end
 end
 
-struct MutationProbabilities
-    rateconstant::Float64
-    adddeletereaction::Float64
-
-    function MutationProbabilities(p::Vector{Float64})
-        new(p[1], p[2])
-    end
-
-    function MutationProbabilities(p1::Float64, p2::Float64)
-        new(p1, p2)
-    end
-end
-
-
+# TODO: is this structure necessary? Can we just use a dictionary?
 struct Settings
     portionelite::Float64
     reactionprobabilities::ReactionProbabilities
-    mutationprobabilities::Float64
+    p_rateconstantmutation::Float64
+    rateconstantrange::Vector{Float64}
+    percent_rateconstant_change::Float64 # Uniform sampling across this range to change rate constant
+    p_picknewrateconstant::Float64 # Probability of picking new rate constant during mutation vs slight change
+    populationsize::Int
+    ngenerations::Int
+    nreactions::Int
+    max_offspring_portion::Float64 # The maximum portion of offspring a single species can have
+    # These must be defined in the JSON
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
     objectivespecies::Vector{String}
-    populationsize::Int
-    ngenerations::Int
-    nreactions::Int
-    rateconstantrange::Vector{Float64}
 end
 
 
 settings = Dict(
+    "portionelite" => .1,
+    "reactionprobabilities" => [.2, .3, .3, .2],
+    "p_rateconstantmutation" => .6, # Probability of changning rate constant vs reaection
+    "rateconstantrange" => [0.1, 50.0],
+    "percent_rateconstant_change" => 0.2,
+    "p_picknewrateconstant" => 0.15,
     "populationsize" => 100,
     "ngenerations" => 400,
-    "reactionprobabilities" => [.2, .3, .3, .2],
-    "mutationprobabilities" => .6,#[.6, .4], # Probability of changning rate constant vs reaection
-    "portionelite" => .1,
     "nreactions" => 5,
-    "rateconstantrange" => [0.1, 3.0],
+    "max_offspring_portion" => 0.1
 )
 
 function read_usersettings(path::String)
@@ -100,10 +94,21 @@ function read_usersettings(path::String)
         end
     end
     # Create settings object
-    # mutationprobabilities = MutationProbabilities(settings["mutationprobabilities"])
+    # p_rateconstantmutation = p_rateconstantmutation(settings["p_rateconstantmutation"])
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
-    usersettings = Settings(settings["portionelite"], reactionprobabilities, settings["mutationprobabilities"],
-        specieslist,initialconditions, objectivedatapath, objectivespecies, settings["populationsize"],
-        settings["ngenerations"], settings["nreactions"], settings["rateconstantrange"])
+    usersettings = Settings(settings["portionelite"], 
+                   reactionprobabilities,
+                   settings["p_rateconstantmutation"],
+                   settings["rateconstantrange"],
+                   settings["percent_rateconstant_change"],
+                   settings["p_picknewrateconstant"],
+                   settings["populationsize"],
+                   settings["ngenerations"],
+                   settings["nreactions"],
+                   settings["max_offspring_portion"],
+                   specieslist,
+                   initialconditions,
+                   objectivedatapath,
+                   objectivespecies)
     return usersettings   
 end

@@ -221,19 +221,21 @@ function mutaterateconstant(network::ReactionNetwork, settings::Settings)
     # 90% chance of perturbing existing value, 10% chance of new random value
     key = getrandomkey(network.reactionlist) # Decide which reaction to change
     p = rand()
-    if p < 0.9
+    if p < settings.p_picknewrateconstant # Randomly pick new rate constant
+        newrateconstant = rand(Uniform(settings.rateconstantrange[1], settings.rateconstantrange[2]))
+        network.reactionlist[key].rateconstant = newrateconstant
         percentchange = rand(Uniform(.8, 1.2))
         network.reactionlist[key].rateconstant *= percentchange
     else
-        newrateconstant = rand(Uniform(settings.rateconstantrange[1], settings.rateconstantrange[2]))
-        network.reactionlist[key].rateconstant = newrateconstant
+        percentchange = rand(Uniform(1-settings.percent_rateconstant_change, 1+settings.percent_rateconstant_change))
+        network.reactionlist[key].rateconstant *= percentchange
     end
     return network
 end
 
 function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::ReactionNetwork)
     p = rand()
-    if p > settings.mutationprobabilities
+    if p > settings.p_rateconstantmutation
         network = adddeletereaction(ng, network)
     else
         mutaterateconstant(network, settings)
@@ -376,7 +378,7 @@ function calculate_num_offspring(species_by_IDs, total_fitness, settings::Settin
     total_offspring = 0 #This is how many offspring we calculate here, for debugging
 
     # NEW: cap number of offspring to 10% of population
-    MAX_OFFSPRING = round(0.1*total)
+    MAX_OFFSPRING = round(settings.max_offspring_portion*total)
 
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
