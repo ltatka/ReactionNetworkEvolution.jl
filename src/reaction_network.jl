@@ -18,7 +18,7 @@ mutable struct Reaction
     #     return new(substrate, product, rateconstant, -1, true)
     # end
 
-    function Reaction(substrate, product, rateconstant)
+    function Reaction(substrate::Vector{String}, product::Vector{String}, rateconstant::Float64)
         substrate = sort(substrate)
         product = sort(product)
         return new(substrate, product, rateconstant, -1, true, [substrate, product])
@@ -26,15 +26,15 @@ mutable struct Reaction
 
 end
 
-function get_reaction_key(reaction::Reaction)
-    return [substrate, product]
-end
+# function get_reaction_key(reaction::Reaction)
+#     return [substrate, product]
+# end
 
 
 mutable struct ReactionNetwork
     specieslist::Vector{String}
     initialcondition::Vector{Float64}
-    reactionlist::Dict{Any,Any}
+    reactionlist::Dict{Vector{Vector{String}},Reaction}
     floatingspecies::Vector{String}
     boundaryspecies::Vector{String}
     float_initialcondition::Vector{Float64}
@@ -56,11 +56,11 @@ struct NetworkGenerator
     numreactions::Int
     reactionprobabilities::ReactionProbabilities
     rateconstantrange::Vector{Float64}
-    seedmodel#::Union{ReactionNetwork, Nothing}
+    # seedmodel::Nothing # Change this if you want to use seed models #::Union{ReactionNetwork, Nothing}
 
     
-    function NetworkGenerator(specieslist::Vector{String}, initialcondition::Vector{Float64}, numreactions::Int, reactionprobabilities::ReactionProbabilities, rateconstantrange::Vector{Float64}; seed=nothing)
-        new(specieslist, initialcondition, numreactions, reactionprobabilities, rateconstantrange, seed)
+    function NetworkGenerator(specieslist::Vector{String}, initialcondition::Vector{Float64}, numreactions::Int, reactionprobabilities::ReactionProbabilities, rateconstantrange::Vector{Float64})#; seed=nothing)
+        new(specieslist, initialcondition, numreactions, reactionprobabilities, rateconstantrange)
     end
 
     
@@ -73,7 +73,7 @@ function get_networkgenerator(settings::Settings; seed=Nothing)#::NetworkGenerat
     reactionprobabilities = settings.reactionprobabilities
     rateconstantrange = settings.rateconstantrange
 
-    return NetworkGenerator(specieslist, initialconditions, nreactions, reactionprobabilities, rateconstantrange, seed=seed)
+    return NetworkGenerator(specieslist, initialconditions, nreactions, reactionprobabilities, rateconstantrange)#, seed=seed)
    
 end
 
@@ -109,7 +109,7 @@ end
 function generate_reactionlist(ng::NetworkGenerator)
     #TODO: What is going on here with global innovation number 
     # global global_innovation_number
-    reactionlist = Dict()
+    reactionlist = Dict{Vector{Vector{String}},Reaction}()
     #reactionlist = Vector{Reaction}()
     for i in 1:ng.numreactions
         reaction = generate_random_reaction(ng)

@@ -46,7 +46,7 @@ function get_objectivefunction(settings::Settings)
     return ObjectiveFunction(settings.objectivespecies, objectivedata, time, indexbyspecies)
 end
 
-function ode_funct!(du, u, network::ReactionNetwork, t)
+function ode_funct!(du::Array{Float64}, u::Array{Float64}, network::ReactionNetwork, t::Float64)
     specieslist = network.specieslist
     
     # Reset du
@@ -85,7 +85,7 @@ function ode_funct!(du, u, network::ReactionNetwork, t)
     end
 end
 
-function solve_ode(objfunct, network)
+function solve_ode(objfunct::ObjectiveFunction, network::ReactionNetwork)
     # 
     #Get time info
     t0 = first(objfunct.time)
@@ -106,7 +106,7 @@ function solve_ode(objfunct, network)
 end
 
 
-function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork; sizepenalty=false)
+function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
     try 
         sol = solve_ode(objfunct, network)
         if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
@@ -193,7 +193,7 @@ end
 
 
 
-function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path=nothing)
+function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path::String=nothing)
     solution = solve_ode(objfunct, network)
     plt = plot(solution)
     if isnothing(path)

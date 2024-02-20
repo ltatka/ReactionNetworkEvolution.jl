@@ -10,8 +10,7 @@ using Random
 using Statistics #This is for calculating the mean distance for debugging
 using Combinatorics # This is for looking at distances again for debugging
 
-NUM_VARIANTS = [] 
-MAX_STALLS = 50
+
 
 mutable struct Species
     networks::Vector{ReactionNetwork}
@@ -71,7 +70,7 @@ mutable struct Species
 end
 
 #TODO: Is this necessary? I thought it would be more complicated.
-function initialize_species_by_IDs(population)
+function initialize_species_by_IDs(population::Array{ReactionNetwork})
     """
     This function is for creating the first species list. It takes a population of networks and assigns them 
     all to the same species. It returns a Species object."""
@@ -81,7 +80,7 @@ function initialize_species_by_IDs(population)
 end
 
 
-function get_diversity_stats(species_by_IDs)
+function get_diversity_stats(species_by_IDs::Dict{String, Species})
     # I want to look at average distance between species and maybe also min and max.
     # I'm going to compare every species to every other species 
     all_species = collect(keys(species_by_IDs))
@@ -96,7 +95,7 @@ function get_diversity_stats(species_by_IDs)
     return mean(distances), minimum(distances), maximum(distances)
 end
 
-function get_diversity_stats_from_list(networklist)
+function get_diversity_stats_from_list(networklist::Array{ReactionNetwork})
     combo_indices = collect(combinations(1:length(networklist),2))
     distances = []
     duplicates = []
@@ -114,7 +113,11 @@ function get_diversity_stats_from_list(networklist)
 end
 
 
-function speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
+function speciate(species_by_IDs::Dict{String, Species},
+    population::Vector{ReactionNetwork},
+    DELTA::Float64, 
+    TARGET_NUM_SPECIES::Int64,
+    SPECIES_MOD_STEP::Float64)
     """
     For each network, compare it to the species in the previous generation by 
     randomly picking a network in that species. If it is close enough, then it is a
@@ -170,7 +173,7 @@ end
 
 
 
-function getrandomkey(d::Dict)
+function getrandomkey(d::Dict{Vector{Vector{String}}, Reaction})
     i = rand(1:length(keys(d)))
     return collect(keys(d))[i]
 end
@@ -243,13 +246,13 @@ function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::React
     return network
 end
 
-function mutate_nonelite_population(settings::Settings, ng::NetworkGenerator, population)
-    nelite = Int(floor(settings.portionelite*length(population)))
-    for i in (nelite+1):length(population)
-        population[i] = mutatenetwork!(settings, ng, population[i])
-    end
-    return population
-end
+# function mutate_nonelite_population(settings::Settings, ng::NetworkGenerator, population)
+#     nelite = Int(floor(settings.portionelite*length(population)))
+#     for i in (nelite+1):length(population)
+#         population[i] = mutatenetwork!(settings, ng, population[i])
+#     end
+#     return population
+# end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = Vector{ReactionNetwork}()
@@ -268,7 +271,7 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
     return population
 end
 
-function sortbyfitness!(population, rev=true)
+function sortbyfitness!(population::Array{ReactionNetwork}, rev::Bool=true)
     # If rev = true, sorts by descending
     # Use rev = true if large fitness = better
     sort!(population, by=get_fitness, rev=rev)
@@ -319,14 +322,14 @@ end
 # end
 
 # This is for debugging mostly
-function print_top_fitness(n::Int, population)
+function print_top_fitness(n::Int, population::Array{ReactionNetwork})
     for i in 1:n
         println(population[i].fitness)
     end
     return nothing
 end
 
-function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs)
+function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs::Dict{String, Species})
     # Evaluates the entire populations fitness as well as the fintess for each species, per the NEAT algo
     # Assigns each individual its fitness score
     # total_fitness = sum of all fitness scores across the entire population, float
@@ -371,7 +374,7 @@ end
 
  
 
-function calculate_num_offspring(species_by_IDs, total_fitness, settings::Settings)
+function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fitness::Float64, settings::Settings)
     # Calculates how many offspring each species gets based on its share of the total fitness (sum of all individuals)
     # Returns a hashmap key, val = speciesID, float, number of offspring for that species
     total = settings.populationsize
@@ -426,11 +429,14 @@ function cleanupreactions(network::ReactionNetwork)
     return network
 end
 
-function reproduce_networks(species_by_IDs, settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; generation=0)
+function reproduce_networks(species_by_IDs, settings::Settings,
+    ng::NetworkGenerator,
+    objfunct::ObjectiveFunction;
+    generation::Int64=0)
     CHANCE_MUTATION = 0.8 #Chance of mutating network (vs crossover)
     WORST_PORTION = 0.1 # The portion of each species to drop
 
-    newpopulation = []
+    newpopulation = Vector{ReactionNetwork}()
 
     # println("there are $(length(keys(networks_by_species)))species")
 
@@ -487,7 +493,7 @@ function reproduce_networks(species_by_IDs, settings::Settings, ng::NetworkGener
 end
 
 
-function calculate_distance(network1, network2)
+function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork)
     # If every single reaction is different, then the distance will be 1
     W = 0
     num_diff = 0
@@ -522,7 +528,7 @@ function calculate_distance(network1, network2)
     # return c1*(num_diff)/N + c2*W/N
 end
 
-function crossover(network1, network2)
+function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     newreactiondict = Dict()
     if network1.fitness > network2.fitness
         morefitnetwork = network1
@@ -574,7 +580,7 @@ function crossover(network1, network2)
 
 end
 
-function writeoutnetwork(network::ReactionNetwork, filename::String; directory="stalled_models")
+function writeoutnetwork(network::ReactionNetwork, filename::String; directory::String="stalled_models")
     astr = convert_to_antimony(network)
     astr *= "\n#fitness: $(network.fitness)"
 

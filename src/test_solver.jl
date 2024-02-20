@@ -7,7 +7,7 @@ include("evo_utils.jl")
 include("network_cleanup.jl")
 # include("settings.jl")
 
-function gettopmodel(species_by_IDs)
+function gettopmodel(species_by_IDs::Dict{String, Species})
     maxfitness = 0
     topnetwork = nothing
     topspecies = nothing
