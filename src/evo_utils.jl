@@ -389,9 +389,10 @@ function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fi
         if species.numstagnations >= 50
             species.numoffspring = 0
             networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
-            writeoutnetwork(networks[1], "$(networks[1].ID).txt")
-            if networks[1].fitness > 0.0088
-                println("high fitness network writeout: $(networks[1].ID)")
+            if networks[1].fitness > settings.writeout_threshold
+                writeoutnetwork(networks[1], "HF_$(networks[1].ID).txt")
+            else
+                writeoutnetwork(networks[1], "$(networks[1].ID).txt")
             end
             
             # println("Writing out a network")

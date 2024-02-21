@@ -52,22 +52,13 @@ function main()
 
     fitnesses = []
     println("starting")
-    # populationsizes = []
+
     for i in 1:NUM_GENERATION
 
-        # fitness_by_species
 
-        # global total_fitness
-        # global numoffspring_by_species
-        # global newpopulation
-        # if i%50 == 0
-        #     avg, min, max = get_diversity_stats(species_by_IDs)
-        #     println("starting generation $i")
-        #     println("avg: $avg, min: $min, max: $max")
-        # end
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
-        L = length(keys(species_by_IDs))
+        # L = length(keys(species_by_IDs))
         # println("$L species")
         # if L <=1
         #     println("generation $i: $L")
@@ -115,14 +106,14 @@ function main()
 
     println("Best fitness: $maxfitness")
 
-    for ID in keys(species_by_IDs)
-        species = species_by_IDs[ID]
-        println(species.topfitness)
-        if species.topfitness > settings.writeout_threshold
-            println("WRiting out runner up from species $(species.ID)")
-            writeoutnetwork(species.topnetwork, "runnerup_$(species.ID)", directory="final_models")
-        end
-    end
+    # for ID in keys(species_by_IDs)
+    #     species = species_by_IDs[ID]
+    #     println(species.topfitness)
+    #     if species.topfitness > settings.writeout_threshold
+    #         println("WRiting out runner up from species $(species.ID)")
+    #         writeoutnetwork(species.topnetwork, "runnerup_$(species.ID)", directory="final_models")
+    #     end
+    # end
 
     
     astr = convert_to_antimony(bestnetwork)
