@@ -58,14 +58,16 @@ struct Settings
     ngenerations::Int
     nreactions::Int
     max_offspring_portion::Float64 # The maximum portion of offspring a single species can have
+    writeout_threshold::Float64 # Networks with this fitness or better will be saved
+    p_crossover::Float64 # Probability of crossover vs mutation
+    drop_portion::Float64 # Portion of worst networks to drop in each species
+
     # These must be defined in the JSON
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
     objectivespecies::Vector{String}
-    writeout_threshold::Float64 # Networks with this fitness or better will be saved
-    p_crossover::Float64 # Probability of crossover vs mutation
-    drop_portion::Float64 # Portion of worst networks to drop in each species
+   
 end
 
 
@@ -113,6 +115,9 @@ function read_usersettings(path::String)
                    settings["ngenerations"],
                    settings["nreactions"],
                    settings["max_offspring_portion"],
+                   settings["writeout_threshold"],
+                   settings["p_crossover"],
+                   settings["drop_portion"],
                    specieslist,
                    initialconditions,
                    objectivedatapath,
