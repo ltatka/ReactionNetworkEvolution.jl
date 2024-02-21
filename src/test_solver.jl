@@ -124,8 +124,8 @@ end
 
 
 
-for i in 1:10
-    @time main()
+for i in 1:100
+    main()
     
 end
 
