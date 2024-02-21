@@ -63,6 +63,9 @@ struct Settings
     initialconditions::Vector{Float64}
     objectivedatapath::String
     objectivespecies::Vector{String}
+    writeout_threshold::Float64 # Networks with this fitness or better will be saved
+    p_crossover::Float64 # Probability of crossover vs mutation
+    drop_portion::Float64 # Portion of worst networks to drop in each species
 end
 
 
@@ -77,6 +80,10 @@ settings = Dict(
     "ngenerations" => 400,
     "nreactions" => 5,
     "max_offspring_portion" => 0.1
+    "writeout_threshold" => 0.0088
+    "p_crossover" => 0.2
+    "drop_portion" => 0.1
+
 )
 
 function read_usersettings(path::String)
