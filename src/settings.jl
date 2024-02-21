@@ -79,9 +79,9 @@ settings = Dict(
     "populationsize" => 100,
     "ngenerations" => 400,
     "nreactions" => 5,
-    "max_offspring_portion" => 0.1
-    "writeout_threshold" => 0.0088
-    "p_crossover" => 0.2
+    "max_offspring_portion" => 0.1,
+    "writeout_threshold" => 0.0088,
+    "p_crossover" => 0.2,
     "drop_portion" => 0.1
 
 )

@@ -118,8 +118,9 @@ function main()
     for ID in keys(species_by_IDs)
         species = species_by_IDs[ID]
         println(species.topfitness)
-        if species.topfitness > 0.0088
-            writeoutnetwork(species.topnetwork, "runnerup_$(bestnetwork.ID)", directory="final_models")
+        if species.topfitness > settings.writeout_threshold
+            println("WRiting out runner up from species $(species.ID)")
+            writeoutnetwork(species.topnetwork, "runnerup_$(species.ID)", directory="final_models")
         end
     end
 
