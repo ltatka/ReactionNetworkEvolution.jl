@@ -7,6 +7,9 @@ include("evo_utils.jl")
 include("network_cleanup.jl")
 # include("settings.jl")
 
+using Dates
+println("Starting $(now())")
+
 function gettopmodel(species_by_IDs::Dict{String, Species})
     maxfitness = 0
     topnetwork = nothing
@@ -36,7 +39,7 @@ function main()
     DELTA = .65
     TARGET_NUM_SPECIES = 10
     SPECIES_MOD_STEP = 0.1
-    NUM_GENERATION = 2
+    NUM_GENERATION = 400
     break_gen = 100
 
     population = generate_network_population(settings, ng)
@@ -111,6 +114,15 @@ function main()
 
 
     println("Best fitness: $maxfitness")
+
+    for ID in keys(species_by_IDs)
+        species = species_by_IDs[ID]
+        println(species.topfitness)
+        if species.topfitness > 0.0088
+            writeoutnetwork(species.topnetwork, "runnerup_$(bestnetwork.ID)", directory="final_models")
+        end
+    end
+
     
     astr = convert_to_antimony(bestnetwork)
     writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)", directory="final_models")
@@ -118,12 +130,12 @@ function main()
 end
 
 
-main()
 
-# for i in 1:10
-#     @time main()
+
+for i in 1:10
+    @time main()
     
-# end
+end
 
 # astr = "S0 -> S0 + S0; k1*S0
 # S0 -> S2 + S2; k2*S0
