@@ -433,9 +433,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     ng::NetworkGenerator,
     objfunct::ObjectiveFunction;
     generation::Int64=0)
-    CHANCE_MUTATION = 0.8 #Chance of mutating network (vs crossover)
-    WORST_PORTION = 0.1 # The portion of each species to drop
-
+    
     newpopulation = Vector{ReactionNetwork}()
 
     # println("there are $(length(keys(networks_by_species)))species")
@@ -468,7 +466,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             end
             # Get rid of the worst networks in the species
             #TODO: Take a look at this if stuff doesn't seem to be working:
-            num_to_remove = Int64(floor(length(networks)*WORST_PORTION))
+            num_to_remove = Int64(floor(length(networks)*settings.drop_portion))
             networks = networks[totaloffspringadded+1:end - num_to_remove] # If we copied over an elite network already, skip it
             # For the rest of the new population:
             offspring_to_add = totaloffspring - totaloffspringadded
@@ -477,13 +475,14 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 network = networks[idx1]
                 # Decide to mutate it or cross it over
                 p = rand()
-                if p < CHANCE_MUTATION
-                    newnetwork = deepcopy(network)
-                    mutatenetwork!(settings, ng, newnetwork)
-                    push!(newpopulation, newnetwork)
-                else # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
+                if p < settings.p_crossover # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
+                    network2 = networks[idx2]
                     network2 = networks[idx2]
                     newnetwork = crossover(network, network2)
+                    push!(newpopulation, newnetwork)
+                else 
+                    newnetwork = deepcopy(network)
+                    mutatenetwork!(settings, ng, newnetwork)
                     push!(newpopulation, newnetwork)
                 end
             end
@@ -580,7 +579,7 @@ function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
 
 end
 
-function writeoutnetwork(network::ReactionNetwork, filename::String; directory::String="stalled_models")
+function writeoutnetwork(network::ReactionNetwork, filename::String; writeout_threshold::Float64=0.0088, directory::String="stalled_models")
     astr = convert_to_antimony(network)
     astr *= "\n#fitness: $(network.fitness)"
 
