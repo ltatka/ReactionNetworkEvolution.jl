@@ -124,3 +124,11 @@ function read_usersettings(path::String)
                    objectivespecies)
     return usersettings   
 end
+
+function writeout_settings(settings::Settings, filename::String)
+    settingsdict = Dict(key=>getfield(settings, key) for key in fieldnames(Settings))
+    stringsettings = JSON.json(settingsdict)
+    open(filename, "w") do f
+        write(f, stringsettings)
+    end
+end

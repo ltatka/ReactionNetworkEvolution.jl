@@ -25,13 +25,12 @@ function gettopmodel(species_by_IDs::Dict{String, Species})
     return topnetwork, maxfitness
 end
 
-function main()
+function main(batchnum::Int64)
     starttime = now()
     starttime = "$starttime"
     mkdir(starttime)
     tracker = Dict{String, Any}(
-        "stalled_model_path" => "",
-        "final_model_path" => "",
+        "batch_num" => batchnum,
         "top_individual_fitness" => Vector{Float64}(),
         "total_num_species" => Vector{Int64}(),
         "avg_species_distances" => Vector{Float64}(),
@@ -49,7 +48,7 @@ function main()
     DELTA = .65
     TARGET_NUM_SPECIES = 10
     SPECIES_MOD_STEP = 0.1
-    NUM_GENERATION = 400
+    NUM_GENERATION = 1
 
     population = generate_network_population(settings, ng)
 
@@ -114,9 +113,10 @@ function main()
     open(joinpath(starttime, "datatracker.json"), "w") do f
         write(f, stringtracker)
     end
+    writeout_settings(settings, joinpath(starttime, "settings.json"))
 end
 
-main()
+main(0)
 
 
 # using Profile

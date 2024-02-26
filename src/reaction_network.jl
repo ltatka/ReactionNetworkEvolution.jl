@@ -109,6 +109,7 @@ end
 function generate_reactionlist(ng::NetworkGenerator)
     #TODO: What is going on here with global innovation number 
     # global global_innovation_number
+
     reactionlist = Dict{Vector{Vector{String}},Reaction}()
     #reactionlist = Vector{Reaction}()
     for i in 1:ng.numreactions
