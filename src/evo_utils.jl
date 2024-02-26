@@ -374,7 +374,7 @@ end
 
  
 
-function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fitness::Float64, settings::Settings)
+function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fitness::Float64, settings::Settings; writeoutdir::String="stalled_models/")
     # Calculates how many offspring each species gets based on its share of the total fitness (sum of all individuals)
     # Returns a hashmap key, val = speciesID, float, number of offspring for that species
     total = settings.populationsize
@@ -390,9 +390,9 @@ function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fi
             species.numoffspring = 0
             networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
             if networks[1].fitness > settings.writeout_threshold
-                writeoutnetwork(networks[1], "HF_$(networks[1].ID).txt")
+                writeoutnetwork(networks[1], "HF_$(networks[1].ID).txt", directory=writeoutdir)
             else
-                writeoutnetwork(networks[1], "$(networks[1].ID).txt")
+                writeoutnetwork(networks[1], "$(networks[1].ID).txt", directory=writeoutdir)
             end
             
             # println("Writing out a network")
@@ -580,7 +580,7 @@ function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
 
 end
 
-function writeoutnetwork(network::ReactionNetwork, filename::String; writeout_threshold::Float64=0.0088, directory::String="stalled_models")
+function writeoutnetwork(network::ReactionNetwork, filename::String; directory::String="stalled_models")
     astr = convert_to_antimony(network)
     astr *= "\n#fitness: $(network.fitness)"
 
@@ -588,9 +588,6 @@ function writeoutnetwork(network::ReactionNetwork, filename::String; writeout_th
         mkdir(directory)
     end
     
-    if network.fitness > 0.88
-        filename = "highfitness_" * filename
-    end
     path = joinpath(directory, filename)
 
     open(path, "w") do file

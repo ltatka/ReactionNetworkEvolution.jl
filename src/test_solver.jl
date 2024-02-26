@@ -10,10 +10,6 @@ include("network_cleanup.jl")
 using Dates
 println("Starting $(now())")
 
-using TimerOutputs
-
-to = TimerOutput()
-
 function gettopmodel(species_by_IDs::Dict{String, Species})
     maxfitness = 0
     topnetwork = nothing
@@ -26,15 +22,23 @@ function gettopmodel(species_by_IDs::Dict{String, Species})
             topspecies = species
         end
     end
-    #println("species: $(topspecies.ID)")
-    #println("num offspring: $(topspecies.numoffspring)")
     return topnetwork, maxfitness
 end
 
-
-
-
 function main()
+    starttime = now()
+    starttime = "$starttime"
+    mkdir(starttime)
+    tracker = Dict{String, Any}(
+        "stalled_model_path" => "",
+        "final_model_path" => "",
+        "top_individual_fitness" => Vector{Float64}(),
+        "total_num_species" => Vector{Int64}(),
+        "avg_species_distances" => Vector{Float64}(),
+        "min_species_distances" => Vector{Float64}(),
+        "max_species_distances" => Vector{Float64}()
+    )
+    
     pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.json"
 
     settings = read_usersettings(pathtosettings)
@@ -45,11 +49,8 @@ function main()
     DELTA = .65
     TARGET_NUM_SPECIES = 10
     SPECIES_MOD_STEP = 0.1
-    NUM_GENERATION = 10#400
-    break_gen = 100
+    NUM_GENERATION = 400
 
-    
-    
     population = generate_network_population(settings, ng)
 
     
@@ -60,41 +61,26 @@ function main()
     species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
     fitnesses = []
-    println("starting")
 
     for i in 1:NUM_GENERATION
 
-        @timeit to "evaluate pop fitness" begin
-            species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
-        end
-        @timeit to "calculate offspring" begin
-            species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
-        end
-        # L = length(keys(species_by_IDs))
-        # println("$L species")
-        # if L <=1
-        #     println("generation $i: $L")
-        # end
+        species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+        species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
         
-
+        L = length(keys(species_by_IDs))
+        avg, mn, mx = get_diversity_stats(species_by_IDs)
+        push!(tracker["total_num_species"], L)
+        push!(tracker["avg_species_distances"], avg)
+        push!(tracker["min_species_distances"], mn)
+        push!(tracker["max_species_distances"], mx)
+        
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
-        # if maxfitness > 0.009
-        #     println("generation $i and model $(bestnetwork.ID), $(maxfitness)")
-        #     writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)_writeout", directory="final_models")
 
-        # end
-
-        push!(fitnesses, maxfitness)
+        push!(tracker["top_individual_fitness"], maxfitness)
     
-        
-        
-        @timeit to "reproduce networks" begin
-            population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
-        end
+        population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
+        species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
-        @timeit to "speciate" begin
-            species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
-        end
 
         
     end
@@ -102,8 +88,6 @@ function main()
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     bestnetwork, maxfitness = gettopmodel(species_by_IDs)
 
-
-    println("Best fitness: $maxfitness")
 
     # for ID in keys(species_by_IDs)
     #     species = species_by_IDs[ID]
@@ -116,12 +100,23 @@ function main()
 
     
     astr = convert_to_antimony(bestnetwork)
-    writeoutnetwork(bestnetwork, "model_$(bestnetwork.ID)", directory="final_models")
-    # return fitnesses
+    writeoutnetwork(bestnetwork, "bestmodel_$(bestnetwork.ID)", directory=joinpath(starttime,"final_models"))
+    
+    for ID in keys(species_by_IDs)
+        species = species_by_IDs[ID]
+        topnetwork = species.topnetwork
+        if topnetwork.ID != bestnetwork.ID
+            writeoutnetwork(topnetwork, "$(species.ID)", directory=joinpath(starttime, "final_models"))
+        end
+    end
+    println("writing out tracker")
+    stringtracker = JSON.json(tracker)
+    open(joinpath(starttime, "datatracker.json"), "w") do f
+        write(f, stringtracker)
+    end
 end
 
 main()
-show(to)
 
 
 # using Profile
