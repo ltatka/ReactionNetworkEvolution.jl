@@ -4,6 +4,6 @@
 "objectivespecies": ["S1", "S0"],
 "reactionprobabilities": [0.1, 0.4, 0.4, 0.1],
 "ngenerations": 1000,
-"populationsize": 150,
+"populationsize": 15,
 "portionelite": 0.0,
 "rateconstantrange": [0,15]}
