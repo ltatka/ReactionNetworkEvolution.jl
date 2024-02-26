@@ -23,7 +23,9 @@ DEFAULT_FITNESS = 0
 MAX_TIME = 10000
 MIN_NREACTIONS = 3
 MAX_NREACTIONS = 100
-SEED = 3
+SEED = 10281992
+
+Random.seed!(SEED)
 
 # global global_innovation_number = 0 #TODO: don't use global vars
 # global current_innovation_num_by_reaction = Dict()
@@ -61,7 +63,10 @@ struct Settings
     writeout_threshold::Float64 # Networks with this fitness or better will be saved
     p_crossover::Float64 # Probability of crossover vs mutation
     drop_portion::Float64 # Portion of worst networks to drop in each species
-
+    seed::Float64
+    starting_delta::Float64
+    delta_step::Float64
+    target_num_species::Int64
     # These must be defined in the JSON
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
@@ -85,7 +90,10 @@ settings = Dict(
     "writeout_threshold" => 0.0088,
     "p_crossover" => 0.2,
     "drop_portion" => 0.1,
-    "seed" => -1
+    "seed" => -1,
+    "starting_delta" => 0.65,
+    "delta_step" => 0.1,
+    "target_num_species" => 10
 )
 
 function read_usersettings(path::String)
@@ -102,10 +110,7 @@ function read_usersettings(path::String)
             settings[k] = j[k]
         end
     end
-    if settings["seed"] == -1
-        settings["seed"] = rand()
-    end
-    Random.seed!(settings["seed"])
+    settings["seed"] = SEED
     # Create settings object
     # p_rateconstantmutation = p_rateconstantmutation(settings["p_rateconstantmutation"])
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
@@ -122,6 +127,10 @@ function read_usersettings(path::String)
                    settings["writeout_threshold"],
                    settings["p_crossover"],
                    settings["drop_portion"],
+                   settings["seed"],
+                   settings["starting_delta"],
+                   settings["delta_step"],
+                   settings["target_num_species"],
                    specieslist,
                    initialconditions,
                    objectivedatapath,

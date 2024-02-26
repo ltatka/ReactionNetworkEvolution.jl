@@ -92,7 +92,11 @@ function get_diversity_stats(species_by_IDs::Dict{String, Species})
         d = calculate_distance(network1, network2)
         push!(distances, d)
     end
-    return mean(distances), minimum(distances), maximum(distances)
+    try
+        return mean(distances), minimum(distances), maximum(distances)
+    catch
+        return -1, -1, -1
+    end
 end
 
 function get_diversity_stats_from_list(networklist::Array{ReactionNetwork})
