@@ -41,6 +41,7 @@ function main(batchnum::Int64)
     pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.json"
 
     settings = read_usersettings(pathtosettings)
+    println(rand())
 
     objfunct = get_objectivefunction(settings)
     ng = get_networkgenerator(settings)

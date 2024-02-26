@@ -6,4 +6,5 @@
 "ngenerations": 1000,
 "populationsize": 15,
 "portionelite": 0.0,
-"rateconstantrange": [0,15]}
+"rateconstantrange": [0,15],
+"seed": 123}

@@ -29,7 +29,7 @@ SEED = 3
 # global current_innovation_num_by_reaction = Dict()
 # delta = 500 #????
 
-Random.seed!(SEED)
+
 
 struct ReactionProbabilities
     uniuni::Float64
@@ -105,6 +105,7 @@ function read_usersettings(path::String)
     if settings["seed"] == -1
         settings["seed"] = rand()
     end
+    Random.seed!(settings["seed"])
     # Create settings object
     # p_rateconstantmutation = p_rateconstantmutation(settings["p_rateconstantmutation"])
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])

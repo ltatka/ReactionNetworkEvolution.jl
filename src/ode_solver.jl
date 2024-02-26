@@ -2,26 +2,9 @@ using DifferentialEquations
 using Sundials
 using Plots
 using BenchmarkTools
-using FindPeaks1D
+
 include("reaction_network.jl")
 
-# # This is a macro that will kill a function if it takes too long. Useful 
-# # for troublesome differential equations
-# macro timeout(seconds, expr, fail)
-#     quote
-#         tsk = @task $expr
-#         schedule(tsk)
-#         Timer($seconds) do timer
-#             istaskdone(tsk) || Base.throwto(tsk, InterruptException())
-#         end
-#         try
-#             fetch(tsk)
-#         catch _;
-#             println("we got to the fail macro")
-#             $fail
-#         end
-#     end
-# end
 
 struct ObjectiveFunction
     objectivespecies::Vector{String} # Can be more than 1
