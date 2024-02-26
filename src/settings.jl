@@ -84,8 +84,8 @@ settings = Dict(
     "max_offspring_portion" => 0.1,
     "writeout_threshold" => 0.0088,
     "p_crossover" => 0.2,
-    "drop_portion" => 0.1
-
+    "drop_portion" => 0.1,
+    "seed" => -1
 )
 
 function read_usersettings(path::String)
@@ -101,6 +101,9 @@ function read_usersettings(path::String)
         if k in keys(j)
             settings[k] = j[k]
         end
+    end
+    if settings["seed"] == -1
+        settings["seed"] = rand()
     end
     # Create settings object
     # p_rateconstantmutation = p_rateconstantmutation(settings["p_rateconstantmutation"])

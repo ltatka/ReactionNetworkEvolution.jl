@@ -52,14 +52,12 @@ function main(batchnum::Int64)
 
     population = generate_network_population(settings, ng)
 
-    
+
     species_by_IDs = initialize_species_by_IDs(population)
     species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
-
-    fitnesses = []
 
     for i in 1:NUM_GENERATION
 
@@ -80,25 +78,11 @@ function main(batchnum::Int64)
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
         species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
-
-        
     end
     
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     bestnetwork, maxfitness = gettopmodel(species_by_IDs)
 
-
-    # for ID in keys(species_by_IDs)
-    #     species = species_by_IDs[ID]
-    #     println(species.topfitness)
-    #     if species.topfitness > settings.writeout_threshold
-    #         println("WRiting out runner up from species $(species.ID)")
-    #         writeoutnetwork(species.topnetwork, "runnerup_$(species.ID)", directory="final_models")
-    #     end
-    # end
-
-    
-    astr = convert_to_antimony(bestnetwork)
     writeoutnetwork(bestnetwork, "bestmodel_$(bestnetwork.ID)", directory=joinpath(starttime,"final_models"))
     
     for ID in keys(species_by_IDs)
@@ -108,7 +92,7 @@ function main(batchnum::Int64)
             writeoutnetwork(topnetwork, "$(species.ID)", directory=joinpath(starttime, "final_models"))
         end
     end
-    println("writing out tracker")
+
     stringtracker = JSON.json(tracker)
     open(joinpath(starttime, "datatracker.json"), "w") do f
         write(f, stringtracker)
