@@ -10,6 +10,10 @@ include("network_cleanup.jl")
 using Dates
 println("Starting $(now())")
 
+using TimerOutputs
+
+to = TimerOutput()
+
 function gettopmodel(species_by_IDs::Dict{String, Species})
     maxfitness = 0
     topnetwork = nothing
@@ -28,6 +32,8 @@ function gettopmodel(species_by_IDs::Dict{String, Species})
 end
 
 
+
+
 function main()
     pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.json"
 
@@ -39,11 +45,14 @@ function main()
     DELTA = .65
     TARGET_NUM_SPECIES = 10
     SPECIES_MOD_STEP = 0.1
-    NUM_GENERATION = 400
+    NUM_GENERATION = 10#400
     break_gen = 100
 
+    
+    
     population = generate_network_population(settings, ng)
 
+    
     species_by_IDs = initialize_species_by_IDs(population)
     species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
@@ -55,9 +64,12 @@ function main()
 
     for i in 1:NUM_GENERATION
 
-
-        species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
-        species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
+        @timeit to "evaluate pop fitness" begin
+            species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+        end
+        @timeit to "calculate offspring" begin
+            species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
+        end
         # L = length(keys(species_by_IDs))
         # println("$L species")
         # if L <=1
@@ -73,33 +85,20 @@ function main()
         # end
 
         push!(fitnesses, maxfitness)
-        # println(maxfitness)
+    
         
         
+        @timeit to "reproduce networks" begin
+            population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
+        end
 
-        population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
+        @timeit to "speciate" begin
+            species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
+        end
+
         
-        # if i == break_gen
-            
-        #     bestnetwork, maxfitness = gettopmodel(species_by_IDs)
-        #     # println("maxfitness: $maxfitness")
-        #     # astr =convert_to_antimony(bestnetwork)
-        #     # println(astr)
-        #     if maxfitness < 0.009
-        #         println("evolution failed")
-        #         break
-        #     end
-
-        # end
-        # push!(populationsizes, length(newpopulation))
-
-
-        species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
-
-
-        # println("This is generation $i and there are $(length(keys(networks_by_species)))")
     end
-    # println(species_by_IDs)
+    
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     bestnetwork, maxfitness = gettopmodel(species_by_IDs)
 
@@ -121,13 +120,22 @@ function main()
     # return fitnesses
 end
 
+main()
+show(to)
 
 
+# using Profile
+# using ProfileView
 
-for i in 1:100
-    main()
+# @profview main()
+
+# @profview main()
+# readlines()
+
+# for i in 1:100
+#     main()
     
-end
+# end
 
 # astr = "S0 -> S0 + S0; k1*S0
 # S0 -> S2 + S2; k2*S0
