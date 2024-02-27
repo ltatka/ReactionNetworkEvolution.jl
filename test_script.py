@@ -28,8 +28,8 @@ def plot_several_models(filepath, rows, cols):
     plt.show()
 
 
-path ="/home/hellsbells/Desktop/networkEv/src/final_models"
-plot_several_models(path, 5, 2)
+# path ="/home/hellsbells/Desktop/networkEv/src/final_models"
+# plot_several_models(path, 5, 2)
 
 def make_truth_csv(model, filename, simulation=[0, 1, 10]):
     if not filename.endswith(".csv"):
@@ -82,18 +82,20 @@ S2 = 9.0
 """
 
 evolvedmodel = """
-S1 + S2 -> S1 + S1; k1*S1*S2
-S0 + S2 -> S0; k2*S0*S2
-S0 + S2 -> S2; k3*S0*S2
-S0 -> S1 + S2; k4*S0
-S0 + S1 -> S0 + S0; k5*S0*S1
-S1 -> S1 + S2; k6*S1
-k1 = 8.937946155170806
-k2 = 14.76786207826798
-k3 = 53.47275184203954
-k4 = 19.91590161265952
-k5 = 4.5478519508971145
-k6 = 8.546208302755343
+S1 -> S0 + S1; k1*S1
+S1 + S1 -> S2; k2*S1*S1
+S1 -> S1 + S1; k3*S1
+S1 -> S0 + S2; k4*S1
+S1 + S2 -> S1 + S2; k5*S1*S2
+S2 -> S0; k6*S2
+S0 + S2 -> S1 + S1; k7*S0*S2
+k1 = 24.861737083698415
+k2 = 0.49830517858451234
+k3 = 17.545680806541643
+k4 = 3.8472700009832663
+k5 = 11.989871428082264
+k6 = 13.54027913398852
+k7 = 6.64983596437539
 S0 = 1.0
 S1 = 5.0
 S2 = 9.0
@@ -101,7 +103,7 @@ S2 = 9.0
 
 # compare_model_plots(model, evolvedmodel, simulation=[0, 10, 1000])
 
-# r = te.loada(evolvedmodel)
-# r.simulate(0,10,50)
-# r.plot()
+r = te.loada(evolvedmodel)
+r.simulate(0,10,50)
+r.plot()
 

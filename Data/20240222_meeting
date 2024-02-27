@@ -1,0 +1,12 @@
+- insights into trade offs of fitness vs computational trade off
+- test with seeding oscillators
+- ROI on computational investment
+- run for 1000 trials x 2
+- More generations?
+-- THings might not be evenly separated.
+- seed with oscillator that is broken, do you recover the same one or get different ones
+- profile to see what the integrator is taking up
+- Explore DoE
+-- add tournament selecton option, look at time and yield, also try roulette, for tournament allow to pick from total population or just the bottom guy. 
+-- 15% yield
+- preload something that is almost an oscillator and then see how fast you recover it to do for design of experiments. Speeds up and allows faster evaluation of features
