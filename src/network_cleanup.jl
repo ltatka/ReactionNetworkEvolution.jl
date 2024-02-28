@@ -153,9 +153,9 @@ end
 
 function process_species_lines(specieslines)
     specieslines = split(specieslines[1], " ")
-    specieslist = []
-    boundary = []
-    floating = []
+    specieslist = Vector{String}()
+    boundary = Vector{String}()
+    floating = Vector{String}()
     for str in specieslines[2:end] # first item will be "species"
         str = replace(str, "," => "")
         str = replace(str, ";" => "")
@@ -168,6 +168,15 @@ function process_species_lines(specieslines)
         push!(specieslist, str)
     end
     return specieslist, boundary, floating
+end
+
+function substring_to_string(substring::Vector{SubString{String}})
+    # When splitting a string, the result is a vector of substrings, we want a vector of strings
+    newstrings = Vector{String}()
+    for s in substring
+        push!(newstrings, "$s")
+    end
+    return newstrings
 end
 
 function process_reaction_lines(reactionlines)
@@ -183,8 +192,8 @@ function process_reaction_lines(reactionlines)
         line, ratesymbol = split(line, ";") # Remove rate law (for now)
         # Substrates and products
         substrates, products = split(line, "->")
-        substrates = split(substrates, "+")
-        products = split(products, "+")
+        substrates = substring_to_string(split(substrates, "+"))
+        products = substring_to_string(split(products, "+"))
         # Get the symbol for the rate constant
         ratesymbol = replace(ratesymbol,"*" => "")
         for s in substrates
@@ -218,7 +227,7 @@ function process_rateconstant_lines(rateconstantlines)
 end
 
 function assign_rates_to_reaction(reactions_by_ratesymbol, rates_by_ratesymbol)
-    reactionlist = Dict()
+    reactionlist = Dict{Vector{Vector{String}}, Reaction}()
     for k in keys(reactions_by_ratesymbol)
         reactions_by_ratesymbol[k].rateconstant = rates_by_ratesymbol[k]
         reactionlist[reactions_by_ratesymbol[k].key] = reactions_by_ratesymbol[k]
@@ -227,7 +236,7 @@ function assign_rates_to_reaction(reactions_by_ratesymbol, rates_by_ratesymbol)
 end
 
 function get_initialcondition_values(specieslist, initialconditions, sublist)
-    sublist_initialconditions = []
+    sublist_initialconditions = Vector{Float64}()
     for s in sublist
         idx = findfirst(item -> item == s, specieslist)
         push!(sublist_initialconditions, initialconditions[idx])
@@ -277,7 +286,7 @@ function convert_from_antimony(filepath::String)
     # Open antimony file and parse contents
     te = pyimport("tellurium")
     rawantstr = read(filepath, String)
-    println(rawantstr) #This is the non-standardized antimony string
+    
     r = te.loada(rawantstr)
     antstring = r.getCurrentAntimony() # This is the standardized antimony string
     # Break up lines by category. Eg. species, reactions, etc
@@ -294,7 +303,7 @@ function convert_from_antimony(filepath::String)
     reactionlist = assign_rates_to_reaction(reactions_by_ratesymbol, rates_by_ratesymbol)
     # Construct the ReactionNetwork
     network = ReactionNetwork(specieslist, all_initialconditions, reactionlist, floatingspecies,
-        boundaryspecies, floating_initialcondtions, boundary_initialconditions, "seedmodel", 1E9)
+        boundaryspecies, floating_initialcondtions, boundary_initialconditions, 0.0, "seedmodel", "seedmodel")
     return network
 end
     

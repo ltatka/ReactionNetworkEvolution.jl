@@ -250,28 +250,24 @@ function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::React
     return network
 end
 
-# function mutate_nonelite_population(settings::Settings, ng::NetworkGenerator, population)
-#     nelite = Int(floor(settings.portionelite*length(population)))
-#     for i in (nelite+1):length(population)
-#         population[i] = mutatenetwork!(settings, ng, population[i])
-#     end
-#     return population
-# end
+
+
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = Vector{ReactionNetwork}()
-    # starternetwork = generate_random_network(ng)
-    # for i in 1:settings.populationsize
-    #     push!(population, deepcopy(starternetwork))
-    # end
-    for i in 1:settings.populationsize
-        network = generate_random_network(ng)
-        push!(population, network)
+
+    if settings.use_seed_network
+        seednetwork = convert_from_antimony(settings.seed_network_path)
+        for i in 1:settings.populationsize
+            push!(population, deepcopy(seednetwork))
+        end
+    else
+        for i in 1:settings.populationsize
+            network = generate_random_network(ng)
+            push!(population, network)
+        end
     end
-    # # Replace first network with seed network if applicable
-    # if ng.seedmodel != Nothing #!isnothing(ng.seedmodel)
-    #     population[1] = ng.seedmodel
-    # end
+
     return population
 end
 

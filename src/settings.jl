@@ -23,7 +23,7 @@ DEFAULT_FITNESS = 0
 MAX_TIME = 10000
 MIN_NREACTIONS = 3
 MAX_NREACTIONS = 100
-SEED = 111
+SEED = 54321
 
 Random.seed!(SEED)
 
@@ -67,6 +67,8 @@ struct Settings
     starting_delta::Float64
     delta_step::Float64
     target_num_species::Int64
+    use_seed_network::Bool # Start with a seed network
+    seed_network_path::String 
     # These must be defined in the JSON
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
@@ -93,7 +95,9 @@ settings = Dict(
     "seed" => -1,
     "starting_delta" => 0.65,
     "delta_step" => 0.1,
-    "target_num_species" => 10
+    "target_num_species" => 10,
+    "use_seed_network" => false,
+    "seed_network_path" => ""
 )
 
 function read_usersettings(path::String)
@@ -131,6 +135,8 @@ function read_usersettings(path::String)
                    settings["starting_delta"],
                    settings["delta_step"],
                    settings["target_num_species"],
+                   settings["use_seed_network"],
+                   settings["seed_network_path"],
                    specieslist,
                    initialconditions,
                    objectivedatapath,
