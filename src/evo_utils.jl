@@ -460,11 +460,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 push!(newpopulation, network)
             end
         elseif totaloffspring > 1 # Total offspring greater than 1
-            # Directly copy the best network if there are five or more individuals in the species
-            if length(networks) >= 5
-                push!(newpopulation, deepcopy(networks[1]))
-                totaloffspringadded += 1
-            end
+            push!(newpopulation, deepcopy(networks[1]))
             # Get rid of the worst networks in the species
             #TODO: Take a look at this if stuff doesn't seem to be working:
             num_to_remove = Int64(floor(length(networks)*settings.drop_portion))
@@ -596,50 +592,3 @@ function writeoutnetwork(network::ReactionNetwork, filename::String; directory::
     end
 end
 
-
-
-# function evolve(settings::Settings, ng::NetworkGenerator, objfunct::ObjectiveFunction; writeout=true)
-#     # Generate a population consisting of single random network
-#     population = generate_network_population(settings, ng)
-#     # Make a dictionary of the networks by their species ID
-#     networks_by_species = Dict(population[1].ID => population)
-#     for i in 1:settings.ngenerations
-#         population = sortbyfitness(population)
-#         # originset = Set()
-#         # for model in population
-#         #     push!(originset, model.ID)
-#         # end
-#         # if length(originset) < 4
-#         #     return nothing
-#         # end
-#         # push!(NUM_VARIANTS, length(originset))
-#         # if i%10 == 0
-#         #     print_top_fitness(1, population)
-#         #     println("set size: $(length(originset))")
-#         # end
-#         # println(last(population).fitness)
-#         population = mutate_nonelite_population(settings, ng, population)
-#         population = evaluate_population_fitness(objfunct, population)
-#         population = select_new_population(settings, population)
-        
-#         if writeout
-#             fname = "generation_$i.txt"
-#             open(fname, "a") do file
-#                 for model in population
-#                     write(file, "$(model.ID)\n")
-#                 end
-#             close(file)
-#             end
-#             fname = "generation_$(i)_fitness"
-#             open(fname, "a") do file
-#                 for model in population
-#                     write(file, "$(model.fitness)\n")
-#                 end
-#             close(file)
-#             end
-#         end
-
-#     end
-#     population = sortbyfitness(population)
-#     return population
-# end
