@@ -176,13 +176,5 @@ end
 
 
 
-function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path::String=nothing)
-    solution = solve_ode(objfunct, network)
-    plt = plot(solution)
-    if isnothing(path)
-        path = dirname(pwd()) * "$(network.ID).png"
-    end
-    savefig(plt, path)
-    return plt
-end
+
 

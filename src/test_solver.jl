@@ -38,6 +38,7 @@ function main(batchnum::Int64)
         "max_species_distances" => Vector{Float64}()
     )
     
+    # pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/seed_oscillator.json"
     pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.json"
 
     settings = read_usersettings(pathtosettings)
@@ -57,6 +58,8 @@ function main(batchnum::Int64)
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
+    println(settings.ngenerations)
+
     for i in 1:settings.ngenerations
 
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
@@ -70,8 +73,13 @@ function main(batchnum::Int64)
         push!(tracker["max_species_distances"], mx)
         
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
+        writeoutnetwork(bestnetwork, "$i", directory=joinpath(starttime, "intermediate_models"))
 
         push!(tracker["top_individual_fitness"], maxfitness)
+
+        # if i%25 == 0
+        #     println("gen $i: $maxfitness")
+        # end
     
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
         species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
@@ -98,10 +106,13 @@ function main(batchnum::Int64)
     writeout_settings(settings, joinpath(starttime, "settings.json"))
 end
 
+
+
 num_batches = 100
 
 for i in 1:num_batches
     main(i)
+
 end
 
 

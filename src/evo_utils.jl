@@ -592,3 +592,22 @@ function writeoutnetwork(network::ReactionNetwork, filename::String; directory::
     end
 end
 
+# function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path::String=nothing)
+#     solution = solve_ode(objfunct, network)
+#     plt = plot(solution)
+#     if isnothing(path)
+#         path = dirname(pwd()) * "$(network.ID).png"
+#     end
+#     savefig(plt, path)
+#     return plt
+# end
+
+# function plot_timeseries_from_file(objfunct:: ObjectiveFunction, network_path::String, save_path::String)
+#     network = convert_from_antimony(network_path)
+#     solution = solve_ode(objfunct, network)
+#     plt = Plots.plot(solution)
+#     # save_pa = dirname(pwd()) * "$(network.ID).png"
+#     savefig(plt, save_pathpath)
+#     return plt
+# end
+

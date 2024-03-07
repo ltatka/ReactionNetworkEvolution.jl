@@ -1,7 +1,33 @@
 import JSON
 include("reaction_network.jl")
+include("evo_utils.jl")
+include("settings.jl")
+include("ode_solver.jl")
+include("network_cleanup.jl")
+using Plots
 
 
+function plot_timeseries_from_file(objfunct:: ObjectiveFunction, network_path::String, save_path::String)
+    network = convert_from_antimony(network_path)
+    solution = solve_ode(objfunct, network)
+    plt = Plots.plot(solution)
+    # save_pa = dirname(pwd()) * "$(network.ID).png"
+    savefig(plt, save_path)
+    return plt
+end
+
+
+inpath = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_fixed_oscillators_all/bestmodel_n7QEsETEzFmy"
+outpath = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_fixed_oscillators_all/test"
+pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.json"
+
+settings = read_usersettings(pathtosettings)
+objfunct = get_objectivefunction(settings)
+
+network = convert_from_antimony(inpath)
+f = evaluate_fitness(objfunct, network)
+println(f)
+# plot_timeseries_from_file(objfunct, inpath, outpath)
 
 # rs = ReactionSet()
 # pushreaction(rs, r1)

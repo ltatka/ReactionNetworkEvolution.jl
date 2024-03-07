@@ -3,9 +3,9 @@
 "objectivedatapath": "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.csv",
 "objectivespecies": ["S1", "S0"],
 "reactionprobabilities": [0.1, 0.4, 0.4, 0.1],
-"ngenerations": 1,
-"populationsize": 20,
+"ngenerations": 200,
+"populationsize": 150,
 "portionelite": 0.0,
-"rateconstantrange": [0,15],
+"rateconstantrange": [0,50],
 "use_seed_network": true,
 "seed_network_path": "/home/hellsbells/Desktop/networkEv/test_files/test_oscillator"}
