@@ -227,7 +227,7 @@ S2 = 9.0
 #fitness: 0.009997643507665454"""
 
 
-inputpath = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/allow_champion_mutation/all_networks"
+inputpath = "/home/hellsbells/Desktop/Data/BenchmarkTests/allow_champion_mutation/all_networks"
 outputpath = os.path.join(Path(inputpath).parent.absolute(), "success")
 
 evaluate_trials_best_models(inputpath, outputpath, bestonly=True)
