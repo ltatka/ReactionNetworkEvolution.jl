@@ -44,6 +44,7 @@ def is_eigen_oscillator(r, writeoutpath=None):
             if r.S0 < 0 or r.S1 < 0 or r.S2 < 0:
                 if writeoutpath is not None:
                     f = open(f"{writeoutpath}_flagged", "w")
+                    r.reset()
                     astr = r.getCurrentAntimony()
                     f.write(astr)
                     f.close()
@@ -228,7 +229,7 @@ def fix_flagged_models(inputpath):
 
 
 
-inputpath = "/home/hellsbells/Desktop/Data/batch_2024-03-08T11:26:56.563"
+inputpath = "/home/hellsbells/Desktop/Data/tournamentselect/batch_2024-03-08T11:26:56.563"
 outputpath = os.path.join(Path(inputpath).parent.absolute(), "success")
 
 evaluate_trials_best_models(inputpath, outputpath, bestonly=True)
