@@ -25,9 +25,10 @@ function gettopmodel(species_by_IDs::Dict{String, Species})
     return topnetwork, maxfitness
 end
 
-function main(batchnum::Int64)
+function main(batchnum::Int64, parentdir::String)
     starttime = now()
     starttime = "$starttime"
+    starttime = joinpath(parentdir, starttime)
     mkdir(starttime)
     tracker = Dict{String, Any}(
         "batch_num" => batchnum,
@@ -110,11 +111,14 @@ end
 
 
 
-num_batches = 100
+num_batches = 1
 
 for i in 1:num_batches
-    main(i)
-
+    starttime = now()
+    starttime = "$starttime"
+    path = joinpath("/home/hellsbells/Desktop/Data/", "batch_$starttime")
+    mkdir(path)
+    main(i, path)
 end
 
 
