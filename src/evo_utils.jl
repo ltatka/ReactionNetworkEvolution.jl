@@ -440,8 +440,6 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     # println("there are $(length(keys(networks_by_species)))species")
 
     for speciesID in keys(species_by_IDs)
-
-
         species = species_by_IDs[speciesID]
         networks = sortbyfitness!(species.networks)
         # println("species $species top fitness is $(networks[1].fitness)")
@@ -464,7 +462,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             # Get rid of the worst networks in the species
             #TODO: Take a look at this if stuff doesn't seem to be working:
             num_to_remove = Int64(floor(length(networks)*settings.drop_portion))
-            networks = networks[totaloffspringadded+1:end - num_to_remove] # If we copied over an elite network already, skip it
+            networks = networks[1:end - num_to_remove] # REMOVED THIS: If we copied over an elite network already, skip it
             # For the rest of the new population:
             offspring_to_add = totaloffspring - totaloffspringadded
             for i in 1:offspring_to_add
@@ -522,6 +520,19 @@ function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork
     # end
 
     # return c1*(num_diff)/N + c2*W/N
+end
+
+function tournamentselect(species::Species)
+    # Select a network from a species via tournament, returns the (unmodifed) selected network
+    networks = species.networks
+    idx1, idx2 = rand(1:length(networks), 2)
+    network1 = networks[idx1]
+    network2 = networks[idx2]
+    if network1.fitness > network2.fitness
+        return network1
+    else
+        return network2
+    end
 end
 
 function crossover(network1::ReactionNetwork, network2::ReactionNetwork)

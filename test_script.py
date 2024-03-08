@@ -302,48 +302,32 @@ path = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_fixed
 # r.plot()
 
 r = te.loada("""
-// Created by libAntimony v2.12.0
-// Compartments and Species:
-species S0, S2, S1;
+S1 -> S0; k1*S1
+S1 -> S0 + S2; k2*S1
+S0 -> S0; k3*S0
+S2 -> S1 + S2; k4*S2
+S2 -> S2 + S2; k5*S2
+S2 -> S1 + S1; k6*S2
+S1 -> S0 + S1; k7*S1
+S2 -> S2; k8*S2
+S1 -> S1 + S1; k9*S1
+S0 + S2 -> S1; k10*S0*S2
+k1 = 1.3355830199967424
+k2 = 6.199622064576581
+k3 = 16.150392790421833
+k4 = 38.02237831497656
+k5 = 37.46739995356413
+k6 = 8.959619122065492
+k7 = 0.5392559497077558
+k8 = 12.82710247392449
+k9 = 33.92894226184361
+k10 = 21.410567320190495
+S0 = 1.0
+S1 = 5.0
+S2 = 9.0
 
-// Reactions:
-_J0: S0 -> S2; k1*S0;
-_J1: S0 + S0 -> S0 + S0; k2*S0*S0;
-_J2: S0 + S0 -> S0 + S1; k3*S0*S0;
-_J3: S1 + S2 -> S0 + S2; k4*S1*S2;
-_J4: S0 + S0 -> S0; k5*S0*S0;
-_J5: S2 -> S1 + S1; k6*S2;
-_J6: S0 + S2 -> S1 + S2; k7*S0*S2;
-_J7: S1 -> S0 + S1; k8*S1;
-_J8: S2 -> S0 + S2; k9*S2;
-_J9: S2 -> S0 + S0; k10*S2;
-_J10: S0 + S2 -> S1; k11*S0*S2;
-_J11: S0 + S2 -> S2 + S2; k12*S0*S2;
-_J12: S2 -> S0; k13*S2;
 
-// Species initializations:
-S0 = 1
-S2 = 5
-S1 = 9
-
-// Variable initializations:
-k1 = 6.46981462863842;
-k2 = 8.45908757038853;
-k3 = 17.2918260552815;
-k4 = 9.84372573972928;
-k5 = 1.62729410144087;
-k6 = 14.5741889550447;
-k7 = 4.47519705587854;
-k8 = 13.7866442490881;
-k9 = 4.28733574970996;
-k10 = 12.3033362468259;
-k11 = 0.346239403079602;
-k12 = 5.83341116492254;
-k13 = 18.5987218526173;
-
-// Other declarations:
-const k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13;
-#fitness: 0.032758383332254254""")
+""")
 # r.integrator.relative_tolerance = 1e-10
 # r.reset()
 # m = r.simulate(0, 50, 100000)
@@ -354,9 +338,9 @@ const k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13;
 # print(r.S0, r.S1, r.S2)
 # r.reset()
 print(is_eigen_oscillator(r))
-
-# r.simulate()
-# r.plot()
+r.reset()
+r.simulate(0, 10, 200)
+r.plot()
 #
 # r.steadyState()
 # print(r.getFullEigenValues())

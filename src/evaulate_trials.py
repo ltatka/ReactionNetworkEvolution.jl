@@ -227,8 +227,8 @@ S2 = 9.0
 #fitness: 0.009997643507665454"""
 
 
-inputpath = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_fixed"
-outputpath = os.path.join(Path(inputpath).parent.absolute(), "1000_trials_fixed_oscillators_newalgo_fixed2")
+inputpath = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/allow_champion_mutation/all_networks"
+outputpath = os.path.join(Path(inputpath).parent.absolute(), "success")
 
 evaluate_trials_best_models(inputpath, outputpath, bestonly=True)
 

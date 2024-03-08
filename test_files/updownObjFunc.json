@@ -5,5 +5,5 @@
 "reactionprobabilities": [0.1, 0.4, 0.4, 0.1],
 "ngenerations": 500,
 "populationsize": 200,
-"portionelite": 0.0,
-"rateconstantrange": [0,15]}
+"portionelite": 0.0
+}

@@ -76,11 +76,13 @@ function main(batchnum::Int64)
         writeoutnetwork(bestnetwork, "$i", directory=joinpath(starttime, "intermediate_models"))
 
         push!(tracker["top_individual_fitness"], maxfitness)
+        
+        if maxfitness > 0.02
+            """It is possible to have oscillators with a lower fitness than this, 
+            but seems that any network with this fitness or higher is certainly an oscillator"""
+            break 
+        end
 
-        # if i%25 == 0
-        #     println("gen $i: $maxfitness")
-        # end
-    
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
         species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
