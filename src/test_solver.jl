@@ -39,8 +39,9 @@ function main(batchnum::Int64, parentdir::String)
         "max_species_distances" => Vector{Float64}()
     )
     
+    cwd = pwd()
     # pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/seed_oscillator.json"
-    pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/updownObjFunc.json"
+    pathtosettings = joinpath(cwd, "test_files/updownObjFunc.json")
 
     settings = read_usersettings(pathtosettings)
 
@@ -111,12 +112,16 @@ end
 
 
 
-num_batches = 1
+num_batches = 100
 
 for i in 1:num_batches
     starttime = now()
     starttime = "$starttime"
-    path = joinpath("/home/hellsbells/Desktop/Data/", "batch_$starttime")
+    # Create a directory outside of the networkEv dir to store output
+    parent = dirname(pwd())
+    outputdir = joinpath(parent, "Data")
+    # Create a directory of output of this batch in the data dir
+    path = joinpath(outputdir, "batch_$starttime")
     mkdir(path)
     main(i, path)
 end
