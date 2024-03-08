@@ -28,7 +28,7 @@ def check_eigens(eigen_array):
             return True
     return False
 
-def is_eigen_oscillator(r, writeoutpath):
+def is_eigen_oscillator(r, writeoutpath=None):
     hasgoodvals = False
     # 1. Measure eigen values
     # eigens = r.getFullEigenValues()
@@ -42,10 +42,11 @@ def is_eigen_oscillator(r, writeoutpath):
         hasgoodvals = check_eigens(eigens)
         if hasgoodvals:
             if r.S0 < 0 or r.S1 < 0 or r.S2 < 0:
-                f = open(f"{writeoutpath}_flagged", "w")
-                astr = r.getCurrentAntimony()
-                f.write(astr)
-                f.close()
+                if writeoutpath is not None:
+                    f = open(f"{writeoutpath}_flagged", "w")
+                    astr = r.getCurrentAntimony()
+                    f.write(astr)
+                    f.close()
                 return False
             else:
                 return True
@@ -113,7 +114,7 @@ def evaluate_models_dir(path, outputpath, bestonly=False):
                 full_model_path = os.path.join(path, model_file)
                 r, fitness = load_model(full_model_path)
                 outpath = os.path.join(outputpath, model_file)
-                if is_eigen_oscillator(r, outpath):
+                if is_eigen_oscillator(r, writeoutpath=outpath):
                     oscillators += 1
                     writeout_model(r, fitness, outpath)
                 break
@@ -122,7 +123,7 @@ def evaluate_models_dir(path, outputpath, bestonly=False):
             r, fitness = load_model(full_model_path)
             models_evaluated += 1
             outpath = os.path.join(outputpath, model_file)
-            if is_eigen_oscillator(r, outpath):
+            if is_eigen_oscillator(r, writeoutpath=outpath):
                 oscillators += 1
                 writeout_model(r, fitness, outpath)
     return models_evaluated, oscillators
@@ -137,9 +138,12 @@ def evaluate_trials_best_models(inputpath, outputpath, childdir="final_models", 
         fullpath = os.path.join(inputpath, file)
         if childdir:
             fullpath = os.path.join(fullpath, childdir)
-        total, oscs = evaluate_models_dir(fullpath, outputpath, bestonly=bestonly)
-        models_evaluated += total
-        oscillators += oscs
+        try:
+            total, oscs = evaluate_models_dir(fullpath, outputpath, bestonly=bestonly)
+            models_evaluated += total
+            oscillators += oscs
+        except:
+            continue
         if models_evaluated % 50 == 0:
             print(f"Evaluated: {models_evaluated}")
         # for model_file in os.listdir(fullpath):
@@ -187,48 +191,46 @@ def plot_trials(inputpath, rows, cols, childdir="final_models"):
                 break
     plt.show()
 
-astr = """
-S0 -> S0 + S0; k1*S0
-S0 + S1 -> S1; k2*S0*S1
-S2 + S2 -> S1 + S2; k3*S2*S2
-S0 + S2 -> S1 + S1; k4*S0*S2
-S0 + S1 -> S1 + S1; k5*S0*S1
-S2 -> S1 + S1; k6*S2
-S2 -> S2 + S2; k7*S2
-S0 + S2 -> S1 + S2; k8*S0*S2
-S0 + S2 -> S0 + S2; k9*S0*S2
-S0 -> S0 + S1; k10*S0
-S2 -> S2; k11*S2
-S0 + S2 -> S2; k12*S0*S2
-S1 -> S0 + S0; k13*S1
-S0 + S1 -> S0 + S0; k14*S0*S1
-S2 -> S1; k15*S2
-S1 -> S1; k16*S1
-k1 = 2.272385348370609
-k2 = 1.9020192182903577
-k3 = 5.657195202706555
-k4 = 16.639776452983458
-k5 = 2.429586518569796
-k6 = 1.8258797353770664
-k7 = 34.060224078166655
-k8 = 12.24006942737817
-k9 = 2.4485979532961055
-k10 = 18.86476105832696
-k11 = 4.553327991133054
-k12 = 14.912567209288481
-k13 = 2.87090423417964
-k14 = 6.142179542580343
-k15 = 0.3809915986054561
-k16 = 2.6863886555898477
-S0 = 1.0
-S1 = 5.0
-S2 = 9.0
-
-#fitness: 0.009997643507665454"""
+def fix_model(astr):
+    split_astr = astr.split("\n")
+    for i in range(len(split_astr)):
+        if "->" in split_astr[i]:
+            split_astr[i] = "#" + split_astr[i]
+            newastr = "\n".join(split_astr)
+            r = te.loada(newastr)
+            if is_eigen_oscillator(r):
+                return newastr
+            # If the model is not fixed, then uncomment the line
+            split_astr[i] = split_astr[i][1:]
+    # If the model can't be fixed, return None
+    return None
+def fix_flagged_models(inputpath):
+    # input path is where all the final oscillators are stored.
+    for file in os.listdir(inputpath):
+        if "flagged" in file:
+            full_model_path = os.path.join(inputpath, file)
+            f = open(full_model_path, "r")
+            astr = f.read()
+            f.close()
+            for line in astr.split("\n"):
+                if line.startswith("#fitness"):
+                    fitness = line.split(" ")[1]
+                    fitness = float(f)
+            fixed_astr = fix_model(astr)
+            if fixed_astr is not None:
+                fixed_astr += f"\nprevious fitness: {fitness}"
+                f = open(full_model_path, "w")
+                f.write(fixed_astr)
+                f.close()
+                print(f"successfully fixed model {file}")
+            else:
+                print("unable to fix model")
 
 
-inputpath = "/home/hellsbells/Desktop/Data/BenchmarkTests/allow_champion_mutation/all_networks"
+
+inputpath = "/home/hellsbells/Desktop/Data/batch_2024-03-08T11:26:56.563"
 outputpath = os.path.join(Path(inputpath).parent.absolute(), "success")
 
 evaluate_trials_best_models(inputpath, outputpath, bestonly=True)
+fix_flagged_models(outputpath)
 
