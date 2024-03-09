@@ -1,6 +1,8 @@
 # include("reaction_network.jl")
-include("settings.jl")
-include("reaction_network.jl")
+# include("settings.jl")
+# include("reaction_network.jl")
+include("ode_solver.jl")
+include("network_cleanup.jl")
 using Distributions
 using CSV
 using DataFrames
@@ -437,12 +439,9 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     
     newpopulation = Vector{ReactionNetwork}()
 
-    # println("there are $(length(keys(networks_by_species)))species")
-
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
         networks = sortbyfitness!(species.networks)
-        # println("species $species top fitness is $(networks[1].fitness)")
         totaloffspringadded = 0
         totaloffspring = species.numoffspring
         # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
@@ -466,13 +465,17 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             # For the rest of the new population:
             offspring_to_add = totaloffspring - totaloffspringadded
             for i in 1:offspring_to_add
-                idx1, idx2 = rand(1:length(networks), 2) #TODO: this does NOT prevent same network from being selected twice, which might be good if we only have one more slot to fill
-                network = networks[idx1]
+                if settings.tournamentselect
+                    network = tournamentselect(species)
+                    network2 = tournamentselect(species)
+                else
+                    idx1, idx2 = rand(1:length(networks), 2) #TODO: this does NOT prevent same network from being selected twice, which might be good if we only have one more slot to fill
+                    network = networks[idx1]
+                    network2 = networks[idx2]
+                end
                 # Decide to mutate it or cross it over
                 p = rand()
                 if p < settings.p_crossover # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
-                    network2 = networks[idx2]
-                    network2 = networks[idx2]
                     newnetwork = crossover(network, network2)
                     push!(newpopulation, newnetwork)
                 else 
@@ -601,6 +604,21 @@ function writeoutnetwork(network::ReactionNetwork, filename::String; directory::
         write(file, astr)
     close(file)
     end
+end
+
+function gettopmodel(species_by_IDs::Dict{String, Species})
+    maxfitness = 0
+    topnetwork = nothing
+    topspecies = nothing
+    for speciesID in keys(species_by_IDs)
+        species = species_by_IDs[speciesID]
+        if species.topfitness > maxfitness
+            maxfitness = species.topfitness
+            topnetwork = species.topnetwork
+            topspecies = species
+        end
+    end
+    return topnetwork, maxfitness
 end
 
 # function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path::String=nothing)

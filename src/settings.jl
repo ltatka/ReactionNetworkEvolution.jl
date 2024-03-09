@@ -17,13 +17,13 @@
 # Time ranges, step size, number of data points  
 # 
 using Random
-import JSON
+using JSON
 
 DEFAULT_FITNESS = 0
 MAX_TIME = 10000
 MIN_NREACTIONS = 3
 MAX_NREACTIONS = 100
-SEED = 1111
+SEED = 11112
 
 Random.seed!(SEED)
 
