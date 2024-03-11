@@ -5,17 +5,13 @@ import DataFrames
 import JSON
 import Dates
 
-
-# include("ode_solver.jl")
 include("evo_utils.jl")
-# include("network_cleanup.jl")
-# include("settings.jl")
 
+function evolve_networks(batchnum::Int64, parentdir::String;  
+    ngenerations::Int64=-1, 
+    populationsize::Int64=-1, 
+    pathtosettings::String="")
 
-println("Starting $(now())")
-
-
-function main(batchnum::Int64, parentdir::String)
     starttime = now()
     starttime = "$starttime"
     starttime = joinpath(parentdir, starttime)
@@ -29,11 +25,15 @@ function main(batchnum::Int64, parentdir::String)
         "max_species_distances" => Vector{Float64}()
     )
     
-    cwd = pwd()
-    # pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/seed_oscillator.json"
-    pathtosettings = joinpath(cwd, "test_files/updownObjFunc.json")
+    # If no path to settings is supplied, use default settings
+    # TODO: Maybe I should change this so there's not a separate file for default settings.
+    if pathtosettings == ""
+        cwd = pwd()
+        # pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/seed_oscillator.json"
+        pathtosettings = joinpath(cwd, "test_files/updownObjFunc.json")
+    end
 
-    settings = read_usersettings(pathtosettings)
+    settings = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize)
 
     objfunct = get_objectivefunction(settings)
     ng = get_networkgenerator(settings)
@@ -101,25 +101,41 @@ end
 
 
 
+function run_evolution(;
+    ngenerations::Int64=-1,
+    nbatches::Int64=-1,
+    populationsize::Int64=-1,
+    pathtosettings::String="",
+    outputpath::String="")
 
-num_batches = 100
-starttime = now()
-starttime = "$starttime"
-# Create a directory outside of the networkEv dir to store output
-parent = dirname(pwd())
-outputdir = joinpath(parent, "Data")
-if !isdir(outputdir)
-    mkdir(outputdir)
+    starttime = now()
+    starttime = "$starttime"
+    println("Starting $starttime")
+
+    if nbatches == -1
+        nbatches = 100
+    end
+    if outputpath == ""
+        # Create a directory outside of the networkEv dir to store output
+        parent = dirname(pwd())
+        outputpath = joinpath(parent, "evolution_output")
+    end
+    # Create a directory of output of this batch in the data dir
+    if !isdir(outputpath)
+        mkdir(outputpath)
+    end
+    path = joinpath(outputpath, "batch_$starttime")
+    mkdir(path)
+    println("Writing output to $path")
+
+    for i in 1:nbatches
+        evolve_networks(i, path; ngenerations, populationsize, pathtosettings)
+    end
+
+    print("done")
 end
 
-# Create a directory of output of this batch in the data dir
-path = joinpath(outputdir, "batch_$starttime")
-mkdir(path)
-println("Writing output to $path")
-for i in 1:num_batches
-    main(i, path)
-end
 
-print("done")
+run_evolution()
 
-end
+end #module

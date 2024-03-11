@@ -1,6 +1,3 @@
-# include("reaction_network.jl")
-# include("settings.jl")
-# include("reaction_network.jl")
 include("ode_solver.jl")
 include("network_cleanup.jl")
 using Distributions

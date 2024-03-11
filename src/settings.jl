@@ -20,7 +20,6 @@ using Random
 using JSON
 
 DEFAULT_FITNESS = 0
-MAX_TIME = 10000
 MIN_NREACTIONS = 3
 MAX_NREACTIONS = 100
 SEED = 11112
@@ -102,7 +101,7 @@ settings = Dict(
     "tournamentselect" => false,
 )
 
-function read_usersettings(path::String)
+function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1)
     j = JSON.parsefile(path)
     # Parse required settings
     specieslist = j["specieslist"]
@@ -120,14 +119,21 @@ function read_usersettings(path::String)
     # Create settings object
     # p_rateconstantmutation = p_rateconstantmutation(settings["p_rateconstantmutation"])
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
+    if ngenerations == -1
+        ngenerations = settings["ngenerations"]
+    end
+    if populationsize == -1
+        populationsize = settings["populationsize"]
+    end
+    
     usersettings = Settings(settings["portionelite"], 
                    reactionprobabilities,
                    settings["p_rateconstantmutation"],
                    settings["rateconstantrange"],
                    settings["percent_rateconstant_change"],
                    settings["p_picknewrateconstant"],
-                   settings["populationsize"],
-                   settings["ngenerations"],
+                   populationsize,
+                   ngenerations,
                    settings["nreactions"],
                    settings["max_offspring_portion"],
                    settings["writeout_threshold"],

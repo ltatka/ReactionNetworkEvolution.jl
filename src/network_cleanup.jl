@@ -1,5 +1,3 @@
-# include("reaction_network.jl")
-
 function reactants_isequal(reactants1, reactants2)
     if length(reactants1) != length(reactants2)
         return false
