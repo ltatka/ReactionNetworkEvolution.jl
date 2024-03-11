@@ -6,28 +6,7 @@ using Sundials
 include("reaction_network.jl")
 
 
-struct ObjectiveFunction
-    objectivespecies::Vector{String} # Can be more than 1
-    objectivedata:: Any#DataFrame #TODO: Change this back?
-    time::Vector{Float64}
-    indexbyspecies::Dict
-end
 
-function get_objectivefunction(settings::Settings)
-
-    objectivedataframe = DataFrame(CSV.File(settings.objectivedatapath))
-    objectivedata = objectivedataframe[!, "S"]
-    time = objectivedataframe[!, "time"]
-    # objectivedata = DataFrame(CSV.File(settings.objectivedatapath))
-    # time = objectivedata[!, "time"]
-
-    indexbyspecies = Dict()
-    # for s in settings.objectivespecies
-    #     idx = findfirst(item -> item == s, settings.specieslist)
-    #     indexbyspecies[s] = idx
-    # end
-    return ObjectiveFunction(settings.objectivespecies, objectivedata, time, indexbyspecies)
-end
 
 function ode_funct!(du::Array{Float64}, u::Array{Float64}, network::ReactionNetwork, t::Float64)
     specieslist = network.specieslist
@@ -79,11 +58,6 @@ function solve_ode(objfunct::ObjectiveFunction, network::ReactionNetwork)
     u0 = network.initialcondition
     ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
     sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize, verbose=false)
-    # sol = @timeout MAX_TIME begin
-    #     println(MAX_TIME)
-    #     solve(ode_prob, CVODE_BDF(), saveat=stepsize, verbose=false)
-    #     println("succss")
-    # end println("fail")
     return sol
     
 end
@@ -96,7 +70,8 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
             return DEFAULT_FITNESS
         end
         fitness = 0.0
-        for i in 1:3
+        nspecies = length(network.floatingspecies)
+        for i in 1:nspecies
             timeseries = sol[i,:]
             tempfitness = 0.0
             for (j, pt) in enumerate(timeseries)
@@ -109,69 +84,8 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
         return fitness
     catch e
         return DEFAULT_FITNESS
-
-
-
-
-    # try
-    #     sol = solve_ode(objfunct, network)
-    #     if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
-    #         return DEFAULT_FITNESS
-    #     end
-    #     fitness = 0.0
-
-    #     for i in 1:3
-    #         timeseries = sol[i, :]
-    #         index, prop = findpeaks1d(timeseries)
-    #         numpeaks = length(index)
-    #         if numpeaks > fitness
-    #             fitness = numpeaks
-    #         end
-    #     end
-    #     return fitness
-    # catch e
-    #     return DEFAULT_FITNESS
     end
     
-    
-    
-    # # This function evaluates the fitness of an individual based on how well the timeseries of the 
-    # # target species matches that of the target timeseries. 
-    # # Changing all fitness stuff here from now on
-    # TARGET_NETWORK_SIZE = 5 # Trying to encourage networks to be this size
-    # PENALTY_MULTIPLIER = 0.95
-    # try
-    #     sol = solve_ode(objfunct, network)
-    #     if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
-    #         return DEFAULT_FITNESS
-    #     end
-    #     fitness = 0.0
-    #     for (i, row) in enumerate(sol.u)
-    #         for s in objfunct.objectivespecies
-    #             idx = objfunct.indexbyspecies[s]
-    #             fitness += abs(objfunct.objectivedata[!, s][i] - row[idx])
-    #         end
-    #     end
-    #     if sizepenalty
-    #         ## TRYING TO PENALIZE LARGE NETWORKS 
-    #         # Take off some percentage of the total fitness according to how large the network is?
-    #         numreactions = length(keys(network.reactionlist))
-    #         excessreactions = numreactions - TARGET_NETWORK_SIZE 
-    #         if excessreactions < 0 # We don't care if the network is too small
-    #             excessreactions = 0
-    #         end
-    #         penalty = (1 - excessreactions/numreactions)*PENALTY_MULTIPLIER
-    #     else
-    #         penalty = 1
-    #     end
-    #     fitness = 1/fitness # Make larger fitness = better
-    #     fitness = fitness*penalty
-
-    #     return fitness # Or should this also assign the fitness to the network?
-    # catch e
-    #     println(e)
-    #     return DEFAULT_FITNESS
-    # end
 end
 
 

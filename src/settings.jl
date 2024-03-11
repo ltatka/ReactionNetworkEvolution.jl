@@ -18,18 +18,11 @@
 # 
 using Random
 using JSON
+using DataFrames
 
 DEFAULT_FITNESS = 0
 MIN_NREACTIONS = 3
 MAX_NREACTIONS = 100
-SEED = 11112
-
-Random.seed!(SEED)
-
-# global global_innovation_number = 0 #TODO: don't use global vars
-# global current_innovation_num_by_reaction = Dict()
-# delta = 500 #????
-
 
 
 struct ReactionProbabilities
@@ -38,16 +31,16 @@ struct ReactionProbabilities
     biuni::Float64
     bibi::Float64
 
-    function ReactionProbabilities(p::Vector{Any})
+    function ReactionProbabilities(p::Vector{Float64})
         new(p[1], p[2], p[3], p[4])
     end
 
-    function ReactionProbabilities(p1, p2, p3, p4)
+    function ReactionProbabilities(p1::Float64, p2::Float64, p3::Float64, p4::Float64)
         new(p1, p2, p3, p4)
     end
 end
 
-# TODO: is this structure necessary? Can we just use a dictionary?
+
 struct Settings
     portionelite::Float64
     reactionprobabilities::ReactionProbabilities
@@ -73,8 +66,27 @@ struct Settings
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
-    objectivespecies::Vector{String}
+    #objectivespecies::Vector{String}
    
+end
+
+struct ObjectiveFunction
+    #objectivespecies::Vector{String} # Can be more than 1
+    objectivedata:: Any# DataFrame #TODO: Change this back?
+    time::Vector{Float64}
+    #indexbyspecies::Dict
+end
+
+function get_objectivefunction(settings::Settings)
+    if settings.objectivedatapath != "DEFAULT"
+        objectivedataframe = DataFrame(CSV.File(settings.objectivedatapath))
+        objectivedata = objectivedataframe[!, "S"]
+        time = objectivedataframe[!, "time"]
+    else
+        time = collect(range(0, 1.25, length=11))
+        objectivedata = [5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0]
+    end
+    return ObjectiveFunction(objectivedata, time)
 end
 
 
@@ -99,25 +111,42 @@ settings = Dict(
     "use_seed_network" => false,
     "seed_network_path" => "",
     "tournamentselect" => false,
+    "specieslist" => ["S0", "S1", "S2"],
+    "initialconditions" => [1.0, 5.0, 9.0],
+    "objectivedatapath" => "DEFAULT"
 )
 
-function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1)
-    j = JSON.parsefile(path)
-    # Parse required settings
-    specieslist = j["specieslist"]
-    initialconditions = j["initialconditions"]
-    objectivedatapath = j["objectivedatapath"]
-    objectivespecies = j["objectivespecies"]
-    # Check for any optional args, use defaults if none 
-    # If there are user specified args, replace value 
-    for k in keys(settings)
-        if k in keys(j)
-            settings[k] = j[k]
+function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1)
+    # If a path to settings is supplied:
+    if path != :"DEFAULT"
+        println("Reading settings from $path")
+        j = JSON.parsefile(path)
+        # # Parse required settings
+        # specieslist = j["specieslist"]
+        # initialconditions = j["initialconditions"]
+        # objectivedatapath = j["objectivedatapath"]
+
+        # Check for any optional args, use defaults if none 
+        # If there are user specified args, replace value 
+        for k in keys(settings)
+            if k in keys(j)
+                settings[k] = j[k]
+            end
         end
+    else
+        println("Using default settings")
     end
-    settings["seed"] = SEED
+    # If no random seed is given, pick one, save it to settings
+    if seed == -1
+        seed = rand(0:1000000)
+        settings["seed"] = seed
+    else 
+        seed = settings["seed"]
+    end
+    # Set the random seed
+    Random.seed!(seed)
+
     # Create settings object
-    # p_rateconstantmutation = p_rateconstantmutation(settings["p_rateconstantmutation"])
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
     if ngenerations == -1
         ngenerations = settings["ngenerations"]
@@ -146,10 +175,10 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["use_seed_network"],
                    settings["seed_network_path"],
                    settings["tournamentselect"],
-                   specieslist,
-                   initialconditions,
-                   objectivedatapath,
-                   objectivespecies)
+                   settings["specieslist"],
+                   settings["initialconditions"],
+                   settings["objectivedatapath"]
+                   )
     return usersettings   
 end
 

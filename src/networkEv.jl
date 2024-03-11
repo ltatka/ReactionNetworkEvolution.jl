@@ -10,7 +10,8 @@ include("evo_utils.jl")
 function evolve_networks(batchnum::Int64, parentdir::String;  
     ngenerations::Int64=-1, 
     populationsize::Int64=-1, 
-    pathtosettings::String="")
+    pathtosettings::String="",
+    seed::Int64=-1)
 
     starttime = now()
     starttime = "$starttime"
@@ -28,12 +29,13 @@ function evolve_networks(batchnum::Int64, parentdir::String;
     # If no path to settings is supplied, use default settings
     # TODO: Maybe I should change this so there's not a separate file for default settings.
     if pathtosettings == ""
-        cwd = pwd()
-        # pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/seed_oscillator.json"
-        pathtosettings = joinpath(cwd, "test_files/updownObjFunc.json")
+        pathtosettings = "DEFAULT"
+        # cwd = pwd()
+        # # pathtosettings = "/home/hellsbells/Desktop/networkEv/test_files/seed_oscillator.json"
+        # pathtosettings = joinpath(cwd, "test_files/updownObjFunc.json")
     end
 
-    settings = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize)
+    settings = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize, seed=seed)
 
     objfunct = get_objectivefunction(settings)
     ng = get_networkgenerator(settings)
@@ -106,7 +108,8 @@ function run_evolution(;
     nbatches::Int64=-1,
     populationsize::Int64=-1,
     pathtosettings::String="",
-    outputpath::String="")
+    outputpath::String="",
+    seed::Int64=-1)
 
     starttime = now()
     starttime = "$starttime"
@@ -129,7 +132,7 @@ function run_evolution(;
     println("Writing output to $path")
 
     for i in 1:nbatches
-        evolve_networks(i, path; ngenerations, populationsize, pathtosettings)
+        evolve_networks(i, path; ngenerations, populationsize, pathtosettings, seed)
     end
 
     print("done")
