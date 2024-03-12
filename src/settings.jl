@@ -104,7 +104,7 @@ settings = Dict(
     "max_offspring_portion" => 0.1,
     "writeout_threshold" => 0.0088,
     "p_crossover" => 0.75,
-    "p_mutation" => 0.75
+    "p_mutation" => 0.75,
     "drop_portion" => 0.1,
     "seed" => -1,
     "starting_delta" => 0.65,
@@ -169,7 +169,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["max_offspring_portion"],
                    settings["writeout_threshold"],
                    settings["p_crossover"],
-                   settings["p_mutation"]
+                   settings["p_mutation"],
                    settings["drop_portion"],
                    settings["seed"],
                    settings["starting_delta"],
