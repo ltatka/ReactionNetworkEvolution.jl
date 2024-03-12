@@ -470,16 +470,17 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                     network = networks[idx1]
                     network2 = networks[idx2]
                 end
-                # Decide to mutate it or cross it over
-                p = rand()
-                if p < settings.p_crossover # crossover with another random network (TODO: for now idc if it crosses over with itself or the elites)
+                # Decide to mutate it, cross it over, or both
+                p = rand()                
+                if p < settings.p_crossover
                     newnetwork = crossover(network, network2)
-                    push!(newpopulation, newnetwork)
-                else 
+                else
                     newnetwork = deepcopy(network)
-                    mutatenetwork!(settings, ng, newnetwork)
-                    push!(newpopulation, newnetwork)
                 end
+                if p >= 1 - settings.p_mutation
+                    mutatenetwork!(settings, ng, newnetwork)
+                end
+                push!(newpopulation, newnetwork)
             end
         end
     end

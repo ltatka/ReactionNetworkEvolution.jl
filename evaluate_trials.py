@@ -47,7 +47,7 @@ def is_eigen_oscillator(r, fitness=None, writeoutpath=None):
                     r.reset()
                     astr = r.getCurrentAntimony()
                     if fitness is not None:
-                        astr += f"\nfitness: {fitness}"
+                        astr += f"\n#fitness: {fitness}"
                     f.write(astr)
                     f.close()
                 return False
@@ -221,11 +221,11 @@ def fix_flagged_models(inputpath):
             for line in astr.split("\n"):
                 if line.startswith("#fitness"):
                     fitness = line.split(" ")[1]
-                    fitness = float(f)
+                    fitness = float(fitness)
             fixed_astr = fix_model(astr)
             if fixed_astr is not None:
-                fixed_astr += f"\n#fitness(old): {fitness}"
-                f = open(full_model_path, "w")
+                # fixed_astr += f"\n#fitness(old): {fitness}"
+                f = open(f"{full_model_path}_fixed", "w")
                 f.write(fixed_astr)
                 f.close()
                 print(f"successfully fixed model {file}")
@@ -236,7 +236,7 @@ def fix_flagged_models(inputpath):
 
 
 
-inputpath = "/home/hellsbells/Desktop/Data/tournamentselect/batch_2024-03-08T11:26:56.563"
+inputpath = "/home/hellsbells/Desktop/evolution_output/batch_2024-03-12T08:50:21.630"
 outputpath = os.path.join(Path(inputpath).parent.absolute(), "success")
 
 oscillators, total = evaluate_trials_best_models(inputpath, outputpath, bestonly=True)

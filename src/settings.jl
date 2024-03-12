@@ -53,7 +53,8 @@ struct Settings
     nreactions::Int
     max_offspring_portion::Float64 # The maximum portion of offspring a single species can have
     writeout_threshold::Float64 # Networks with this fitness or better will be saved
-    p_crossover::Float64 # Probability of crossover vs mutation
+    p_crossover::Float64 # Probability of p_crossover
+    p_mutation::Float64 # Probability of mutation (does not need to sum to 1 with p_crossover)
     drop_portion::Float64 # Portion of worst networks to drop in each species
     seed::Float64
     starting_delta::Float64
@@ -102,7 +103,8 @@ settings = Dict(
     "nreactions" => 5,
     "max_offspring_portion" => 0.1,
     "writeout_threshold" => 0.0088,
-    "p_crossover" => 0.2,
+    "p_crossover" => 0.75,
+    "p_mutation" => 0.75
     "drop_portion" => 0.1,
     "seed" => -1,
     "starting_delta" => 0.65,
@@ -167,6 +169,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["max_offspring_portion"],
                    settings["writeout_threshold"],
                    settings["p_crossover"],
+                   settings["p_mutation"]
                    settings["drop_portion"],
                    settings["seed"],
                    settings["starting_delta"],
