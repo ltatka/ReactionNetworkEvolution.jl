@@ -253,17 +253,16 @@ end
 
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
-    population = Vector{ReactionNetwork}()
+    population = Vector{ReactionNetwork}(undef, settings.populationsize)
 
     if settings.use_seed_network
         seednetwork = convert_from_antimony(settings.seed_network_path)
         for i in 1:settings.populationsize
-            push!(population, deepcopy(seednetwork))
+            population[i] = deepcopy(seednetwork)
         end
     else
         for i in 1:settings.populationsize
-            network = generate_random_network(ng)
-            push!(population, network)
+            population[i] = generate_random_network(ng)
         end
     end
 
@@ -413,7 +412,7 @@ function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fi
         end
     end
     # println("total offspring: $total_offspring")
-    return species_by_IDs
+    return species_by_IDs, Int64(total_offspring)
 end
 
 
@@ -431,10 +430,12 @@ end
 
 function reproduce_networks(species_by_IDs, settings::Settings,
     ng::NetworkGenerator,
-    objfunct::ObjectiveFunction;
-    generation::Int64=0)
+    objfunct::ObjectiveFunction,
+    total_offspring::Int64)
     
-    newpopulation = Vector{ReactionNetwork}()
+    newpopulation = Vector{ReactionNetwork}(undef, total_offspring)
+
+    offspring_index = 1
 
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
@@ -449,10 +450,11 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             newnetwork = mutatenetwork!(settings, ng, newnetwork)
             newfitness = evaluate_fitness(objfunct, newnetwork)
             if newfitness > network.fitness
-                push!(newpopulation, newnetwork)
+                newpopulation[offspring_index] = newnetwork
             else
-                push!(newpopulation, network)
+                newpopulation[offspring_index] = network
             end
+            offspring_index += 1
         elseif totaloffspring > 1 # Total offspring greater than 1
             # Calculate number elite
             num_elite = Int64(round(length(networks)*settings.portionelite))
@@ -460,7 +462,8 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 num_elite = 1
             end
             for i = 1:num_elite
-                push!(newpopulation, deepcopy(networks[i]))
+                newpopulation[offspring_index] = deepcopy(networks[i])
+                offspring_index += 1
             end
             # Get rid of the worst networks in the species
             num_to_remove = Int64(floor(length(networks)*settings.drop_portion))
@@ -486,7 +489,8 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 if p >= 1 - settings.p_mutation
                     mutatenetwork!(settings, ng, newnetwork)
                 end
-                push!(newpopulation, newnetwork)
+                newpopulation[offspring_index] = newnetwork
+                offspring_index += 1
             end
         end
     end
@@ -496,10 +500,10 @@ end
 
 function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork)
     # If every single reaction is different, then the distance will be 1
-    W = 0
+    # W = 0
     num_diff = 0
-    c1 = 1 # Value from paper
-    c2 = 0.4 # Value from paper (as C3 in the paper) 
+    # c1 = 1 # Value from paper
+    # c2 = 0.4 # Value from paper (as C3 in the paper) 
     if length(network1.reactionlist) >= length(network2.reactionlist)
         largernetwork = network1
         smallernetwork = network2

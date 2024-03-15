@@ -91,7 +91,8 @@ function get_objectivefunction(settings::Settings)
 end
 
 
-settings = Dict(
+function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1)
+    settings = Dict(
     "portionelite" => 0.1,
     "reactionprobabilities" => [.1, .4, .4, .1],
     "p_rateconstantmutation" => .6, # Probability of changning rate constant vs reaection
@@ -116,9 +117,7 @@ settings = Dict(
     "specieslist" => ["S0", "S1", "S2"],
     "initialconditions" => [1.0, 5.0, 9.0],
     "objectivedatapath" => "DEFAULT"
-)
-
-function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1)
+    )
     # If a path to settings is supplied:
     if path != :"DEFAULT"
         println("Reading settings from $path")

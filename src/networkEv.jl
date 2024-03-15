@@ -15,11 +15,11 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     mkdir(starttime)
     tracker = Dict{String, Any}(
         "batch_num" => batchnum,
-        "top_individual_fitness" => Vector{Float64}(),
-        "total_num_species" => Vector{Int64}(),
-        "avg_species_distances" => Vector{Float64}(),
-        "min_species_distances" => Vector{Float64}(),
-        "max_species_distances" => Vector{Float64}()
+        "top_individual_fitness" => Vector{Float64}(undef, settings.ngenerations),
+        # "total_num_species" => Vector{Int64}(),
+        # "avg_species_distances" => Vector{Float64}(),
+        # "min_species_distances" => Vector{Float64}(),
+        # "max_species_distances" => Vector{Float64}()
     )
 
     objfunct = get_objectivefunction(settings)
@@ -34,41 +34,34 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     species_by_IDs = initialize_species_by_IDs(population)
     species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
-    species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
-    species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings)
+    # species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+    # species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings)
 
 
     for i in 1:settings.ngenerations
 
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
-        species_by_IDs = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
+        species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
         
-        L = length(keys(species_by_IDs))
-        avg, mn, mx = get_diversity_stats(species_by_IDs)
-        push!(tracker["total_num_species"], L)
-        push!(tracker["avg_species_distances"], avg)
-        push!(tracker["min_species_distances"], mn)
-        push!(tracker["max_species_distances"], mx)
+        # L = length(keys(species_by_IDs))
+        # avg, mn, mx = get_diversity_stats(species_by_IDs)
+        # push!(tracker["total_num_species"], L)
+        # push!(tracker["avg_species_distances"], avg)
+        # push!(tracker["min_species_distances"], mn)
+        # push!(tracker["max_species_distances"], mx)
         
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
         # writeoutnetwork(bestnetwork, "$i", directory=joinpath(starttime, "intermediate_models"))
 
-        push!(tracker["top_individual_fitness"], maxfitness)
+        tracker["top_individual_fitness"][i] =  maxfitness
         
         if maxfitness > 0.05
             """It is possible to have oscillators with a lower fitness than this, 
             but seems that any network with this fitness or higher is certainly an oscillator"""
             break 
         end
-        if i == 282 && batchnum ==2
-            println("here")
-        end
-        population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
-        # if length(population)== 0
-        #     println(i, batchnum)
-        #     break
-        # end
 
+        population = reproduce_networks(species_by_IDs, settings, ng, objfunct, total_offspring)
 
         species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
