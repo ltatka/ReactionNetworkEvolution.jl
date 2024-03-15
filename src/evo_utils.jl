@@ -178,7 +178,7 @@ end
 
 function getrandomkey(d::Dict{Vector{Vector{String}}, Reaction})
     i = rand(1:length(keys(d)))
-    return collect(keys(d))[i]
+    return @inbounds collect(keys(d))[i]
 end
 
 
@@ -257,12 +257,12 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
 
     if settings.use_seed_network
         seednetwork = convert_from_antimony(settings.seed_network_path)
-        for i in 1:settings.populationsize
+        @inbounds for i in 1:settings.populationsize
             population[i] = deepcopy(seednetwork)
         end
     else
-        for i in 1:settings.populationsize
-            population[i] = generate_random_network(ng)
+        @inbounds for i in 1:settings.populationsize
+           population[i] = generate_random_network(ng)
         end
     end
 
@@ -461,7 +461,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             if num_elite == 0
                 num_elite = 1
             end
-            for i = 1:num_elite
+            @inbounds for i = 1:num_elite
                 newpopulation[offspring_index] = deepcopy(networks[i])
                 offspring_index += 1
             end
@@ -470,7 +470,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             networks = networks[1:end - num_to_remove] 
             # For the rest of the new population:
             offspring_to_add = totaloffspring - num_elite
-            for i in 1:offspring_to_add
+            @inbounds for i in 1:offspring_to_add
                 if settings.tournamentselect
                     network = tournamentselect(species)
                     network2 = tournamentselect(species)

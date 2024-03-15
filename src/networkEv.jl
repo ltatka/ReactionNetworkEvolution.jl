@@ -125,7 +125,7 @@ function run_evolution(;
     settings = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize, seed=seed)
 
     for i in 1:nbatches
-        evolve_networks(i, path, settings)
+        @time evolve_networks(i, path, settings)
     end
 
     print("done")
