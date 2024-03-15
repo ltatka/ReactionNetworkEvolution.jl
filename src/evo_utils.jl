@@ -336,7 +336,7 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
     #   hashmap(key, val)= speciesID, float
     # NOTE: The reason this also returns networks_by_species this hashmap is modified, the fitness score is 
     # added to each network
-    total_fitness = 0
+    total_fitness = 0.0
 
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
@@ -385,7 +385,7 @@ function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fi
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
         ##If the champion of the species has stagnated for more than 15 generations, it won't be allowed to reproduce
-        if species.numstagnations >= 50
+        if species.numstagnations >= 5000000 #disabling this for now
             species.numoffspring = 0
             networks = sortbyfitness!(species.networks) #TODO: This might not be necessary
             if networks[1].fitness > settings.writeout_threshold
@@ -439,7 +439,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     for speciesID in keys(species_by_IDs)
         species = species_by_IDs[speciesID]
         networks = sortbyfitness!(species.networks)
-        totaloffspringadded = 0
+        
         totaloffspring = species.numoffspring
         # If species is only allowed one offspring, take the most fit individual, mutate it, and either pass on the
         # mutated network or the original, whichever is more fit
@@ -454,13 +454,19 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 push!(newpopulation, network)
             end
         elseif totaloffspring > 1 # Total offspring greater than 1
-            push!(newpopulation, deepcopy(networks[1]))
+            # Calculate number elite
+            num_elite = Int64(round(length(networks)*settings.portionelite))
+            if num_elite == 0
+                num_elite = 1
+            end
+            for i = 1:num_elite
+                push!(newpopulation, deepcopy(networks[i]))
+            end
             # Get rid of the worst networks in the species
-            #TODO: Take a look at this if stuff doesn't seem to be working:
             num_to_remove = Int64(floor(length(networks)*settings.drop_portion))
-            networks = networks[1:end - num_to_remove] # REMOVED THIS: If we copied over an elite network already, skip it
+            networks = networks[1:end - num_to_remove] 
             # For the rest of the new population:
-            offspring_to_add = totaloffspring - totaloffspringadded
+            offspring_to_add = totaloffspring - num_elite
             for i in 1:offspring_to_add
                 if settings.tournamentselect
                     network = tournamentselect(species)
@@ -472,7 +478,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 end
                 # Decide to mutate it, cross it over, or both
                 p = rand()                
-                if p < settings.p_crossover
+                if p < settings.p_crossover && idx1 != idx2
                     newnetwork = crossover(network, network2)
                 else
                     newnetwork = deepcopy(network)

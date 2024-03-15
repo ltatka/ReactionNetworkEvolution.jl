@@ -55,13 +55,21 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
 
         push!(tracker["top_individual_fitness"], maxfitness)
         
-        if maxfitness > 0.02
+        if maxfitness > 0.05
             """It is possible to have oscillators with a lower fitness than this, 
             but seems that any network with this fitness or higher is certainly an oscillator"""
             break 
         end
-
+        if i == 282 && batchnum ==2
+            println("here")
+        end
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, generation = i)
+        # if length(population)== 0
+        #     println(i, batchnum)
+        #     break
+        # end
+
+
         species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
     end
@@ -131,6 +139,6 @@ function run_evolution(;
 end
 
 
-run_evolution(ngenerations=1, populationsize=10)
+run_evolution(seed=10)
 
 end #module

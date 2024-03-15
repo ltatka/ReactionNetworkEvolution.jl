@@ -24,7 +24,7 @@ def writeout_model(r, fitness, path):
 
 def check_eigens(eigen_array):
     for num in eigen_array:
-        if num.real > 0 and num.imag != 0:
+        if num.real >= 0 and num.imag != 0:
             return True
     return False
 
@@ -236,8 +236,8 @@ def fix_flagged_models(inputpath):
 
 
 
-inputpath = "/home/hellsbells/Desktop/evolution_output/batch_2024-03-12T08:50:21.630"
-outputpath = os.path.join(Path(inputpath).parent.absolute(), "success")
+inputpath = "/home/hellsbells/Desktop/evolution_output/400gens_nostalls"
+outputpath = inputpath + "_success"
 
 oscillators, total = evaluate_trials_best_models(inputpath, outputpath, bestonly=True)
 print("attempting to fix flagged models")

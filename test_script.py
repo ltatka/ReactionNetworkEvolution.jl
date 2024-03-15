@@ -57,7 +57,7 @@ def is_eigen_oscillator(r, f=None, writeoupath=None):
 
 def check_eigens(eigen_array):
     for num in eigen_array:
-        if num.real > 0 and num.imag != 0:
+        if num.real >= 0 and num.imag != 0:
             return True
     return False
 
@@ -268,13 +268,44 @@ def plot_fitness(path):
     plt.plot(fitness)
     plt.show()
 
+def plot_several_fitness(path):
+    for dir in os.listdir(path):
+        fullpath = os.path.join(path, f"{dir}/datatracker.json")
+        try:
+            f = open(fullpath)
+            data = json.load(f)
+            f.close()
+            fitness = data["top_individual_fitness"]
+            plt.plot(fitness)
+        except:
+            continue
+    plt.title(path)
+    plt.show()
+
+def find_descreasing_fitness(path):
+    for dir in os.listdir(path):
+        fullpath = os.path.join(path, f"{dir}/datatracker.json")
+        try:
+            f = open(fullpath)
+            data = json.load(f)
+            f.close()
+            fitness = data["top_individual_fitness"]
+            for i in range(len(fitness)-2):
+                if fitness[i + 1] < fitness[i]:
+                    print(dir, i)
+                    break
+
+        except:
+            continue
 
 
-# input= "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials"
-# output = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_oscillators"
-# plot_several_models_and_savefig(input, output, 5, 5)
 
-path = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_fixed_oscillators_newalgo_fixed"
+
+inputpath = "/home/hellsbells/Desktop/evolution_output/800gen_nostalls_success"
+# outputpath = inputpath + "_success"
+# plot_several_fitness(inputpath)
+# find_descreasing_fitness(inputpath)
+
 
 # for file in os.listdir(path):
 #     f = open(os.path.join(path, file), "r")
@@ -285,7 +316,7 @@ path = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_fixed
 #         print(file)
 #
 #
-# plot_several_models(path,7, 6)
+plot_several_models(inputpath,4, 4)
 # #
 
 # path = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_oscillators"
@@ -302,39 +333,28 @@ path = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_fixed
 # r.plot()
 
 r = te.loada("""
-// Created by libAntimony v2.12.0
-// Compartments and Species:
-species S0, S1, S2;
+S0 + S2 -> S1 + S2; k1*S0*S2
+S2 -> S0 + S2; k2*S2
+S0 -> S0; k3*S0
+S0 -> S1 + S2; k4*S0
+S0 + S2 -> S1; k5*S0*S2
+S2 -> S1 + S2; k6*S2
+S1 -> S1; k7*S1
+S0 + S1 -> S0; k8*S0*S1
+k1 = 51.21650576481565
+k2 = 25.462116055953523
+k3 = 31.701727123250397
+k4 = 25.212858192136718
+k5 = 82.8216306419557
+k6 = 154.11847861456187
+k7 = 27.43722898480794
+k8 = 92.69299316369137
+S0 = 1.0
+S1 = 5.0
+S2 = 9.0
 
-// Reactions:
-_J0: S0 -> S0 + S0; k1*S0;
-_J1: S1 -> S0 + S1; k2*S1;
-_J2: S2 -> S0 + S2; k3*S2;
-_J3: S0 + S2 -> S0 + S1; k4*S0*S2;
-_J4: S1 + S2 -> S0 + S2; k5*S1*S2;
-_J5: S2 -> S0; k6*S2;
-_J6: S1 + S2 -> S1; k7*S1*S2;
-_J7: S1 + S2 -> S0 + S0; k8*S1*S2;
-
-// Species initializations:
-S0 = 1;
-S1 = 5;
-S2 = 9;
-
-// Variable initializations:
-k1 = 1#50.2315239783502;
-k2 = 1#34.469029524034;
-k3 = 43.3510350225645;
-k4 = 47.1870303688937;
-k5 = 22.9028115320053;
-k6 = 24.34594212256;
-k7 = 17.1951000282582;
-k8 = 12.7709570700312;
-
-// Other declarations:
-const k1, k2, k3, k4, k5, k6, k7, k8;
-
-# #fitness: 0.009012495826190126""")
+#fitness: 0.009362781
+""")
 # r.integrator.relative_tolerance = 1e-10
 # r.reset()
 # m = r.simulate(0, 50, 100000)
@@ -344,23 +364,23 @@ const k1, k2, k3, k4, k5, k6, k7, k8;
 # r.steadyState()
 # print(r.S0, r.S1, r.S2)
 # r.reset()
-print(is_eigen_oscillator(r))
-r.reset()
-r.steadyState()
-print(r.S0, r.S1, r.S2)
-print(r.getFullEigenValues())
-
-r.reset()
-# r.integrator.relative_tolerance = 1e-10
+# print(is_eigen_oscillator(r))
 # r.reset()
-r.simulate(0, 10, 200)
-r.plot()
-#
 # r.steadyState()
+# # print(r.S0, r.S1, r.S2)
 # print(r.getFullEigenValues())
-# r.reset()
-# fig, axs = plt.subplots(1, 3)
 #
+# r.reset()
+# r.integrator.relative_tolerance = 1e-10
+# # r.reset()
+# r.simulate(0, 10, 100)
+# r.plot()
+# #
+# # r.steadyState()
+# # print(r.getFullEigenValues())
+# # r.reset()
+# # fig, axs = plt.subplots(1, 3)
+# #
 #
 # print(r.getFullEigenValues())
 # m = r.simulate(0,10,500)

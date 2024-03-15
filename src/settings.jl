@@ -92,14 +92,14 @@ end
 
 
 settings = Dict(
-    "portionelite" => .1,
-    "reactionprobabilities" => [.2, .3, .3, .2],
+    "portionelite" => 0.1,
+    "reactionprobabilities" => [.1, .4, .4, .1],
     "p_rateconstantmutation" => .6, # Probability of changning rate constant vs reaection
     "rateconstantrange" => [0.1, 50.0],
     "percent_rateconstant_change" => 0.2,
     "p_picknewrateconstant" => 0.15,
     "populationsize" => 100,
-    "ngenerations" => 400,
+    "ngenerations" => 800,#400,
     "nreactions" => 5,
     "max_offspring_portion" => 0.1,
     "writeout_threshold" => 0.0088,
@@ -138,12 +138,18 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
     else
         println("Using default settings")
     end
-    # If no random seed is given, pick one, save it to settings
-    if seed == -1
-        seed = rand(0:1000000)
+    # If seed is given as an optional arg, use it and save it to settings. 
+    # This will take precedence over any seed specified in the settings file
+    # If no random seed is given, check if one is specified in settings, if not, pick randomly and save it
+    if seed != -1
         settings["seed"] = seed
-    else 
-        seed = settings["seed"]
+    else
+        if settings["seed"] == -1
+            seed = rand(0:1000000)
+            settings["seed"] = seed
+        else
+            seed = settings["seed"]
+        end
     end
     # Set the random seed
     Random.seed!(seed)
