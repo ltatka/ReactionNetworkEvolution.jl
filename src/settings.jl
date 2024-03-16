@@ -1,28 +1,6 @@
-# Things that can have default settings:
-# Reaction probabilities
-# Rate constant ranges
-# Max num generations
-# Fitness threshold
-# How much a rate constant can change during mutation
-
-# Things that the user has to specify
-# Names of species in the network
-# INITIAL CONDITIONS
-    # Definitely will have this (or close) for the objective species
-    # Should initial conditions of other species be things that can change?
-# Time series data (doesn't have to be for all species, can(should?) just be for objective function)
-# FUTURE: known reactions, possibly their certainty too
-
-# Things we can caclulate/get
-# Time ranges, step size, number of data points  
-# 
 using Random
 using JSON
 using DataFrames
-
-DEFAULT_FITNESS = 0
-MIN_NREACTIONS = 3
-MAX_NREACTIONS = 100
 
 
 struct ReactionProbabilities
@@ -93,40 +71,35 @@ end
 
 function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1)
     settings = Dict(
-    "portionelite" => 0.1,
-    "reactionprobabilities" => [.1, .4, .4, .1],
-    "p_rateconstantmutation" => .6, # Probability of changning rate constant vs reaection
-    "rateconstantrange" => [0.1, 50.0],
-    "percent_rateconstant_change" => 0.2,
-    "p_picknewrateconstant" => 0.15,
-    "populationsize" => 100,
-    "ngenerations" => 800,#400,
-    "nreactions" => 5,
-    "max_offspring_portion" => 0.1,
-    "writeout_threshold" => 0.0088,
-    "p_crossover" => 0.75,
-    "p_mutation" => 0.75,
-    "drop_portion" => 0.1,
-    "seed" => -1,
-    "starting_delta" => 0.65,
-    "delta_step" => 0.1,
-    "target_num_species" => 10,
-    "use_seed_network" => false,
-    "seed_network_path" => "",
-    "tournamentselect" => false,
-    "specieslist" => ["S0", "S1", "S2"],
-    "initialconditions" => [1.0, 5.0, 9.0],
-    "objectivedatapath" => "DEFAULT"
-    )
+        "portionelite" => 0.1,
+        "reactionprobabilities" => [.1, .4, .4, .1],
+        "p_rateconstantmutation" => .6, # Probability of changning rate constant vs reaction
+        "rateconstantrange" => [0.1, 50.0],
+        "percent_rateconstant_change" => 0.2,
+        "p_picknewrateconstant" => 0.15,
+        "populationsize" => 100,
+        "ngenerations" => 800,#400,
+        "nreactions" => 5,
+        "max_offspring_portion" => 1,#0.1,
+        "writeout_threshold" => 0.0088,
+        "p_crossover" => 0.75,
+        "p_mutation" => 0.75,
+        "drop_portion" => 0.1,
+        "seed" => -1,
+        "starting_delta" => 0.65,
+        "delta_step" => 0.1,
+        "target_num_species" => 10,
+        "use_seed_network" => false,
+        "seed_network_path" => "",
+        "tournamentselect" => false,
+        "specieslist" => ["S0", "S1", "S2"],
+        "initialconditions" => [1.0, 5.0, 9.0],
+        "objectivedatapath" => "DEFAULT"
+        )
     # If a path to settings is supplied:
     if path != :"DEFAULT"
         println("Reading settings from $path")
         j = JSON.parsefile(path)
-        # # Parse required settings
-        # specieslist = j["specieslist"]
-        # initialconditions = j["initialconditions"]
-        # objectivedatapath = j["objectivedatapath"]
-
         # Check for any optional args, use defaults if none 
         # If there are user specified args, replace value 
         for k in keys(settings)

@@ -316,8 +316,8 @@ inputpath = "/home/hellsbells/Desktop/evolution_output/800gen_nostalls_success"
 #         print(file)
 #
 #
-plot_several_models(inputpath,4, 4)
-# #
+# plot_several_models(inputpath,4, 4)
+# # #
 
 # path = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_oscillators"
 # modelname = "bestmodel_H4Pyg4D9SZ5i"
@@ -333,38 +333,64 @@ plot_several_models(inputpath,4, 4)
 # r.plot()
 
 r = te.loada("""
-S0 + S2 -> S1 + S2; k1*S0*S2
-S2 -> S0 + S2; k2*S2
-S0 -> S0; k3*S0
-S0 -> S1 + S2; k4*S0
-S0 + S2 -> S1; k5*S0*S2
-S2 -> S1 + S2; k6*S2
-S1 -> S1; k7*S1
-S0 + S1 -> S0; k8*S0*S1
-k1 = 51.21650576481565
-k2 = 25.462116055953523
-k3 = 31.701727123250397
-k4 = 25.212858192136718
-k5 = 82.8216306419557
-k6 = 154.11847861456187
-k7 = 27.43722898480794
-k8 = 92.69299316369137
-S0 = 1.0
-S1 = 5.0
-S2 = 9.0
+// Created by libAntimony v2.12.0
+// Compartments and Species:
+species S1, S2, S0;
 
-#fitness: 0.009362781
+// Reactions:
+_J0: S1 + S2 -> S0 + S2; k1*S1*S2;
+#_J1: S0 + S0 -> S2; k2*S0*S0;
+_J2: S0 + S0 -> S0; k3*S0*S0;
+_J3: S0 + S1 -> S1 + S1; k4*S0*S1;
+_J4: S1 -> S1 + S2; k5*S1;
+_J5: S0 + S2 -> S0 + S2; k6*S0*S2;
+_J6: S0 -> S0 + S2; k7*S0;
+_J7: S1 + S1 -> S1 + S1; k8*S1*S1;
+_J8: S2 -> S2; k9*S2;
+_J9: S1 -> S0 + S1; k10*S1;
+_J10: S0 -> S2 + S2; k11*S0;
+_J11: S0 + S2 -> S2; k12*S0*S2;
+_J12: S1 -> S0 + S0; k13*S1;
+_J13: S2 -> S0; k14*S2;
+_J14: S1 -> S1; k15*S1;
+
+// Species initializations:
+S1 = 5;
+S2 = 9;
+S0 = 1;
+
+// Variable initializations:
+k1 = 3.36495487244513;
+k2 = 9.3887511062499;
+k3 = 19.8324490541693;
+k4 = 59.9610897219989;
+k5 = 41.3953222290076;
+k6 = 10.8446618226208;
+k7 = 85.1925626785795;
+k8 = 47.9051148402496;
+k9 = 14.6363835222696;
+k10 = 9.39312395219087;
+k11 = 57.856294625205;
+k12 = 9.13869907614637;
+k13 = 28.1911480471516;
+k14 = 29.0559217184585;
+k15 = 44.0058206837288;
+
+// Other declarations:
+const k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15;
+
+#fitness: 0.050921741969524786
 """)
 # r.integrator.relative_tolerance = 1e-10
 # r.reset()
 # m = r.simulate(0, 50, 100000)
-# # r.simulate(0, 50, 10000)
-# r.plot()
+r.simulate(0, 10,500)
+r.plot()
 # r.reset()
 # r.steadyState()
 # print(r.S0, r.S1, r.S2)
 # r.reset()
-# print(is_eigen_oscillator(r))
+print(is_eigen_oscillator(r))
 # r.reset()
 # r.steadyState()
 # # print(r.S0, r.S1, r.S2)

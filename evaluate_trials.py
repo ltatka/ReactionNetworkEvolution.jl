@@ -224,7 +224,7 @@ def fix_flagged_models(inputpath):
                     fitness = float(fitness)
             fixed_astr = fix_model(astr)
             if fixed_astr is not None:
-                # fixed_astr += f"\n#fitness(old): {fitness}"
+                fixed_astr += f"\n#fitness(old): {fitness}"
                 f = open(f"{full_model_path}_fixed", "w")
                 f.write(fixed_astr)
                 f.close()
@@ -236,7 +236,7 @@ def fix_flagged_models(inputpath):
 
 
 
-inputpath = "/home/hellsbells/Desktop/evolution_output/400gens_nostalls"
+inputpath = "/home/hellsbells/Desktop/evolution_output/default_no_stalls_800"
 outputpath = inputpath + "_success"
 
 oscillators, total = evaluate_trials_best_models(inputpath, outputpath, bestonly=True)

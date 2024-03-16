@@ -178,5 +178,5 @@ function generate_random_network(ng::NetworkGenerator)
     float_initialcondition, boundary_initialcondition = get_initialconditions(ng, floatingspecies, boundaryspecies)
     reactionlist = generate_reactionlist(ng)
     ID = randstring(10)
-    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, DEFAULT_FITNESS, ID, "0")
+    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, 0, ID, "0")
 end

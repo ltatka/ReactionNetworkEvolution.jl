@@ -34,10 +34,6 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     species_by_IDs = initialize_species_by_IDs(population)
     species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
-    # species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
-    # species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings)
-
-
     for i in 1:settings.ngenerations
 
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
@@ -51,8 +47,6 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         # push!(tracker["max_species_distances"], mx)
         
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
-        # writeoutnetwork(bestnetwork, "$i", directory=joinpath(starttime, "intermediate_models"))
-
         tracker["top_individual_fitness"][i] =  maxfitness
         
         if maxfitness > 0.05
@@ -62,7 +56,6 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         end
 
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, total_offspring)
-
         species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
     end
@@ -125,13 +118,13 @@ function run_evolution(;
     settings = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize, seed=seed)
 
     for i in 1:nbatches
-        @time evolve_networks(i, path, settings)
+        evolve_networks(i, path, settings)
     end
 
     print("done")
 end
 
 
-run_evolution(seed=10)
+run_evolution(seed=10, populationsize=10,ngenerations=1)
 
 end #module

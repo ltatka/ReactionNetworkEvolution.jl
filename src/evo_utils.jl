@@ -178,7 +178,7 @@ end
 
 function getrandomkey(d::Dict{Vector{Vector{String}}, Reaction})
     i = rand(1:length(keys(d)))
-    return @inbounds collect(keys(d))[i]
+    return collect(keys(d))[i]
 end
 
 
@@ -203,7 +203,7 @@ function addreaction(ng::NetworkGenerator, network::ReactionNetwork)
 end
 
 function deletereaction(network::ReactionNetwork)
-    if length(network.reactionlist) <= MIN_NREACTIONS # Maintain a minimum of 2 reactions
+    if length(network.reactionlist) <= 3 # Maintain a minimum of 3 reactions
         return network
     end
     key = getrandomkey(network.reactionlist)
@@ -250,8 +250,6 @@ function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::React
 end
 
 
-
-
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = Vector{ReactionNetwork}(undef, settings.populationsize)
 
@@ -275,49 +273,6 @@ function sortbyfitness!(population::Array{ReactionNetwork}, rev::Bool=true)
     sort!(population, by=get_fitness, rev=rev)
     return population
 end
-
-
-# function eliteselect(settings::Settings, population)
-#     nelite = Int(floor(settings.portionelite*length(population)))
-#     newpopulation = []
-#     for i in 1:nelite
-#         push!(newpopulation, deepcopy(population[i]))
-#     end
-#     return newpopulation
-# end
-
-
-# function tournamentselect(settings::Settings, population, newpopulation)
-#     #For now, this is only going to select networks and put them in the new population. Will mutate them later
-#     nelite = Int(floor(settings.portionelite*length(population)))
-#     for i in 1:(settings.populationsize - nelite)
-#         # This will allow elites to be selected and they might dominate
-#         # What if we mutate only the elites first?
-#         if i < settings.populationsize/2 #for first half, allow elite selection
-#             idx1, idx2 = sample(1:settings.populationsize, 2)
-#         else # for second half, select only from non-elites
-#             if nelite == 0
-#                 nelite = 1
-#             end
-#             idx1, idx2 = sample(nelite:settings.populationsize, 2)
-#         end
-#         network1 = population[idx1]
-#         network2 = population[idx2]
-#         if network1.fitness < network2.fitness
-#             push!(newpopulation, deepcopy(network1))
-#         else
-#             push!(newpopulation, deepcopy(network2))
-#         end
-#     end
-#     return newpopulation
-# end
-
-# function select_new_population(settings::Settings, population)
-#     population = sortbyfitness(population)
-#     newpopulation = eliteselect(settings, population)
-#     newpopulation  = tournamentselect(settings, population, newpopulation)
-#     return newpopulation
-# end
 
 # This is for debugging mostly
 function print_top_fitness(n::Int, population::Array{ReactionNetwork})
@@ -392,31 +347,19 @@ function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fi
             else
                 writeoutnetwork(networks[1], "$(networks[1].ID).txt", directory=writeoutdir)
             end
-            
-            # println("Writing out a network")
         else
-            # if species.numstagnations != 0
-            #     println("calculate_num_offspring, stagnation count is $(species.numstagnations)")
-            # end
             portion_offspring = species.speciesfitness/total_fitness  # The portion of the next generation this species gets to produce
             numoffspring = round(portion_offspring * total) # The number of offspring this species gets to produce
-
             # Cap number of offspring
             if numoffspring > MAX_OFFSPRING
                 numoffspring = MAX_OFFSPRING
             end
             total_offspring += numoffspring
-
-
             species.numoffspring = numoffspring # The number of offspring this species gets to produce
         end
     end
-    # println("total offspring: $total_offspring")
     return species_by_IDs, Int64(total_offspring)
 end
-
-
-
 
 function cleanupreactions(network::ReactionNetwork)
     network = removenullreactions(network)
@@ -521,16 +464,6 @@ function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork
     end
     
     return num_diff/N
-
-    # for key in keys(network1.reactionlist)
-    #     if key in keys(network2.reactionlist)
-    #         W += abs(network2.reactionlist[key].rateconstant - network1.reactionlist[key].rateconstant)
-    #     else
-    #         num_diff += 1
-    #     end
-    # end
-
-    # return c1*(num_diff)/N + c2*W/N
 end
 
 function tournamentselect(species::Species)

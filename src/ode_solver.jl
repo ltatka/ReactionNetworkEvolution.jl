@@ -1,12 +1,7 @@
 using DifferentialEquations
 using Sundials
-# using Plots
-# using BenchmarkTools
 
 include("reaction_network.jl")
-
-
-
 
 function ode_funct!(du::Array{Float64}, u::Array{Float64}, network::ReactionNetwork, t::Float64)
     specieslist = network.specieslist
@@ -57,33 +52,27 @@ function solve_ode(objfunct::ObjectiveFunction, network::ReactionNetwork)
 
     u0 = network.initialcondition
     ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
-    sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize, verbose=false)
+    sol = solve(ode_prob, CVODE_BDF(), saveat=stepsize, verbose=false, dense=false, save_everystep=false)
     return sol
     
 end
-
 
 function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
     try 
         sol = solve_ode(objfunct, network)
         if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
-            return DEFAULT_FITNESS
+            return 0
         end
-        fitness = 0.0
-        nspecies = length(network.floatingspecies)
-        for i in 1:nspecies
-            timeseries = sol[i,:]
-            tempfitness = 0.0
-            for (j, pt) in enumerate(timeseries)
-                tempfitness += abs(pt - objfunct.objectivedata[j])
-            end
-            if 1/tempfitness > fitness
-                fitness = 1/tempfitness
+        fitness = zeros(length(network.floatingspecies))
+        for (i, row) in enumerate(sol.u)
+            for j in 1:length(network.floatingspecies)
+                fitness[j] += abs(row[j]- objfunct.objectivedata[i])
             end
         end
-        return fitness
+        topfitness = 1/(minimum(fitness))
+        return topfitness
     catch e
-        return DEFAULT_FITNESS
+        return 0
     end
     
 end
