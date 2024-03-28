@@ -125,6 +125,6 @@ function run_evolution(;
 end
 
 
-run_evolution(seed=10, populationsize=10,ngenerations=1)
+run_evolution(seed=22, nbatches=351)
 
 end #module

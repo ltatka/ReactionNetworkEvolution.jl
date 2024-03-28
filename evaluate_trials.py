@@ -236,11 +236,12 @@ def fix_flagged_models(inputpath):
 
 
 
-inputpath = "/home/hellsbells/Desktop/evolution_output/default_no_stalls_800"
+inputpath = "/home/hellsbells/Desktop/evolution_output/yes_crossover/yes_crossover"
 outputpath = inputpath + "_success"
 
 oscillators, total = evaluate_trials_best_models(inputpath, outputpath, bestonly=True)
 print("attempting to fix flagged models")
 fixed_models = fix_flagged_models(outputpath)
 print(f"fixed {fixed_models} models\nnew success rate: {(oscillators+fixed_models)/total}")
+print(f"Total: {total}\nFixed: {fixed_models}\nOriginal oscillators: {oscillators} ")
 
