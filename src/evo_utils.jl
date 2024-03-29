@@ -255,11 +255,11 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
 
     if settings.use_seed_network
         seednetwork = convert_from_antimony(settings.seed_network_path)
-        @inbounds for i in 1:settings.populationsize
+        for i in 1:settings.populationsize
             population[i] = deepcopy(seednetwork)
         end
     else
-        @inbounds for i in 1:settings.populationsize
+        for i in 1:settings.populationsize
            population[i] = generate_random_network(ng)
         end
     end
@@ -330,6 +330,16 @@ end
 function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fitness::Float64, settings::Settings; writeoutdir::String="stalled_models/")
     # Calculates how many offspring each species gets based on its share of the total fitness (sum of all individuals)
     # Returns a hashmap key, val = speciesID, float, number of offspring for that species
+    # If speciation is turned off, it will assign give the single species all of the offspring
+    
+    if !settings.enable_speciation
+        for speciesID in keys(species_by_IDs) #this should only be one thing
+            species = species_by_IDs[speciesID]
+            species.numoffspring = settings.populationsize
+        end
+        return species_by_IDs, settings.populationsize
+    end
+
     total = settings.populationsize
     total_offspring = 0 #This is how many offspring we calculate here, for debugging
 
@@ -401,10 +411,10 @@ function reproduce_networks(species_by_IDs, settings::Settings,
         elseif totaloffspring > 1 # Total offspring greater than 1
             # Calculate number elite
             num_elite = Int64(round(length(networks)*settings.portionelite))
-            if num_elite == 0
+            if num_elite == 0 && settings.portionelite != 0.0 # Set minimum number of elites to 1, unless the user has specifically set this value to 0
                 num_elite = 1
             end
-            @inbounds for i = 1:num_elite
+            for i = 1:num_elite
                 newpopulation[offspring_index] = deepcopy(networks[i])
                 offspring_index += 1
             end
@@ -413,7 +423,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             networks = networks[1:end - num_to_remove] 
             # For the rest of the new population:
             offspring_to_add = totaloffspring - num_elite
-            @inbounds for i in 1:offspring_to_add
+            for i in 1:offspring_to_add
                 if settings.tournamentselect
                     network = tournamentselect(species)
                     network2 = tournamentselect(species)

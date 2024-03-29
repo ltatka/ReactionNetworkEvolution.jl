@@ -32,13 +32,16 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     population = generate_network_population(settings, ng)
 
     species_by_IDs = initialize_species_by_IDs(population)
-    species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
+
+    if settings.enable_speciation
+        species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
+    end
 
     for i in 1:settings.ngenerations
 
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
-        
+
         # L = length(keys(species_by_IDs))
         # avg, mn, mx = get_diversity_stats(species_by_IDs)
         # push!(tracker["total_num_species"], L)
@@ -56,8 +59,12 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         end
 
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, total_offspring)
-        species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
 
+        if settings.enable_speciation
+            species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
+        else
+            species_by_IDs = initialize_species_by_IDs(population)
+        end
     end
     
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)

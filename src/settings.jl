@@ -41,10 +41,11 @@ struct Settings
     use_seed_network::Bool # Start with a seed network
     seed_network_path::String
     tournamentselect::Bool
-    # These must be defined in the JSON
+
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
+    enable_speciation::Bool
     #objectivespecies::Vector{String}
    
 end
@@ -94,7 +95,8 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "tournamentselect" => false,
         "specieslist" => ["S0", "S1", "S2"],
         "initialconditions" => [1.0, 5.0, 9.0],
-        "objectivedatapath" => "DEFAULT"
+        "objectivedatapath" => "DEFAULT",
+        "enable_speciation" => false#true,
         )
     # If a path to settings is supplied:
     if path != :"DEFAULT"
@@ -158,7 +160,8 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["tournamentselect"],
                    settings["specieslist"],
                    settings["initialconditions"],
-                   settings["objectivedatapath"]
+                   settings["objectivedatapath"],
+                   settings["enable_speciation"],
                    )
     return usersettings   
 end
