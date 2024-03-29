@@ -6,15 +6,32 @@ This module allows the user to easily run an evolutionary algorithm to create ma
 ### Installing Julia
 This module uses the julia programming language. Installation instructions can be found [here](https://julialang.org/downloads/).
 
-### Setting up the networkEv module
+### Quick Start
 1. Either fork or clone this module. Clone via the command ```git clone https://github.com/ltatka/networkEv```
 2. Navigate to the directory where you have downloaded the networkEv repo.
-3. Type ```julia```
-4. Enter the julia package manager by typing ```]```
-5. Activate the project environment to download all the dependencies ```activate ./networkEv```
-6. Exit the julia package manager by hitting the BACKSPACE key
-7. Import the module ```import networkEv```
-8. To run evolution using default settings, use the command ```run_evolution()```
+
+#### Command Line
+1. To install the networkEv module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'
+2. To run evolution with default settings: ```julia --project=. evscript.jl <br>
+This command also takes optional command line arguments: <br>
+* ```--nbatches```: the number of batches to run (100 by default)
+* ```--ngenerations```: the number of generations per batch (800 by default)
+* ```--populationsize```: the number of networks in a population
+* ```--pathtosettings```: path to a json file storing additional custom settings
+* ```--outputpath```: path to a directory where evolution output will be written
+* ```--seed```: specify a seed for the random number generator
+
+#### Bash Script
+```./quickstart.sh``` to run evolution with default settings. This script can also be edited to include the command line arguements in the previous section.
+
+#### Write your own scripts
+1. Use the run_evolution in a .jl file as follows <br>
+``` using networkEv <br>
+networkEv.run_evolution```
+
+2. Command line arguments can be specified as keyword arguments in the ```run_evolution``` function.
+For example ```networkEv.run_evolution(ngenerations=500)```
+
 
 ## Customizing Settings
 Almost all settings can be customized. 
