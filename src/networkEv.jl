@@ -131,7 +131,4 @@ function run_evolution(;
     print("done")
 end
 
-
-run_evolution(seed=22, nbatches=351)
-
 end #module
