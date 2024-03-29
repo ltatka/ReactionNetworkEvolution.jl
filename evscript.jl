@@ -26,7 +26,7 @@ end
 
 parsed_args = parse_args(ARGS, s)
 
-run_evolution(ngenerations=parsed_args["ngenerations"],
+networkEv.run_evolution(ngenerations=parsed_args["ngenerations"],
               nbatches=parsed_args["nbatches"],
               populationsize=parsed_args["populationsize"],
               pathtosettings=parsed_args["pathtosettings"],
