@@ -7,7 +7,7 @@ do
 
     julia --project=. -e 'using Pkg; Pkg.instantiate()'  
 
-    julia --project=. evscript.jl --ngenerations 1 --nbatches 1
+    julia --project=. evscript.jl
 
     ((counter++)) 
 

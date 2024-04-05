@@ -13,6 +13,10 @@ struct ReactionProbabilities
         new(p[1], p[2], p[3], p[4])
     end
 
+    function ReactionProbabilities(dict::Dict{String, Any})
+        new(dict["uniuni"], dict["unibi"], dict["biuni"], dict["bibi"])
+    end
+
     function ReactionProbabilities(p1::Float64, p2::Float64, p3::Float64, p4::Float64)
         new(p1, p2, p3, p4)
     end
@@ -96,7 +100,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "specieslist" => ["S0", "S1", "S2"],
         "initialconditions" => [1.0, 5.0, 9.0],
         "objectivedatapath" => "DEFAULT",
-        "enable_speciation" => false#true,
+        "enable_speciation" => true,
         )
     # If a path to settings is supplied:
     if path != :"DEFAULT"
@@ -126,7 +130,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         end
     end
     # Set the random seed
-    Random.seed!(seed)
+    Random.seed!(Int64(seed))
 
     # Create settings object
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
