@@ -1,5 +1,6 @@
 using Distributions
 using PyCall
+using AutoHashEquals
 
 include("settings.jl")
 
@@ -26,6 +27,31 @@ mutable struct Reaction
 
 end
 
+function Base.hash(x::Reaction, h::UInt)
+    Base.hash(x.substrate, Base.hash(x.product, Base.hash(:Reaction, h)))
+end
+function Base.isequal(a::Reaction, b::Reaction)
+    Base.isequal(a.substrate, b.substrate) && Base.isequal(a.product, b.product)
+end
+# Returns `false` if any two fields compare as false; otherwise, `missing` if at least
+# one comparison is missing. Otherwise `true`.
+# This matches the semantics of `==` for Tuple's and NamedTuple's.
+function Base.:(==)(a::Reaction, b::Reaction)
+    found_missing = false
+    cmp = a.substrate == b.substrate
+    cmp === false && return false
+    if ismissing(cmp)
+        found_missing = true
+    end
+    cmp = a.product == b.product
+    cmp === false && return false
+    if ismissing(cmp)
+        found_missing = true
+    end
+    found_missing && return missing
+    return true
+end
+
 # function get_reaction_key(reaction::Reaction)
 #     return [substrate, product]
 # end
@@ -47,6 +73,26 @@ mutable struct ReactionNetwork
     # function ReactionNetwork(specieslist::Vector{String},initialcondition::Vector{Float64},reactionlist::Vector{Reaction},floatingspecies::Vector{String},boundaryspecies::Vector{String},float_initialcondition::Vector{Float64},boundary_initialcondition::Vector{Float64})
     #     return new(specieslist, initialcondition, floatingspecies, boundaryspecies, float_initialcondition,boundary_initialcondition, 1.0E8)
     # end
+end
+
+function Base.hash(x::ReactionNetwork, h::UInt)
+    Base.hash(x.reactionlist, Base.hash(:ReactionNetwork, h))
+end
+function Base.isequal(a::ReactionNetwork, b::ReactionNetwork)
+    Base.isequal(a.reactionlist, b.reactionlist)
+end
+# Returns `false` if any two fields compare as false; otherwise, `missing` if at least
+# one comparison is missing. Otherwise `true`.
+# This matches the semantics of `==` for Tuple's and NamedTuple's.
+function Base.:(==)(a::ReactionNetwork, b::ReactionNetwork)
+    found_missing = false
+    cmp = a.reactionlist == b.reactionlist
+    cmp === false && return false
+    if ismissing(cmp)
+        found_missing = true
+    end
+    found_missing && return missing
+    return true
 end
 
 #TODO: floating and boundary species
