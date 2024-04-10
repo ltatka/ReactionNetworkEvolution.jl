@@ -4,6 +4,7 @@ from pathlib import Path
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+import shutil
 
 def load_model(path):
     f = open(path, "r")
@@ -131,6 +132,11 @@ def evaluate_models_dir(path, outputpath, bestonly=False):
                 writeout_model(r, fitness, outpath)
     return models_evaluated, oscillators
 
+def copy_(src, dst):
+    if os.path.isdir(src):
+        shutil.copytree(src, dst)
+    else:
+        shutil.copy(src, dst)
 def evaluate_trials_best_models(inputpath, outputpath, childdir="final_models", limit=None, bestonly=False):
     print("starting...")
     if not os.path.isdir(outputpath):
@@ -145,6 +151,8 @@ def evaluate_trials_best_models(inputpath, outputpath, childdir="final_models", 
             total, oscs = evaluate_models_dir(fullpath, outputpath, bestonly=bestonly)
             models_evaluated += total
             oscillators += oscs
+            if oscs > 0:
+                copy_(inputpath, outputpath)
         except:
             continue
         if models_evaluated % 50 == 0:
@@ -236,7 +244,7 @@ def fix_flagged_models(inputpath):
 
 
 
-inputpath = "/home/hellsbells/Desktop/evolution_output/yes_crossover/yes_crossover"
+inputpath = "/home/hellsbells/Desktop/evolution_output/unique_species_no_spec/output"
 outputpath = inputpath + "_success"
 
 oscillators, total = evaluate_trials_best_models(inputpath, outputpath, bestonly=True)

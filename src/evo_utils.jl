@@ -386,7 +386,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     objfunct::ObjectiveFunction,
     total_offspring::Int64)
     
-    newpopulation = Vector{ReactionNetwork}(undef, total_offspring+1)
+    newpopulation = Vector{ReactionNetwork}(undef, total_offspring)
 
     offspring_index = 1
 
@@ -447,7 +447,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             end
         end
     end
-    return newpopulation
+    return newpopulation 
 end
 
 

@@ -1,3 +1,4 @@
+import numpy as np
 import tellurium as te
 
 import matplotlib
@@ -282,6 +283,26 @@ def plot_several_fitness(path):
     plt.title(path)
     plt.show()
 
+def plot_several_unique_networks(path):
+    i = 0
+    for dir in os.listdir(path):
+        fullpath = os.path.join(path, f"{dir}/datatracker.json")
+        try:
+            f = open(fullpath)
+            data = json.load(f)
+            f.close()
+            fitness = data["num_unique_networks"][1:]
+            if max(data["num_unique_networks"]) > 100:
+                continue
+            plt.plot(fitness)
+            i += 1
+            if i > 5:
+                break
+        except:
+            continue
+    plt.title(path)
+    plt.show()
+
 def find_descreasing_fitness(path):
     for dir in os.listdir(path):
         fullpath = os.path.join(path, f"{dir}/datatracker.json")
@@ -301,125 +322,39 @@ def find_descreasing_fitness(path):
 
 
 
-inputpath = "/home/hellsbells/Desktop/evolution_output/800gen_nostalls_success"
-# outputpath = inputpath + "_success"
-# plot_several_fitness(inputpath)
-# find_descreasing_fitness(inputpath)
+path = "/home/hellsbells/Desktop/evolution_output/unique_species/output"
 
 
-# for file in os.listdir(path):
-#     f = open(os.path.join(path, file), "r")
-#     astr = f.read()
-#     f.close()
-#     r = te.loada(astr)
-#     if not is_eigen_oscillator(r):
-#         print(file)
-#
-#
-# plot_several_models(inputpath,4, 4)
-# # #
 
-# path = "/home/hellsbells/Desktop/networkEv/Data/BenchmarkTests/1000_trials_oscillators"
-# modelname = "bestmodel_H4Pyg4D9SZ5i"
-#
-# model_path = os.path.join(path, modelname)
-#
-# f = open(model_path, "r")
-# astr = f.read()
-# f.close()
-# r = te.loada(astr)
-# r.simulate(0, 1, 100)
-# print(r.getFullEigenValues())
-# r.plot()
+i = 0
+portion_data = []
+for dir in os.listdir(path):
 
-r = te.loada("""
-// Created by libAntimony v2.12.0
-// Compartments and Species:
-species S1, S2, S0;
+    fullpath = os.path.join(path, f"{dir}/datatracker.json")
+    try:
+        f = open(fullpath)
+        data = json.load(f)
+        f.close()
+        num_unique = data["num_unique_networks"][1:]
+        num_total = data["num_individuals"][1:]
+        if max(num_unique) > 100:
+            continue
+        portion = [u/t for u,t in zip(num_unique, num_total)]
+        portion_data.append(portion)
+        i += 1
+        if i > 50:
+            break
+    except:
+        continue
+portion_data = np.array(portion_data)
+# avgs = np.mean(data, axis=1)
+# std = np.std(data, axis=1)
 
-// Reactions:
-_J0: S1 + S2 -> S0 + S2; k1*S1*S2;
-#_J1: S0 + S0 -> S2; k2*S0*S0;
-_J2: S0 + S0 -> S0; k3*S0*S0;
-_J3: S0 + S1 -> S1 + S1; k4*S0*S1;
-_J4: S1 -> S1 + S2; k5*S1;
-_J5: S0 + S2 -> S0 + S2; k6*S0*S2;
-_J6: S0 -> S0 + S2; k7*S0;
-_J7: S1 + S1 -> S1 + S1; k8*S1*S1;
-_J8: S2 -> S2; k9*S2;
-_J9: S1 -> S0 + S1; k10*S1;
-_J10: S0 -> S2 + S2; k11*S0;
-_J11: S0 + S2 -> S2; k12*S0*S2;
-_J12: S1 -> S0 + S0; k13*S1;
-_J13: S2 -> S0; k14*S2;
-_J14: S1 -> S1; k15*S1;
-
-// Species initializations:
-S1 = 5;
-S2 = 9;
-S0 = 1;
-
-// Variable initializations:
-k1 = 3.36495487244513;
-k2 = 9.3887511062499;
-k3 = 19.8324490541693;
-k4 = 59.9610897219989;
-k5 = 41.3953222290076;
-k6 = 10.8446618226208;
-k7 = 85.1925626785795;
-k8 = 47.9051148402496;
-k9 = 14.6363835222696;
-k10 = 9.39312395219087;
-k11 = 57.856294625205;
-k12 = 9.13869907614637;
-k13 = 28.1911480471516;
-k14 = 29.0559217184585;
-k15 = 44.0058206837288;
-
-// Other declarations:
-const k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, k11, k12, k13, k14, k15;
-
-#fitness: 0.050921741969524786
-""")
-# r.integrator.relative_tolerance = 1e-10
-# r.reset()
-# m = r.simulate(0, 50, 100000)
-r.simulate(0, 10,500)
-r.plot()
-# r.reset()
-# r.steadyState()
-# print(r.S0, r.S1, r.S2)
-# r.reset()
-print(is_eigen_oscillator(r))
-# r.reset()
-# r.steadyState()
-# # print(r.S0, r.S1, r.S2)
-# print(r.getFullEigenValues())
-#
-# r.reset()
-# r.integrator.relative_tolerance = 1e-10
-# # r.reset()
-# r.simulate(0, 10, 100)
-# r.plot()
-# #
-# # r.steadyState()
-# # print(r.getFullEigenValues())
-# # r.reset()
-# # fig, axs = plt.subplots(1, 3)
-# #
-#
-# print(r.getFullEigenValues())
-# m = r.simulate(0,10,500)
-# axs[0].plot(m['time'], m[:,1:])
-# axs[0].set_title(f"{r.getFullEigenValues()}", size=8)
-#
-# r.reset()
-# m = r.simulate(0,1000,5000)
-# axs[1].plot(m['time'], m[:,1:])
-# axs[1].set_title(f"{r.getFullEigenValues()}", size=8)
-#
-# r.reset()
-# m = r.simulate(0,10000,50000)
-# axs[2].plot(m['time'], m[:,1:])
-# axs[2].set_title(f"{r.getFullEigenValues()}", size=8)
-# plt.show()
+df = pd.DataFrame(portion_data)
+means = df.mean()
+dev = df.std()
+# path = df.rolling(window=50, min_periods=1).mean()
+# dev = df.rolling(window=50, min_periods=1).std()
+plt.plot(means)
+plt.fill_between(dev.index, (means-2*dev), (means+2*dev), color='c')
+plt.show()

@@ -16,6 +16,8 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     tracker = Dict{String, Any}(
         "batch_num" => batchnum,
         "top_individual_fitness" => Vector{Float64}(undef, settings.ngenerations),
+        "num_unique_networks" => Vector{Int64}(undef, settings.ngenerations+1),
+        "num_individuals" => Vector{Int64}(undef, settings.ngenerations+1)
         # "total_num_species" => Vector{Int64}(),
         # "avg_species_distances" => Vector{Float64}(),
         # "min_species_distances" => Vector{Float64}(),
@@ -30,6 +32,10 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     SPECIES_MOD_STEP = settings.delta_step
 
     population = generate_network_population(settings, ng)
+    if settings.track_unique_networks
+        num_unique = length(Set(population))
+        tracker["num_unique_networks"][1] = num_unique
+    end
 
     species_by_IDs = initialize_species_by_IDs(population)
 
@@ -59,6 +65,15 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         end
 
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, total_offspring)
+
+        if settings.track_unique_networks
+            num_unique = length(Set(population))
+            if num_unique > 100
+                println(population)
+            end
+            tracker["num_unique_networks"][i+1] = num_unique
+            tracker["num_individuals"][i+1] = length(population)
+        end
 
         if settings.enable_speciation
             species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)

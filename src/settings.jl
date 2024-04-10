@@ -50,6 +50,7 @@ struct Settings
     initialconditions::Vector{Float64}
     objectivedatapath::String
     enable_speciation::Bool
+    track_unique_networks::Bool
     #objectivespecies::Vector{String}
    
 end
@@ -101,6 +102,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "initialconditions" => [1.0, 5.0, 9.0],
         "objectivedatapath" => "DEFAULT",
         "enable_speciation" => true,
+        "track_unique_networks" => true,
         )
     # If a path to settings is supplied:
     if path != :"DEFAULT"
@@ -166,6 +168,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["initialconditions"],
                    settings["objectivedatapath"],
                    settings["enable_speciation"],
+                   settings["track_unique_networks"]
                    )
     return usersettings   
 end

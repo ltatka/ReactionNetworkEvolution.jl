@@ -1,6 +1,6 @@
 using Distributions
 using PyCall
-using AutoHashEquals
+
 
 include("settings.jl")
 
