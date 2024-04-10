@@ -17,7 +17,8 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         "batch_num" => batchnum,
         "top_individual_fitness" => Vector{Float64}(undef, settings.ngenerations),
         "num_unique_networks" => Vector{Int64}(undef, settings.ngenerations+1),
-        "num_individuals" => Vector{Int64}(undef, settings.ngenerations+1)
+        "num_individuals" => Vector{Int64}(undef, settings.ngenerations+1),
+        "num_best_network" => Vector{Int64}(undef, settings.ngenerations)
         # "total_num_species" => Vector{Int64}(),
         # "avg_species_distances" => Vector{Float64}(),
         # "min_species_distances" => Vector{Float64}(),
@@ -58,6 +59,14 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
         tracker["top_individual_fitness"][i] =  maxfitness
         
+        bestnetwork_count = 0
+        for network in population
+            if network == bestnetwork
+                bestnetwork_count += 1
+            end
+        end
+        tracker["num_best_network"][i] = bestnetwork_count
+
         if maxfitness > 0.05
             """It is possible to have oscillators with a lower fitness than this, 
             but seems that any network with this fitness or higher is certainly an oscillator"""

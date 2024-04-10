@@ -7,7 +7,7 @@ do
 
     julia --project=. -e 'using Pkg; Pkg.instantiate()'  
 
-    julia --project=. evscript.jl
+    julia --project=. run_evolution.jl
 
     ((counter++)) 
 
