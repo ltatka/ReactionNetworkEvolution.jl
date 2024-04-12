@@ -444,6 +444,9 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 end
                 newpopulation[offspring_index] = newnetwork
                 offspring_index += 1
+                if offspring_index > total_offspring
+                    break
+                end
             end
         end
     end
