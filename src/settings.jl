@@ -52,6 +52,7 @@ struct Settings
     enable_speciation::Bool
     track_unique_networks::Bool
     #objectivespecies::Vector{String}
+    note::String # User can add any description or other labels here
    
 end
 
@@ -75,7 +76,7 @@ function get_objectivefunction(settings::Settings)
 end
 
 
-function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1)
+function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1, note::String="")
     settings = Dict(
         "portionelite" => 0.1,
         "reactionprobabilities" => [.1, .4, .4, .1],
@@ -103,6 +104,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "objectivedatapath" => "DEFAULT",
         "enable_speciation" => true,
         "track_unique_networks" => true,
+        "note"=>""
         )
     # If a path to settings is supplied:
     if path != :"DEFAULT"
@@ -168,7 +170,8 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["initialconditions"],
                    settings["objectivedatapath"],
                    settings["enable_speciation"],
-                   settings["track_unique_networks"]
+                   settings["track_unique_networks"],
+                   settings["note"]
                    )
     return usersettings   
 end
