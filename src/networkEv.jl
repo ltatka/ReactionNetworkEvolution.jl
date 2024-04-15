@@ -45,6 +45,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     end
 
     for i in 1:settings.ngenerations
+    
 
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
@@ -58,16 +59,15 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
         tracker["top_individual_fitness"][i] =  maxfitness
-        
-        bestnetwork_count = 0
-        for network in population
-            if network == bestnetwork
-                bestnetwork_count += 1
-            end
+        if maxfitness <= 0
+            println(bestnetwork)
         end
+
+        
+        bestnetwork_count = count_best_networks(bestnetwork, population)
         tracker["num_best_network"][i] = bestnetwork_count
 
-        if maxfitness > settings.writeout_threshold #0.05
+        if maxfitness > 20#settings.writeout_threshold #0.05
             """It is possible to have oscillators with a lower fitness than this, 
             but seems that any network with this fitness or higher is certainly an oscillator"""
             break 
