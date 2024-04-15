@@ -561,7 +561,7 @@ function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
                 if !newreaction.isactive
                     p_active = rand()
                     if p_active < 0.25
-                        rnewreaction.isactive = true
+                        newreaction.isactive = true
                     end
                 end
                 newreactiondict[key] = newreaction
