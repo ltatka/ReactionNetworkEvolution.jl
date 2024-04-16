@@ -416,15 +416,25 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 newpopulation[offspring_index] = network
             end
             offspring_index += 1
+            if offspring_index > total_offspring
+                println("There's that weird bug")
+                println("this species had $(species.numoffspring) allotted. There were $(length(networks)) member networks")
+
+            end
         elseif totaloffspring > 1 # Total offspring greater than 1
             # Calculate number elite
-            num_elite = Int64(round(length(networks)*settings.portionelite))
+            num_elite = Int64(round(totaloffspring*settings.portionelite))
             if num_elite == 0 && settings.portionelite != 0.0 # Set minimum number of elites to 1, unless the user has specifically set this value to 0
                 num_elite = 1
             end
             for i = 1:num_elite
                 newpopulation[offspring_index] = deepcopy(networks[i])
                 offspring_index += 1
+                if offspring_index > total_offspring
+                    println("There's that weird bug")
+                    println("this species had $(species.numoffspring) allotted. There were $(length(networks)) member networks")
+                    println("We were trying to add $i out of $offspring_to_add left")
+                end
             end
             # Get rid of the worst networks in the species
             num_to_remove = Int64(floor(length(networks)*settings.drop_portion))
@@ -466,7 +476,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 end
                 if offspring_index > total_offspring
                     println("There's that weird bug")
-                    println("this species had $numoffspring allotted. There were $(length(networks)) member networks")
+                    println("this species had $(species.numoffspring) allotted. There were $(length(networks)) member networks")
                     println("We were trying to add $i out of $offspring_to_add left")
                 end
                 newpopulation[offspring_index] = newnetwork
