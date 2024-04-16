@@ -37,6 +37,7 @@ struct Settings
     writeout_threshold::Float64 # Networks with this fitness or better will be saved
     p_crossover::Float64 # Probability of p_crossover
     p_mutation::Float64 # Probability of mutation (does not need to sum to 1 with p_crossover)
+    excluisve_crossover_mutation::Bool # If true, either crossover OR mutation, never both
     drop_portion::Float64 # Portion of worst networks to drop in each species
     seed::Float64
     starting_delta::Float64
@@ -50,7 +51,7 @@ struct Settings
     initialconditions::Vector{Float64}
     objectivedatapath::String
     enable_speciation::Bool
-    track_unique_networks::Bool
+    track_metadata::Bool
     #objectivespecies::Vector{String}
     note::String # User can add any description or other labels here
    
@@ -91,6 +92,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "writeout_threshold" => 0.05,
         "p_crossover" => 0.75,
         "p_mutation" => 0.75,
+        "exclusive_crossover_mutation" => false,
         "drop_portion" => 0.1,
         "seed" => -1,
         "starting_delta" => 0.65,
@@ -103,7 +105,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "initialconditions" => [1.0, 5.0, 9.0],
         "objectivedatapath" => "DEFAULT",
         "enable_speciation" => true,
-        "track_unique_networks" => true,
+        "track_metadata" => true,
         "note"=>""
         )
     # If a path to settings is supplied:
@@ -136,6 +138,19 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
     # Set the random seed
     Random.seed!(Int64(seed))
 
+    # Check if the user has supplied a note
+    if note != ""
+        settings["note"] = note
+    end
+
+    # Check probability values
+    if settings["exclusive_crossover_mutation"] && (settings["p_crossover"] + settings["p_mutation"] > 1)
+        error("p_crossover + p_mutation must be less than or equal to 1")
+    end
+    if sum(settings["reactionprobabilities"]) != 1
+        error("reactionprobabilities must sum to 1")
+    end
+
     # Create settings object
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
     if ngenerations == -1
@@ -144,6 +159,8 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
     if populationsize == -1
         populationsize = settings["populationsize"]
     end
+
+
     
     usersettings = Settings(settings["portionelite"], 
                    reactionprobabilities,
@@ -158,6 +175,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["writeout_threshold"],
                    settings["p_crossover"],
                    settings["p_mutation"],
+                   settings["exclusive_crossover_mutation"],
                    settings["drop_portion"],
                    settings["seed"],
                    settings["starting_delta"],
@@ -170,7 +188,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["initialconditions"],
                    settings["objectivedatapath"],
                    settings["enable_speciation"],
-                   settings["track_unique_networks"],
+                   settings["track_metadata"],
                    settings["note"]
                    )
     return usersettings   

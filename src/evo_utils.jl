@@ -394,7 +394,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     objfunct::ObjectiveFunction,
     total_offspring::Int64)
     
-    newpopulation = Vector{ReactionNetwork}(undef, total_offspring+1)
+    newpopulation = Vector{ReactionNetwork}(undef, total_offspring)
 
     offspring_index = 1
 
@@ -442,16 +442,32 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 end
                 # Decide to mutate it, cross it over, or both
                 p = rand()                
-                if p < settings.p_crossover && idx1 != idx2
-                    newnetwork = crossover(network, network2)
+                if settings.excluisve_crossover_mutation
+                    # if exclusive_crossover_mutation is set to true, then either crossover OR mutation will occur. 
+                    # If p_crossover + p_mutation is < 1, then there's a chance that neither will occur.
+                    if p < settings.p_crossover && idx1 != idx2
+                        newnetwork = crossover(network1, network2)
+                    elseif p < settings.p_crossover + settings.p_mutation
+                        newnetwork = deepcopy(network)
+                        newnetwork = mutatenetwork!(settings, ng, newnetwork)
+                    else
+                        newnetwork = deepcopy(network)
+                    end
                 else
-                    newnetwork = deepcopy(network)
-                end
-                if p >= 1 - settings.p_mutation
-                    mutatenetwork!(settings, ng, newnetwork)
+                    # If exclusive_crossover_mutation is set to false (default), then mutation, crossover, or BOTH, will occcur
+                    if p < settings.p_crossover && idx1 != idx2
+                        newnetwork = crossover(network, network2)
+                    else
+                        newnetwork = deepcopy(network)
+                    end
+                    if p >= 1 - settings.p_mutation
+                        mutatenetwork!(settings, ng, newnetwork)
+                    end
                 end
                 if offspring_index > total_offspring
-                    println("here")
+                    println("There's that weird bug")
+                    println("this species had $numoffspring allotted. There were $(length(networks)) member networks")
+                    println("We were trying to add $i out of $offspring_to_add left")
                 end
                 newpopulation[offspring_index] = newnetwork
                 offspring_index += 1

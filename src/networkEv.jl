@@ -13,18 +13,20 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     starttime = "$starttime"
     starttime = joinpath(parentdir, starttime)
     mkdir(starttime)
-    tracker = Dict{String, Any}(
-        "batch_num" => batchnum,
-        "top_individual_fitness" => Vector{Float64}(undef, settings.ngenerations),
-        "num_unique_networks" => Vector{Int64}(undef, settings.ngenerations+1),
-        "num_individuals" => Vector{Int64}(undef, settings.ngenerations+1),
-        "num_best_network" => Vector{Int64}(undef, settings.ngenerations)
-        # "total_num_species" => Vector{Int64}(),
-        # "avg_species_distances" => Vector{Float64}(),
-        # "min_species_distances" => Vector{Float64}(),
-        # "max_species_distances" => Vector{Float64}()
-    )
-
+    if settings.track_metadata
+        tracker = Dict{String, Any}(
+            "batch_num" => batchnum,
+            "top_individual_fitness" => Vector{Float64}(),
+            "num_unique_networks" => Vector{Int64}(),
+            "num_individuals" => Vector{Int64}(),
+            "num_best_network" => Vector{Int64}(),
+            "total_num_species" => Vector{Int64}(),
+            "avg_species_distances" => Vector{Float64}(),
+            "min_species_distances" => Vector{Float64}(),
+            "max_species_distances" => Vector{Float64}()
+        )
+    end
+    
     objfunct = get_objectivefunction(settings)
     ng = get_networkgenerator(settings)
 
@@ -33,39 +35,39 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     SPECIES_MOD_STEP = settings.delta_step
 
     population = generate_network_population(settings, ng)
-    if settings.track_unique_networks
-        num_unique = length(Set(population))
-        tracker["num_unique_networks"][1] = num_unique
-    end
-
     species_by_IDs = initialize_species_by_IDs(population)
 
     if settings.enable_speciation
         species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
     end
 
-    for i in 1:settings.ngenerations
+    if settings.track_metadata
+        num_unique = length(Set(population))
+        push!(tracker["num_unique_networks"], num_unique)
+        push!(tracker["num_individuals"], length(population))
+        push!(tracker["total_num_species"], length(keys(species_by_IDs)))
+        avg, mn, mx = get_diversity_stats(species_by_IDs)
+        push!(tracker["avg_species_distances"], avg)
+        push!(tracker["min_species_distances"], mn)
+        push!(tracker["max_species_distances"], mx)
+    end
     
 
+    for i in 1:settings.ngenerations
+    
+        # TODO: save time by also returning the top fitness and network?
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
         species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
 
-        # L = length(keys(species_by_IDs))
-        # avg, mn, mx = get_diversity_stats(species_by_IDs)
-        # push!(tracker["total_num_species"], L)
-        # push!(tracker["avg_species_distances"], avg)
-        # push!(tracker["min_species_distances"], mn)
-        # push!(tracker["max_species_distances"], mx)
         
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
-        tracker["top_individual_fitness"][i] =  maxfitness
-        if maxfitness <= 0
-            println(bestnetwork)
+
+        if settings.track_metadata
+            push!(tracker["top_individual_fitness"],maxfitness)
+            bestnetwork_count = count_best_networks(bestnetwork, population)
+            push!(tracker["num_best_network"], bestnetwork_count)
         end
 
-        
-        bestnetwork_count = count_best_networks(bestnetwork, population)
-        tracker["num_best_network"][i] = bestnetwork_count
 
         if maxfitness > 20#settings.writeout_threshold #0.05
             """It is possible to have oscillators with a lower fitness than this, 
@@ -75,13 +77,15 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
 
         population = reproduce_networks(species_by_IDs, settings, ng, objfunct, total_offspring)
 
-        if settings.track_unique_networks
+        if settings.track_metadata
             num_unique = length(Set(population))
-            if num_unique > 100
-                println(population)
-            end
-            tracker["num_unique_networks"][i+1] = num_unique
-            tracker["num_individuals"][i+1] = length(population)
+            push!(tracker["num_unique_networks"], num_unique)
+            push!(tracker["num_individuals"], length(population))
+            push!(tracker["total_num_species"], length(keys(species_by_IDs)))
+            avg, mn, mx = get_diversity_stats(species_by_IDs)
+            push!(tracker["avg_species_distances"], avg)
+            push!(tracker["min_species_distances"], mn)
+            push!(tracker["max_species_distances"], mx)
         end
 
         if settings.enable_speciation
@@ -94,6 +98,13 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
     bestnetwork, maxfitness = gettopmodel(species_by_IDs)
 
+    if settings.track_metadata
+        push!(tracker["top_individual_fitness"],maxfitness)
+        bestnetwork_count = count_best_networks(bestnetwork, population)
+        push!(tracker["num_best_network"], bestnetwork_count)
+    end
+
+
     writeoutnetwork(bestnetwork, "bestmodel_$(bestnetwork.ID)", directory=joinpath(starttime,"final_models"))
     
     for ID in keys(species_by_IDs)
@@ -104,10 +115,13 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         end
     end
 
-    stringtracker = JSON.json(tracker)
-    open(joinpath(starttime, "datatracker.json"), "w") do f
-        write(f, stringtracker)
+    if settings.track_metadata
+        stringtracker = JSON.json(tracker)
+        open(joinpath(starttime, "datatracker.json"), "w") do f
+            write(f, stringtracker)
+        end
     end
+
     writeout_settings(settings, joinpath(starttime, "settings.json"))
 end
 
