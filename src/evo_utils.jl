@@ -394,7 +394,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     objfunct::ObjectiveFunction,
     total_offspring::Int64)
     
-    newpopulation = Vector{ReactionNetwork}(undef, total_offspring)
+    newpopulation = Vector{ReactionNetwork}(undef, total_offspring+1)
 
     offspring_index = 1
 
@@ -407,7 +407,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
         # mutated network or the original, whichever is more fit
         if totaloffspring == 1
             network = networks[1]
-            newnetwork = deepcopy(network)
+            newnetwork = deepcopy(networks[1])
             newnetwork = mutatenetwork!(settings, ng, newnetwork)
             newfitness = evaluate_fitness(objfunct, newnetwork)
             if newfitness > network.fitness
@@ -450,11 +450,12 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 if p >= 1 - settings.p_mutation
                     mutatenetwork!(settings, ng, newnetwork)
                 end
+                if offspring_index > total_offspring
+                    println("here")
+                end
                 newpopulation[offspring_index] = newnetwork
                 offspring_index += 1
-                if offspring_index > total_offspring
-                    break
-                end
+
             end
         end
     end
