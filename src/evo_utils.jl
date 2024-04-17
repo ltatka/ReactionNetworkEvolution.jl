@@ -512,7 +512,7 @@ function tournamentselect(species::Species)
     end
 end
 
-function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
+function crossover_more_lenient(network1::ReactionNetwork, network2::ReactionNetwork)
     """
     A more lenient crossover method
     1. All genes that are common are inherited with the rate constants from the more fit parent
@@ -590,7 +590,7 @@ function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     return newnetwork
 
 end
-function crossover_old(network1::ReactionNetwork, network2::ReactionNetwork)
+function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     newreactiondict = Dict()
     if network1.fitness > network2.fitness
         morefitnetwork = network1
