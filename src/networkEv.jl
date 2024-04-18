@@ -153,7 +153,10 @@ function run_evolution(;
         mkdir(outputpath)
     end
     path = joinpath(outputpath, "batch_$starttime")
-    mkdir(path)
+    if !isdir(path)
+        mkdir(path)
+    end
+    
     println("Writing output to $path")
 
     # If no path to settings is supplied, use default settings
