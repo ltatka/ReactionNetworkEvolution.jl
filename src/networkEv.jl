@@ -152,8 +152,8 @@ function run_evolution(;
     if !isdir(outputpath)
         mkdir(outputpath)
     end
-    path = joinpath(outputpath, "batch_$starttime")
-    path = joinpath(path, randstring(3))
+    path = joinpath(outputpath, "batch_$starttime" * randstring(3))
+
     if !isdir(path)
         mkdir(path)
     end
