@@ -143,13 +143,13 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         settings["note"] = note
     end
 
-    # Check probability values
-    if settings["exclusive_crossover_mutation"] && (settings["p_crossover"] + settings["p_mutation"] > 1)
-        error("p_crossover + p_mutation must be less than or equal to 1")
-    end
-    if sum(settings["reactionprobabilities"]) != 1
-        error("reactionprobabilities must sum to 1")
-    end
+    # # Check probability values
+    # if settings["exclusive_crossover_mutation"] && (settings["p_crossover"] + settings["p_mutation"] > 1)
+    #     error("p_crossover + p_mutation must be less than or equal to 1")
+    # end
+    # if sum(settings["reactionprobabilities"]) != 1
+    #     error("reactionprobabilities must sum to 1")
+    # end
 
     # Create settings object
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
