@@ -114,9 +114,11 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         j = JSON.parsefile(path)
         # Check for any optional args, use defaults if none 
         # If there are user specified args, replace value 
-        for k in keys(settings)
-            if k in keys(j)
+        for k in keys(j)
+            if k in keys(settings)
                 settings[k] = j[k]
+            elseif k ∉ keys(settings)
+                error("$k not found in settings")
             end
         end
     else
