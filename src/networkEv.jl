@@ -150,9 +150,14 @@ function run_evolution(;
     end
     # Create a directory of output of this batch in the data dir
     if !isdir(outputpath)
-        mkdir(outputpath)
+        # This is for dealing with race conditions in parallel computing
+        try
+            mkdir(outputpath)
+        catch LoadError
+        end
     end
-    path = joinpath(outputpath, "batch_$starttime" * randstring(3))
+
+    path = joinpath(outputpath, "batch_$starttime" * randstring(3)) # randstring is for race conditions
 
     if !isdir(path)
         mkdir(path)

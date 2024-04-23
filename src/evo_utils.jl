@@ -395,9 +395,6 @@ function reproduce_networks(species_by_IDs, settings::Settings,
     total_offspring::Int64)
     
     newpopulation = Vector{ReactionNetwork}(undef, total_offspring)
-    if total_offspring ==1
-        println("here")
-    end
 
     offspring_index = 1
 
@@ -428,6 +425,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             # By basing the number of elites to copy over on the size of the subsequent generation, in some cases the number of elites to copy over
             # will be greater than the number of individuals in the current species. In this case, we copy over all the individuals in the current species,
             # and then populate the rest of the next generation with mutated networks. 
+            # Possible problem: maybe this will stop evolution if it happens several times and the networks never get modified?
             if num_elite > length(networks)
                 num_elite = length(networks)
             end
