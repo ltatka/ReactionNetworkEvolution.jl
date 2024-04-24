@@ -69,7 +69,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         end
 
 
-        if maxfitness > 20#settings.writeout_threshold #0.05
+        if maxfitness > settings.writeout_threshold #0.05
             """It is possible to have oscillators with a lower fitness than this, 
             but seems that any network with this fitness or higher is certainly an oscillator"""
             break 

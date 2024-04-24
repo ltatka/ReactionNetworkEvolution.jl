@@ -454,7 +454,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                     # if exclusive_crossover_mutation is set to true, then either crossover OR mutation will occur. 
                     # If p_crossover + p_mutation is < 1, then there's a chance that neither will occur.
                     if p < settings.p_crossover && idx1 != idx2
-                        newnetwork = crossover(network1, network2)
+                        newnetwork = crossover(network, network2)
                     elseif p < settings.p_crossover + settings.p_mutation
                         newnetwork = deepcopy(network)
                         newnetwork = mutatenetwork!(settings, ng, newnetwork)
