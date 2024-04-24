@@ -10,7 +10,7 @@ include("evo_utils.jl")
 function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
 
     starttime = now()
-    starttime = "$starttime"
+    starttime = "$starttime" * randstring(3)  # for race conditions
     starttime = joinpath(parentdir, starttime)
     mkdir(starttime)
     if settings.track_metadata
