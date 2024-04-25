@@ -2,7 +2,6 @@ using Random
 using JSON
 using DataFrames
 
-
 struct ReactionProbabilities
     uniuni::Float64
     unibi::Float64
@@ -21,7 +20,6 @@ struct ReactionProbabilities
         new(p1, p2, p3, p4)
     end
 end
-
 
 struct Settings
     portionelite::Float64
@@ -46,7 +44,6 @@ struct Settings
     use_seed_network::Bool # Start with a seed network
     seed_network_path::String
     tournamentselect::Bool
-
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
@@ -76,7 +73,6 @@ function get_objectivefunction(settings::Settings)
     end
     return ObjectiveFunction(objectivedata, time)
 end
-
 
 function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1, note::String="")
     settings = Dict(
@@ -164,8 +160,6 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         populationsize = settings["populationsize"]
     end
 
-
-    
     usersettings = Settings(settings["portionelite"], 
                    reactionprobabilities,
                    settings["p_rateconstantmutation"],

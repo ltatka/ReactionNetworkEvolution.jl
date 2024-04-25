@@ -313,10 +313,10 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
             total_fitness += species_fitness/N
             species.speciesfitness = species_fitness/N #species fitness is now going to be the average fitness of member species
         else
-            total_fitness += topfitnesss
+            total_fitness += topfitness
             species.speciesfitness = topfitness
         end
-        
+
         oldfitness = species.topfitness
         species.topfitness = topfitness
         species.topnetwork = topnetwork
