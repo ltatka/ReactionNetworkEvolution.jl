@@ -56,7 +56,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
     for i in 1:settings.ngenerations
     
         # TODO: save time by also returning the top fitness and network?
-        species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+        species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs, settings)
         species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
 
         
@@ -95,7 +95,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         end
     end
     
-    species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs)
+    species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs, settings)
     bestnetwork, maxfitness = gettopmodel(species_by_IDs)
 
     if settings.track_metadata

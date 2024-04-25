@@ -53,6 +53,7 @@ struct Settings
     enable_speciation::Bool
     track_metadata::Bool
     #objectivespecies::Vector{String}
+    average_fitness::Bool
     note::String # User can add any description or other labels here
    
 end
@@ -106,6 +107,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "objectivedatapath" => "DEFAULT",
         "enable_speciation" => true,
         "track_metadata" => true,
+        "average_fitness" => true,
         "note"=>""
         )
     # If a path to settings is supplied:
@@ -191,6 +193,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["objectivedatapath"],
                    settings["enable_speciation"],
                    settings["track_metadata"],
+                   settings["average_fitness"],
                    settings["note"]
                    )
     return usersettings   

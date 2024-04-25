@@ -282,7 +282,7 @@ function print_top_fitness(n::Int, population::Array{ReactionNetwork})
     return nothing
 end
 
-function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs::Dict{String, Species})
+function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs::Dict{String, Species}, settings::Settings)
     # Evaluates the entire populations fitness as well as the fintess for each species, per the NEAT algo
     # Assigns each individual its fitness score
     # total_fitness = sum of all fitness scores across the entire population, float
@@ -309,11 +309,18 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
                 topnetwork = network
             end
         end
-        total_fitness += species_fitness/N
+        if settings.average_fitness
+            total_fitness += species_fitness/N
+            species.speciesfitness = species_fitness/N #species fitness is now going to be the average fitness of member species
+        else
+            total_fitness += topfitnesss
+            species.speciesfitness = topfitness
+        end
+        
         oldfitness = species.topfitness
         species.topfitness = topfitness
         species.topnetwork = topnetwork
-        species.speciesfitness = species_fitness/N #species fitness is now going to be the average fitness of member species
+        
         # If the previous top fitness is the same as this one, increment the stagnation counter by one. Otherwise, reset it to 0
         if oldfitness == topfitness
             species.numstagnations += 1
