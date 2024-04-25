@@ -57,28 +57,28 @@ function solve_ode(objfunct::ObjectiveFunction, network::ReactionNetwork)
     
 end
 
-function evaluate_fitness_new(objfunct:: ObjectiveFunction, network::ReactionNetwork)
-    cmax = 20
-    cmin = 5
-    try 
-        sol = solve_ode(objfunct, network)
-        if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
-            return 0
-        end
-        fitness = zeros(length(network.floatingspecies))
-        for i = 1:length(sol.u)-1
-            for j in 1:length(network.floatingspecies)
-                # if it crosses the lower bound or upper bound
-                if ((sol.u[i][j] > cmin && sol.u[i+1][j] <=cmin) || (sol.u[i][j] < cmin && sol.u[i+1][j] >=cmin)) || ((sol.u[i][j] > cmax && sol.u[i+1][j] <=cmax) || (sol.u[i][j] < cmax && sol.u[i+1][j] >=cmax))
-                    fitness[j] += 1
-                end
-            end
-        end
-        return maximum(fitness)
-    catch e
-        return 0
-    end
-end
+# function evaluate_fitness_new(objfunct:: ObjectiveFunction, network::ReactionNetwork)
+#     cmax = 20
+#     cmin = 5
+#     try 
+#         sol = solve_ode(objfunct, network)
+#         if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
+#             return 0
+#         end
+#         fitness = zeros(length(network.floatingspecies))
+#         for i = 1:length(sol.u)-1
+#             for j in 1:length(network.floatingspecies)
+#                 # if it crosses the lower bound or upper bound
+#                 if ((sol.u[i][j] > cmin && sol.u[i+1][j] <=cmin) || (sol.u[i][j] < cmin && sol.u[i+1][j] >=cmin)) || ((sol.u[i][j] > cmax && sol.u[i+1][j] <=cmax) || (sol.u[i][j] < cmax && sol.u[i+1][j] >=cmax))
+#                     fitness[j] += 1
+#                 end
+#             end
+#         end
+#         return maximum(fitness)
+#     catch e
+#         return 0
+#     end
+# end
 
 
 function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
