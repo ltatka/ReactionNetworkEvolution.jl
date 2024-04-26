@@ -23,7 +23,9 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
             "total_num_species" => Vector{Int64}(),
             "avg_species_distances" => Vector{Float64}(),
             "min_species_distances" => Vector{Float64}(),
-            "max_species_distances" => Vector{Float64}()
+            "max_species_distances" => Vector{Float64}(),
+            "delta" => Vector{Float64}(),
+            "avg_intraspecies_distance" => Vector{Float64}()
         )
     end
     
@@ -50,6 +52,8 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         push!(tracker["avg_species_distances"], avg)
         push!(tracker["min_species_distances"], mn)
         push!(tracker["max_species_distances"], mx)
+        push!(tracker["delta"], DELTA)
+        push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs))
     end
     
 
@@ -86,6 +90,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
             push!(tracker["avg_species_distances"], avg)
             push!(tracker["min_species_distances"], mn)
             push!(tracker["max_species_distances"], mx)
+            push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs))
         end
 
         if settings.enable_speciation
@@ -102,6 +107,8 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         push!(tracker["top_individual_fitness"],maxfitness)
         bestnetwork_count = count_best_networks(bestnetwork, population)
         push!(tracker["num_best_network"], bestnetwork_count)
+        push!(tracker["delta"], DELTA)
+        push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs))
     end
 
 

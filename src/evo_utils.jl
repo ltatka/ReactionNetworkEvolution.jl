@@ -78,6 +78,32 @@ function initialize_species_by_IDs(population::Array{ReactionNetwork})
     return Dict(ID => species)
 end
 
+function get_intraspecies_distances(species_by_IDs::Dict{String, Species})
+    # This measures the avg distance between individuals in a single species. 
+    # It's a metric to determine how similar individuals within a species are on average
+    avg_distances = []
+    for ID in keys(species_by_IDs)
+        species = species_by_IDs[ID]
+        if length(species.networks) > 1
+            distances = []
+            species = species_by_IDs[ID]
+            combo_indices = collect(combinations(1:length(species.networks), 2))
+            for combo in combo_indices
+                network1 = species.networks[combo[1]]
+                network2 = species.networks[combo[2]]
+                d = calculate_distance(network1, network2)
+                push!(distances, d)
+            end
+            push!(avg_distances, mean(distances))
+        end
+    end
+    if length(avg_distances) > 0
+        # This would happen if every species only had 1 individual
+        return mean(avg_distances)
+    else
+        return -1
+    end
+end
 
 function get_diversity_stats(species_by_IDs::Dict{String, Species})
     # I want to look at average distance between species and maybe also min and max.
