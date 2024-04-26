@@ -487,7 +487,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                     # if exclusive_crossover_mutation is set to true, then either crossover OR mutation will occur. 
                     # If p_crossover + p_mutation is < 1, then there's a chance that neither will occur.
                     if p < settings.p_crossover && idx1 != idx2
-                        newnetwork = crossover(network, network2)
+                        newnetwork = crossover(network, network2, settings)
                     elseif p < settings.p_crossover + settings.p_mutation
                         newnetwork = deepcopy(network)
                         newnetwork = mutatenetwork!(settings, ng, newnetwork)
@@ -497,7 +497,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 else
                     # If exclusive_crossover_mutation is set to false (default), then mutation, crossover, or BOTH, will occcur
                     if p < settings.p_crossover && idx1 != idx2
-                        newnetwork = crossover(network, network2)
+                        newnetwork = crossover(network, network2, settings)
                     else
                         newnetwork = deepcopy(network)
                     end
@@ -553,85 +553,72 @@ function tournamentselect(species::Species)
     end
 end
 
-function crossover_more_lenient(network1::ReactionNetwork, network2::ReactionNetwork)
+function same_fitness_crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     """
     A more lenient crossover method
-    1. All genes that are common are inherited with the rate constants from the more fit parent
-        Or maybe dice roll for rate constants?
-    2. Option A:
-        All genes from the more fit parent are inherited, mismatched genes from the less fit parent are inheited with dice roll 
-       Option B:
-        All mismatched genes are inherited with dice roll. 
-        
+    If networks are within 5% fitness of each other, then coin toss for all reactions
     """
     newreactiondict = Dict()
-    if network1.fitness > network2.fitness
-        morefitnetwork = network1
-        lessfitnetwork = network2
-    elseif network1.fitness < network2.fitness
-        morefitnetwork = network2
-        lessfitnetwork = network1
-    else #If equal fitness, randomly assign roles  
-        p = rand()
-        if p < 0.5
-            morefitnetwork = network1
-            lessfitnetwork = network2
-        else
-            morefitnetwork = network2
-            lessfitnetwork = network1
-        end
-    end
-    # We are going to look through the genes in the more fit network. If there is a gene in the 
-    # less fit network that is not in the more fit one, we don't care. But if there is an unmatched gene in the more
-    # fit network, we want to keep it
-    for key in keys(morefitnetwork.reactionlist)
-        # If the reaction is in both networks, randomly copy it from either network
-        if key in keys(lessfitnetwork.reactionlist)
-            p = rand()
-            if p < 0.5
-                newreaction = morefitnetwork.reactionlist[key]
-            else
-                newreaction = lessfitnetwork.reactionlist[key]
-            end
-            
-        else # If the reaction is NOT in the less fit network, copy it over
-            newreaction = morefitnetwork.reactionlist[key]
-        end
-        # If the selected reaction is inactive, 25% of it being reactivated
-        if !newreaction.isactive
-            p = rand()
-            if p < 0.25
-                newreaction.isactive = true
-            end
-        end
-        newreactiondict[key] = newreaction
-    end
-    for key in keys(lessfitnetwork.reactionlist)
-        if key ∉ keys(morefitnetwork.reactionlist)
-            p = rand()
-            if p < 0.5
-                newreaction = lessfitnetwork.reactionlist[key]
-                if !newreaction.isactive
-                    p_active = rand()
-                    if p_active < 0.25
-                        newreaction.isactive = true
-                    end
-                end
-                newreactiondict[key] = newreaction
-            end
-        end
-    end
-    
 
+    for key in keys(network1.reactionlist)
+        # If the reaction is in both networks, randomly copy it from either network
+        p = rand()
+        if key in keys(network2.reactionlist)
+            if p < 0.5
+                newreactiondict[key] = network1.reactionlist[key]
+            else
+                newreactiondict[key] = network2.reactionlist[key]
+            end
+        # If the reaction is only in network1, coin toss to pass it on or not
+        else
+            if p < 0.5
+                newreactiondict[key] = network1.reactionlist[key]
+            end
+        end
+        # If a new reaction is added and it's inactive, .25 probability to reactivate it
+        if key in keys(newreactiondict) && !newreationdict[key].isactive && rand() < 0.25
+            newreactiondict[key].isactive = true
+        end
+    end
+
+    # Look for reactions that are only in network2, coin toss to pass it on or not
+    for key in keys(network2.reactionlist)
+        p = rand()
+        if key ∉ keys(network1.reactionlist) && p < 0.5
+            newreactiondict[key] = network2.reactionlist[key]
+            if !newreactiondict[key].isactive && rand() < 0.25
+                newreactiondict[key].isactive = true
+            end
+        end
+    end
 
     newnetwork = deepcopy(morefitnetwork)
     newnetwork.reactionlist = newreactiondict
 
     #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
     return newnetwork
-
 end
-function crossover(network1::ReactionNetwork, network2::ReactionNetwork)
+
+function network_fitness_is_similar(network1::ReactionNetwork, network2::ReactionNetwork, range::Float64)
+    # Determines if two networks have similar fitness or not
+    if network1.fitness > network2.fitness
+        return network2.fitness >= (1-range)*network1.fitness && network2.fitness <= (1+range)*network1.fitness
+    elseif network1.fitness < network2.fitness 
+        return network1.fitness >= (1-range)*network2.fitness && network1.fitness <= (1+range)*network2.fitness
+    else # networks have the same fitness
+        return true
+    end
+end
+
+function crossover(network1::ReactionNetwork, network2::ReactionNetwork, settings::Settings)
+    if settings.same_fitness_crossover && network_fitnes_is_similar(network1, network2, settings.fitness_range_same_fitness_crossover)
+        return same_fitness_crossover(network1, network2)
+    else
+        return general_crossover(network1, network2)
+    end
+end
+
+function general_crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     newreactiondict = Dict()
     if network1.fitness > network2.fitness
         morefitnetwork = network1
