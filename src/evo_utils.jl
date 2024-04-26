@@ -167,7 +167,7 @@ function speciate(species_by_IDs::Dict{String, Species},
     for network in population
         species_assigned = false
         for speciesID in keys(species_by_IDs)
-            network2 = rand(species_by_IDs[speciesID].networks)
+            network2 = species_by_IDs[speciesID].topnetwork# rand(species_by_IDs[speciesID].networks)
             distance = calculate_distance(network, network2)
             if distance <= DELTA
                 network.ID = speciesID
