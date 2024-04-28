@@ -8,7 +8,7 @@ struct ReactionProbabilities
     biuni::Float64
     bibi::Float64
 
-    function ReactionProbabilities(p::Vector{Float64})
+    function ReactionProbabilities(p::Vector{Any})
         new(p[1], p[2], p[3], p[4])
     end
 
