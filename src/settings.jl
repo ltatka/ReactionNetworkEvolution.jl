@@ -47,6 +47,7 @@ struct Settings
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
     objectivedatapath::String
+    match_objectivefunction_species::Bool
     enable_speciation::Bool
     track_metadata::Bool
     #objectivespecies::Vector{String}
@@ -64,16 +65,27 @@ struct ObjectiveFunction
     #indexbyspecies::Dict
 end
 
-function get_objectivefunction(settings::Settings)
-    if settings.objectivedatapath != "DEFAULT"
-        objectivedataframe = DataFrame(CSV.File(settings.objectivedatapath))
-        objectivedata = objectivedataframe[!, "S"]
-        time = objectivedataframe[!, "time"]
+
+function rowtovec(df::DataFrame, row::Int)
+    # Quickly convert a row of a dataframe into a vector
+    return [df[row,i] for i in 1:ncol(df)]
+end
+
+function get_objectivefunction(path::String)
+    if path != "DEFAULT"
+        objectivedataframe = DataFrame(CSV.File(path))
+        time = objectivedataframe[!, 1]
+        objectivedata = objectivedataframe[!, 2:end]
+        specieslist = names(objectivedata)
+        initialconditions = rowtovec(objectivedata, 1)
+        objectivedata = Matrix(objectivedata)
     else
         time = collect(range(0, 1.25, length=11))
         objectivedata = [5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0]
+        specieslist = ["S0", "S1", "S2"]
+        initialconditions = [0., 0., 0.]
     end
-    return ObjectiveFunction(objectivedata, time)
+    return ObjectiveFunction(objectivedata, time), specieslist, initialconditions
 end
 
 function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1, note::String="")
@@ -103,6 +115,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "specieslist" => ["S0", "S1", "S2"],
         "initialconditions" => [1.0, 5.0, 9.0],
         "objectivedatapath" => "DEFAULT",
+        "match_objectivefunction_species" => true,
         "enable_speciation" => true,
         "track_metadata" => true,
         "average_fitness" => true,
@@ -155,6 +168,19 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
     #     error("reactionprobabilities must sum to 1")
     # end
 
+    # Get the objective function and species IDs 
+    objectivefunction, floatingspeciesIDs, initialconditions = get_objectivefunction(settings["objectivedatapath"])
+    settings["specieslist"] = floatingspeciesIDs
+    # If the initial conditions were read from the objective data, them put them in the settings, dict.
+    # If the intital conditions are returend as [0., 0., 0.], then use either default or user-supplied
+    if initialconditions != [0., 0., 0.,] 
+        settings["initialconditions"] = initialconditions
+    end
+    if length(initialconditions) != length(floatingspeciesIDs)
+        error("number of initial conditions does not match number of floating species")
+    end
+
+
     # Create settings object
     reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
     if ngenerations == -1
@@ -189,6 +215,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["specieslist"],
                    settings["initialconditions"],
                    settings["objectivedatapath"],
+                   settings["match_objectivefunction_species"],
                    settings["enable_speciation"],
                    settings["track_metadata"],
                    settings["average_fitness"],
@@ -196,7 +223,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["fitness_range_same_fitness_crossover"],
                    settings["note"]
                    )
-    return usersettings   
+    return usersettings, objectivefunction   
 end
 
 function writeout_settings(settings::Settings, filename::String)

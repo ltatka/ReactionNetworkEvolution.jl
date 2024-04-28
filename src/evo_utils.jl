@@ -325,7 +325,7 @@ function evaluate_population_fitness(objfunct::ObjectiveFunction, species_by_IDs
         topfitness = 0
         topnetwork = species.networks[1]
         for network in species.networks
-            fitness = (evaluate_fitness(objfunct, network))
+            fitness = (evaluate_fitness(objfunct, network, settings))
             # total_fitness += fitness
             species_fitness += fitness
             network.fitness = fitness
@@ -442,7 +442,7 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             network = networks[1]
             newnetwork = deepcopy(networks[1])
             newnetwork = mutatenetwork!(settings, ng, newnetwork)
-            newfitness = evaluate_fitness(objfunct, newnetwork)
+            newfitness = evaluate_fitness(objfunct, newnetwork, settings)
             if newfitness > network.fitness
                 newpopulation[offspring_index] = newnetwork
             else

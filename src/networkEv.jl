@@ -7,7 +7,7 @@ import Dates
 
 include("evo_utils.jl")
 
-function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
+function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings, objfunct::ObjectiveFunction)
 
     starttime = now()
     starttime = "$starttime" * randstring(3)  # for race conditions
@@ -29,7 +29,6 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings)
         )
     end
     
-    objfunct = get_objectivefunction(settings)
     ng = get_networkgenerator(settings)
 
     DELTA = settings.starting_delta
@@ -177,10 +176,10 @@ function run_evolution(;
         pathtosettings = "DEFAULT"
     end
 
-    settings = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize, seed=seed, note=note)
+    settings, objectivefunction = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize, seed=seed, note=note)
 
     for i in 1:nbatches
-        evolve_networks(i, path, settings)
+        evolve_networks(i, path, settings, objectivefunction)
     end
 
     print("done")

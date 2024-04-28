@@ -81,20 +81,29 @@ end
 # end
 
 
-function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork)
+function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork, settings::Settings)
     try 
         sol = solve_ode(objfunct, network)
         if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
             return 0
         end
-        fitness = zeros(length(network.floatingspecies))
-        for (i, row) in enumerate(sol.u)
-            for j in 1:length(network.floatingspecies)
-                fitness[j] += abs(row[j]- objfunct.objectivedata[i])
+        if settings.objectivedatapath == "DEFAULT"
+            fitness = zeros(length(network.floatingspecies))
+            for (i, row) in enumerate(sol.u)
+                for j in 1:length(network.floatingspecies)
+                    fitness[j] += abs(row[j]- objfunct.objectivedata[i])
+                end
             end
+            return 1/(minimum(fitness))
+        else
+            fitness = 0
+            if settings.match_objectivefunction_species
+                for (i, row) in enumerate(sol.u)
+                    fitness += sum(abs.(row - objfunct.objectivedata[i, :]))
+                end
+            end
+            return 1/fitness
         end
-        topfitness = 1/(minimum(fitness))
-        return topfitness
     catch e
         return 0
     end
