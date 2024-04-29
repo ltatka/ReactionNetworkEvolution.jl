@@ -12,6 +12,10 @@ struct ReactionProbabilities
         new(p[1], p[2], p[3], p[4])
     end
 
+    function ReactionProbabilities(p::Vector{Float64})
+        new(p[1], p[2], p[3], p[4])
+    end
+
     function ReactionProbabilities(dict::Dict{String, Any})
         new(dict["uniuni"], dict["unibi"], dict["biuni"], dict["bibi"])
     end
