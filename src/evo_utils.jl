@@ -576,7 +576,7 @@ function same_fitness_crossover(network1::ReactionNetwork, network2::ReactionNet
             end
         end
         # If a new reaction is added and it's inactive, .25 probability to reactivate it
-        if key in keys(newreactiondict) && !newreationdict[key].isactive && rand() < 0.25
+        if key in keys(newreactiondict) && !newreactiondict[key].isactive && rand() < 0.25
             newreactiondict[key].isactive = true
         end
     end
