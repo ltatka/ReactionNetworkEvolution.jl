@@ -611,7 +611,7 @@ function network_fitness_is_similar(network1::ReactionNetwork, network2::Reactio
 end
 
 function crossover(network1::ReactionNetwork, network2::ReactionNetwork, settings::Settings)
-    if settings.same_fitness_crossover && network_fitnes_is_similar(network1, network2, settings.fitness_range_same_fitness_crossover)
+    if settings.same_fitness_crossover && network_fitness_is_similar(network1, network2, settings.fitness_range_same_fitness_crossover)
         return same_fitness_crossover(network1, network2)
     else
         return general_crossover(network1, network2)
