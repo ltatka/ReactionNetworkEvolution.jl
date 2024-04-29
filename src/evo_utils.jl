@@ -592,7 +592,7 @@ function same_fitness_crossover(network1::ReactionNetwork, network2::ReactionNet
         end
     end
 
-    newnetwork = deepcopy(morefitnetwork)
+    newnetwork = deepcopy(network1) # It doesn't matter which one is copied because reactions will be replaced
     newnetwork.reactionlist = newreactiondict
 
     #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
