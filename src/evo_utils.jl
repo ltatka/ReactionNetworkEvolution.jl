@@ -553,6 +553,79 @@ function tournamentselect(species::Species)
     end
 end
 
+function lenient_crossover(network1::ReactionNetwork, network2::ReactionNetwork)
+    """
+    A more lenient crossover method
+    1. All reactions that are common are inherited with the rate constants from either parents
+    2. All reactions that are only in the fit parent are inherited
+    3. Reactions that are only in the less fit parent have 50% of inheritance
+        
+    """
+    newreactiondict = Dict()
+    if network1.fitness > network2.fitness
+        morefitnetwork = network1
+        lessfitnetwork = network2
+    elseif network1.fitness < network2.fitness
+        morefitnetwork = network2
+        lessfitnetwork = network1
+    else #If equal fitness, randomly assign roles  
+        p = rand()
+        if p < 0.5
+            morefitnetwork = network1
+            lessfitnetwork = network2
+        else
+            morefitnetwork = network2
+            lessfitnetwork = network1
+        end
+    end
+    # We are going to look through the genes in the more fit network. If there is a gene in the 
+    # less fit network that is not in the more fit one, we don't care. But if there is an unmatched gene in the more
+    # fit network, we want to keep it
+    for key in keys(morefitnetwork.reactionlist)
+        # If the reaction is in both networks, randomly copy it from either network
+        if key in keys(lessfitnetwork.reactionlist)
+            p = rand()
+            if p < 0.5
+                newreaction = morefitnetwork.reactionlist[key]
+            else
+                newreaction = lessfitnetwork.reactionlist[key]
+            end
+
+        else # If the reaction is NOT in the less fit network, copy it over
+            newreaction = morefitnetwork.reactionlist[key]
+        end
+        # If the selected reaction is inactive, 25% of it being reactivated
+        if !newreaction.isactive
+            p = rand()
+            if p < 0.25
+                newreaction.isactive = true
+            end
+        end
+        newreactiondict[key] = newreaction
+    end
+    for key in keys(lessfitnetwork.reactionlist)
+        if key ∉ keys(morefitnetwork.reactionlist)
+            p = rand()
+            if p < 0.5
+                newreaction = lessfitnetwork.reactionlist[key]
+                if !newreaction.isactive
+                    p_active = rand()
+                    if p_active < 0.25
+                        rnewreaction.isactive = true
+                    end
+                end
+                newreactiondict[key] = newreaction
+            end
+        end
+    end
+    newnetwork = deepcopy(morefitnetwork)
+    newnetwork.reactionlist = newreactiondict
+
+    #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
+    return newnetwork
+
+end
+
 function same_fitness_crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     """
     A more lenient crossover method
@@ -624,6 +697,8 @@ end
 function crossover(network1::ReactionNetwork, network2::ReactionNetwork, settings::Settings)
     if settings.same_fitness_crossover && network_fitness_is_similar(network1, network2, settings.fitness_range_same_fitness_crossover)
         return same_fitness_crossover(network1, network2)
+    elseif settings.lenient_crossover
+        return lenient_crossover(network1, network2)
     else
         return general_crossover(network1, network2)
     end

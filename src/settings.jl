@@ -58,6 +58,7 @@ struct Settings
     average_fitness::Bool
     same_fitness_crossover::Bool
     fitness_range_same_fitness_crossover::Float64
+    lenient_crossover::Bool
     note::String # User can add any description or other labels here
    
 end
@@ -125,6 +126,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "average_fitness" => true,
         "same_fitness_crossover" => false,
         "fitness_range_same_fitness_crossover" => 0.05,
+        "lenient_crossover" => false,
         "note"=>""
         )
     # If a path to settings is supplied:
@@ -225,6 +227,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["average_fitness"],
                    settings["same_fitness_crossover"],
                    settings["fitness_range_same_fitness_crossover"],
+                   settings["lenient_crossover"],
                    settings["note"]
                    )
     return usersettings, objectivefunction   
