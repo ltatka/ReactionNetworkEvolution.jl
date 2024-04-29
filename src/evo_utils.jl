@@ -557,6 +557,8 @@ function same_fitness_crossover(network1::ReactionNetwork, network2::ReactionNet
     """
     A more lenient crossover method
     If networks are within 5% fitness of each other, then coin toss for all reactions
+
+    PROBLEM: If you have two small networks, you can end not passing down ANY reactions...
     """
     newreactiondict = Dict()
 
@@ -593,6 +595,15 @@ function same_fitness_crossover(network1::ReactionNetwork, network2::ReactionNet
     end
 
     newnetwork = deepcopy(network1) # It doesn't matter which one is copied because reactions will be replaced
+    if length(keys(newreactiondict)) == 0 
+        # If we didn't manage to copy any reactions to the offspring, just return one of the parents
+        p = rand()
+        if p < 0.5
+            return network1
+        else
+            return network2
+        end
+    end
     newnetwork.reactionlist = newreactiondict
 
     #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
