@@ -1,4 +1,4 @@
-# networkEv
+# NetEvolve
 ## Purpose
 This module allows the user to easily run an evolutionary algorithm to create mass-action chemical reaction networks with oscillatory behavior.
 
@@ -7,11 +7,11 @@ This module allows the user to easily run an evolutionary algorithm to create ma
 This module uses the julia programming language. Installation instructions can be found [here](https://julialang.org/downloads/).
 
 ### Quick Start
-1. Either fork or clone this module. Clone via the command ```git clone https://github.com/ltatka/networkEv```
-2. Navigate to the directory where you have downloaded the networkEv repo.
+1. Either fork or clone this module. Clone via the command ```git clone https://github.com/ltatka/NetEvolve```
+2. Navigate to the directory where you have downloaded the NetEvolve repo.
 
 #### Command Line
-1. To install the networkEv module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
+1. To install the NetEvolve module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
 2. To run evolution with default settings: ```julia --project=. evscript.jl``` <br>
 This command also takes optional command line arguments: <br>
 * ```--nbatches```: the number of batches to run (100 by default)
@@ -27,12 +27,12 @@ This command also takes optional command line arguments: <br>
 #### Write your own scripts
 1. Use the run_evolution in a .jl file as follows <br>
 ```
-using networkEv
-networkEv.run_evolution
+using NetEvolve
+NetEvolve.run_evolution
 ```
 
 2. Command line arguments can be specified as keyword arguments in the ```run_evolution``` function.
-For example ```networkEv.run_evolution(ngenerations=500)```
+For example ```NetEvolve.run_evolution(ngenerations=500)```
 
 
 ## Additional Custom Settings
@@ -40,7 +40,7 @@ For example ```networkEv.run_evolution(ngenerations=500)```
 Additional settings can be specified in a JSON file. <br>
 When using the command line or bash script, the path can be supplied as a flag argument:
 ```julia --project=. evscript.jl --pathtosettings="/home/name/path/to/your/settings.json"```
-When using the networkEv module in a .jl script:
+When using the NetEvolve module in a .jl script:
 ```run_evolution(pathtosettings="/home/name/path/to/your/settings.json")```
 
 An example of a JSON file specifying custom settings: <br>

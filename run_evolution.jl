@@ -1,4 +1,4 @@
-using networkEv
+using NetEvolve
 using ArgParse
 
 s = ArgParseSettings()
@@ -29,7 +29,7 @@ end
 
 parsed_args = parse_args(ARGS, s)
 
-networkEv.run_evolution(ngenerations=parsed_args["ngenerations"],
+NetEvolve.run_evolution(ngenerations=parsed_args["ngenerations"],
               nbatches=parsed_args["nbatches"],
               populationsize=parsed_args["populationsize"],
               pathtosettings=parsed_args["pathtosettings"],

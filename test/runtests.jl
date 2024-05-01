@@ -1,10 +1,10 @@
-using networkEv
+using NetEvolve
 using Test
 
-@testset "networkEv.jl" begin
+@testset "NetEvolve.jl" begin
 	 
-	r1 = networkEv.Reaction(["S2", "S1"], ["S3", "S4"], 5.0)
-	r2 = networkEv.Reaction(["S1", "S2"], ["S4", "S3"], 1.3)
+	r1 = NetEvolve.Reaction(["S2", "S1"], ["S3", "S4"], 5.0)
+	r2 = NetEvolve.Reaction(["S1", "S2"], ["S4", "S3"], 1.3)
 	myset = Set([r1, r2])
 	@test length(myset) == 1
 
