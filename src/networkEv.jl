@@ -62,8 +62,11 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs, settings)
         species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
 
-        
+
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
+        if length(tracker["top_individual_fitness"]) > 0 &&  tracker["top_individual_fitness"][end] - maxfitness > 0.0002
+            println("generation $i")
+        end
 
         if settings.track_metadata
             push!(tracker["top_individual_fitness"],maxfitness)
