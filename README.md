@@ -8,11 +8,11 @@ This module uses the julia programming language. Installation instructions can b
 
 ### Quick Start
 1. Either fork or clone this module. Clone via the command ```git clone https://github.com/ltatka/NetEvolve```
-2. Navigate to the directory where you have downloaded the NetEvolve repo.
+2. Navigate to the directory where you have downloaded the NetEvolve repo: ```cd NetEvolve```
 
 #### Command Line
 1. To install the NetEvolve module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
-2. To run evolution with default settings: ```julia --project=. evscript.jl``` <br>
+2. To run evolution with default settings: ```julia --project=. run_evolution.jl``` <br>
 This command also takes optional command line arguments: <br>
 * ```--nbatches```: the number of batches to run (100 by default)
 * ```--ngenerations```: the number of generations per batch (800 by default)
@@ -20,6 +20,8 @@ This command also takes optional command line arguments: <br>
 * ```--pathtosettings```: path to a json file storing additional custom settings
 * ```--outputpath```: path to a directory where evolution output will be written
 * ```--seed```: specify a seed for the random number generator
+For example, to change the populationsize to 200 via the command line: <br>
+```julia --project=. run_evolution.jl --populationsize=200```
 
 #### Bash Script
 ```./quickstart.sh``` to run evolution with default settings. This script can also be edited to include the command line arguements in the previous section.
@@ -28,7 +30,7 @@ This command also takes optional command line arguments: <br>
 1. Use the run_evolution in a .jl file as follows <br>
 ```
 using NetEvolve
-NetEvolve.run_evolution
+NetEvolve.run_evolution()
 ```
 
 2. Command line arguments can be specified as keyword arguments in the ```run_evolution``` function.
