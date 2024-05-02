@@ -7,7 +7,7 @@ s = ArgParseSettings()
     "--ngenerations"
         arg_type = Int
         default = -1
-    "--nbatches"
+    "--ntrials"
         arg_type = Int
         default = -1
     "--populationsize"
@@ -30,7 +30,7 @@ end
 parsed_args = parse_args(ARGS, s)
 
 NetEvolve.run_evolution(ngenerations=parsed_args["ngenerations"],
-              nbatches=parsed_args["nbatches"],
+              nbatches=parsed_args["ntrials"],
               populationsize=parsed_args["populationsize"],
               pathtosettings=parsed_args["pathtosettings"],
               outputpath=parsed_args["outputpath"],
