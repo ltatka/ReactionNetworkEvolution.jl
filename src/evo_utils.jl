@@ -275,6 +275,15 @@ function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::React
     return network
 end
 
+function randomize_reaction_rates(network::ReactionNetwork, rateconstantrange::Vector{Float64})
+    # Randomize the reaction rates for a given reaction network. Pick from uniform distribution 
+    # within the ranges provided.
+    for reactionkey in keys(network.reactionlist)
+        reaction = network.reactionlist[reactionkey]
+        reaction.rateconstant = rand(Uniform(rateconstantrange[1], rateconstantrange[2]))
+    end
+    return network
+end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = Vector{ReactionNetwork}(undef, settings.populationsize)
@@ -282,7 +291,11 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
     if settings.use_seed_network
         seednetwork = convert_from_antimony(settings.seed_network_path)
         for i in 1:settings.populationsize
-            population[i] = deepcopy(seednetwork)
+            network = deepcopy(seednetwork)
+            if settings.randomize_seednetwork_rates
+                network = randomize_reaction_rates(network, settings.rateconstantrange)
+            end
+            population[i] = network
         end
     else
         for i in 1:settings.populationsize

@@ -47,6 +47,7 @@ struct Settings
     target_num_species::Int64
     use_seed_network::Bool # Start with a seed network
     seed_network_path::String
+    randomize_seednetwork_rates::Bool
     tournamentselect::Bool
     specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
     initialconditions::Vector{Float64}
@@ -114,8 +115,9 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "starting_delta" => 0.65,
         "delta_step" => 0.1,
         "target_num_species" => 10,
-        "use_seed_network" => false,
-        "seed_network_path" => "",
+        "use_seed_network" => true,#false,
+        "seed_network_path" => "/home/hellsbells/Desktop/seednetwork.txt",#"",
+        "randomize_seednetwork_rates" => true,
         "tournamentselect" => false,
         "specieslist" => ["S0", "S1", "S2"],
         "initialconditions" => [1.0, 5.0, 9.0],
@@ -123,7 +125,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "match_objectivefunction_species" => true,
         "enable_speciation" => true,
         "track_metadata" => true,
-        "average_fitness" => true,
+        "average_fitness" => false,
         "same_fitness_crossover" => false,
         "fitness_range_same_fitness_crossover" => 0.05,
         "lenient_crossover" => false,
@@ -217,6 +219,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["target_num_species"],
                    settings["use_seed_network"],
                    settings["seed_network_path"],
+                   settings["randomize_seednetwork_rates"],
                    settings["tournamentselect"],
                    settings["specieslist"],
                    settings["initialconditions"],
