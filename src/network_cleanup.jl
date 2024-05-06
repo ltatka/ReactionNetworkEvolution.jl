@@ -1,3 +1,5 @@
+
+
 function reactants_isequal(reactants1, reactants2)
     if length(reactants1) != length(reactants2)
         return false
@@ -277,10 +279,17 @@ function convert_from_antimony_string(astr::String)
 end
 
 
-            
+
+function convert_from_antimony(filepath::String)
+    # This will only work with very specifically formatted antimony strings.
+    # I did this because RoadRunner.jl just doesn't fucking work at all. 
+    rawanstr = read(filepath, String)
+    return convert_from_antimony_string(rawanstr)
+end
+
 
  
-function convert_from_antimony(filepath::String)
+function convert_from_antimony_old(filepath::String)
     # Open antimony file and parse contents
     te = pyimport("tellurium")
     rawantstr = read(filepath, String)
