@@ -530,8 +530,10 @@ end
 
 function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork)
     # If every single reaction is different, then the distance will be 1
-    # W = 0
     num_diff = 0
+    num_same = 0
+    sum_differences = 0
+    parameter_distance_weight = 1
     # c1 = 1 # Value from paper
     # c2 = 0.4 # Value from paper (as C3 in the paper) 
     if length(network1.reactionlist) >= length(network2.reactionlist)
@@ -547,10 +549,14 @@ function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork
     for key in keys(largernetwork.reactionlist)
         if key ∉ keys(smallernetwork.reactionlist)
             num_diff += 1
+        else # If the reaction is in both networks, look at how different the rate constants are
+            sum_differences += abs(largernetwork.reactionlist[key].rateconstant - smallernetwork.reactionlist[key].rateconstant)
+            num_same += 1
         end
     end
-    
-    return num_diff/N
+
+    distance = num_diff/N + (parameter_distance_weight*(sum_differences/num_same))
+    return distance
 end
 
 function tournamentselect(species::Species)
