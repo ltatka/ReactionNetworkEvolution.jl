@@ -244,7 +244,7 @@ function get_initialcondition_values(specieslist, initialconditions, sublist)
     return sublist_initialconditions
 end
 
-function convert_from_antimony_string(astr::String)
+function convert_from_antimony_string(astr::String, settings::Settings)
     # THis is mostly for me so I can copy/paste antimony strings and get out network objectivespecies
     reactionlines = []
     rateconstantlines = []
@@ -259,11 +259,11 @@ function convert_from_antimony_string(astr::String)
             push!(initialconditionlines, line)
         end
     end
-    specieslist = ["S0", "S1", "S2"]
-    floatingspecies = ["S0", "S1", "S2"]
+    specieslist = settings.specieslist
+    floatingspecies = settings.specieslist
     boundaryspecies = []
     
-    all_initialconditions = [1, 5, 9]#process_initialcondition_lines(initialconditionlines)
+    all_initialconditions = settings.initialconditions #process_initialcondition_lines(initialconditionlines)
     floating_initialcondtions = all_initialconditions
     boundary_initialconditions = Vector{Float64}[]
     # floating_initialcondtions = get_initialcondition_values(specieslist, all_initialconditions, floatingspecies)
@@ -280,11 +280,11 @@ end
 
 
 
-function convert_from_antimony(filepath::String)
+function convert_from_antimony(filepath::String, settings::Settings)
     # This will only work with very specifically formatted antimony strings.
     # I did this because RoadRunner.jl just doesn't fucking work at all. 
     rawanstr = read(filepath, String)
-    return convert_from_antimony_string(rawanstr)
+    return convert_from_antimony_string(rawanstr, settings)
 end
 
 
