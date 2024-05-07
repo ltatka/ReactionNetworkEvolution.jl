@@ -44,6 +44,7 @@ struct Settings
     seed::Float64
     starting_delta::Float64
     delta_step::Float64
+    parameter_distance_weight::Float64
     target_num_species::Int64
     use_seed_network::Bool # Start with a seed network
     seed_network_path::String
@@ -114,6 +115,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "seed" => -1,
         "starting_delta" => 0.65,
         "delta_step" => 0.1,
+        "parameter_distance_weight" => 0.0,
         "target_num_species" => 10,
         "use_seed_network" => false,
         "seed_network_path" => "",
@@ -216,6 +218,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["seed"],
                    settings["starting_delta"],
                    settings["delta_step"],
+                   settings["parameter_distance_weight"],
                    settings["target_num_species"],
                    settings["use_seed_network"],
                    settings["seed_network_path"],

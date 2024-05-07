@@ -32,14 +32,12 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
     ng = get_networkgenerator(settings)
 
     DELTA = settings.starting_delta
-    TARGET_NUM_SPECIES = settings.target_num_species
-    SPECIES_MOD_STEP = settings.delta_step
 
     population = generate_network_population(settings, ng)
     species_by_IDs = initialize_species_by_IDs(population)
 
     if settings.enable_speciation
-        species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
+        species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, settings)
     end
 
     if settings.track_metadata
@@ -47,12 +45,12 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
         push!(tracker["num_unique_networks"], num_unique)
         push!(tracker["num_individuals"], length(population))
         push!(tracker["total_num_species"], length(keys(species_by_IDs)))
-        avg, mn, mx = get_diversity_stats(species_by_IDs)
+        avg, mn, mx = get_diversity_stats(species_by_IDs, settings)
         push!(tracker["avg_species_distances"], avg)
         push!(tracker["min_species_distances"], mn)
         push!(tracker["max_species_distances"], mx)
         push!(tracker["delta"], DELTA)
-        push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs))
+        push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs, settings))
     end
     
 
@@ -88,15 +86,15 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
             push!(tracker["num_unique_networks"], num_unique)
             push!(tracker["num_individuals"], length(population))
             push!(tracker["total_num_species"], length(keys(species_by_IDs)))
-            avg, mn, mx = get_diversity_stats(species_by_IDs)
+            avg, mn, mx = get_diversity_stats(species_by_IDs, settings)
             push!(tracker["avg_species_distances"], avg)
             push!(tracker["min_species_distances"], mn)
             push!(tracker["max_species_distances"], mx)
-            push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs))
+            push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs, settings))
         end
 
         if settings.enable_speciation
-            species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, TARGET_NUM_SPECIES, SPECIES_MOD_STEP)
+            species_by_IDs, DELTA = speciate(species_by_IDs, population, DELTA, settings)
         else
             species_by_IDs = initialize_species_by_IDs(population)
         end
@@ -110,7 +108,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
         bestnetwork_count = count_best_networks(bestnetwork, population)
         push!(tracker["num_best_network"], bestnetwork_count)
         push!(tracker["delta"], DELTA)
-        push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs))
+        push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs, settings))
     end
 
 

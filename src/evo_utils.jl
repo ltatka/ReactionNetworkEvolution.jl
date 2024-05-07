@@ -78,7 +78,7 @@ function initialize_species_by_IDs(population::Array{ReactionNetwork})
     return Dict(ID => species)
 end
 
-function get_intraspecies_distances(species_by_IDs::Dict{String, Species})
+function get_intraspecies_distances(species_by_IDs::Dict{String, Species}, settings::Settings)
     # This measures the avg distance between individuals in a single species. 
     # It's a metric to determine how similar individuals within a species are on average
     avg_distances = []
@@ -91,7 +91,7 @@ function get_intraspecies_distances(species_by_IDs::Dict{String, Species})
             for combo in combo_indices
                 network1 = species.networks[combo[1]]
                 network2 = species.networks[combo[2]]
-                d = calculate_distance(network1, network2)
+                d = calculate_distance(network1, network2, settings.parameter_distance_weight)
                 push!(distances, d)
             end
             push!(avg_distances, mean(distances))
@@ -105,7 +105,7 @@ function get_intraspecies_distances(species_by_IDs::Dict{String, Species})
     end
 end
 
-function get_diversity_stats(species_by_IDs::Dict{String, Species})
+function get_diversity_stats(species_by_IDs::Dict{String, Species}, settings::Settings)
     # I want to look at average distance between species and maybe also min and max.
     # I'm going to compare every species to every other species 
     all_species = collect(keys(species_by_IDs))
@@ -114,7 +114,7 @@ function get_diversity_stats(species_by_IDs::Dict{String, Species})
     for combo in combo_indices
         network1 = species_by_IDs[all_species[combo[1]]].topnetwork
         network2 = species_by_IDs[all_species[combo[2]]].topnetwork
-        d = calculate_distance(network1, network2)
+        d = calculate_distance(network1, network2, settings.parameter_distance_weight)
         push!(distances, d)
     end
     try
@@ -124,14 +124,14 @@ function get_diversity_stats(species_by_IDs::Dict{String, Species})
     end
 end
 
-function get_diversity_stats_from_list(networklist::Array{ReactionNetwork})
+function get_diversity_stats_from_list(networklist::Array{ReactionNetwork}, settings::Settings)
     combo_indices = collect(combinations(1:length(networklist),2))
     distances = []
     duplicates = []
     for combo in combo_indices
         network1 = networklist[combo[1]]
         network2 = networklist[combo[2]]
-        d = calculate_distance(network1, network2)
+        d = calculate_distance(network1, network2, settings.parameter_distance_weight)
         push!(distances, d)
         if d == 0
             push!(duplicates, combo[2])
@@ -145,8 +145,8 @@ end
 function speciate(species_by_IDs::Dict{String, Species},
     population::Vector{ReactionNetwork},
     DELTA::Float64, 
-    TARGET_NUM_SPECIES::Int64,
-    SPECIES_MOD_STEP::Float64)
+    settings::Settings
+    )
     """
     For each network, compare it to the species in the previous generation by 
     randomly picking a network in that species. If it is close enough, then it is a
@@ -157,10 +157,10 @@ function speciate(species_by_IDs::Dict{String, Species},
     each be assigned to a new species. 
     """
     num_species = length(keys(species_by_IDs))
-    if num_species > TARGET_NUM_SPECIES
-        DELTA += SPECIES_MOD_STEP
-    elseif num_species < TARGET_NUM_SPECIES
-        DELTA -= SPECIES_MOD_STEP
+    if num_species > settings.target_num_species
+        DELTA += settings.delta_step
+    elseif num_species < settings.target_num_species
+        DELTA -= settings.delta_step
     end
 
     new_species_by_IDs = Dict{String, Species}()
@@ -168,7 +168,7 @@ function speciate(species_by_IDs::Dict{String, Species},
         species_assigned = false
         for speciesID in keys(species_by_IDs)
             network2 = species_by_IDs[speciesID].topnetwork# rand(species_by_IDs[speciesID].networks)
-            distance = calculate_distance(network, network2)
+            distance = calculate_distance(network, network2, settings.parameter_distance_weight)
             if distance <= DELTA
                 network.ID = speciesID
                 # If we've already assigned a network to this species, just add it to the list 
@@ -287,7 +287,6 @@ end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = Vector{ReactionNetwork}(undef, settings.populationsize)
-
     if settings.use_seed_network
         seednetwork = convert_from_antimony(settings.seed_network_path, settings)
         for i in 1:settings.populationsize
@@ -528,12 +527,12 @@ function reproduce_networks(species_by_IDs, settings::Settings,
 end
 
 
-function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork)
+function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork, parameter_distance_weight::Float64)
     # If every single reaction is different, then the distance will be 1
     num_diff = 0
     num_same = 0
     sum_differences = 0
-    parameter_distance_weight = 1
+    # parameter_distance_weight = 1
     # c1 = 1 # Value from paper
     # c2 = 0.4 # Value from paper (as C3 in the paper) 
     if length(network1.reactionlist) >= length(network2.reactionlist)
