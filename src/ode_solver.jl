@@ -42,6 +42,15 @@ function ode_funct!(du::Array{Float64}, u::Array{Float64}, network::ReactionNetw
     end
 end
 
+function solve_ode(network::ReactionNetwork, tspan::Tuple{Float64, Float64})
+    # Just solve the network with given tspan
+    u0 = network.initialcondition
+    ode_prob = ODEProblem(ode_funct!, u0, tspan, network)
+    sol = solve(ode_prob, CVODE_BDF(), verbose=false, dense=false)#, save_everystep=false)
+    return sol
+end
+
+
 function solve_ode(objfunct::ObjectiveFunction, network::ReactionNetwork)
     # 
     #Get time info

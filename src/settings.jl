@@ -95,6 +95,101 @@ function get_objectivefunction(path::String)
     return ObjectiveFunction(objectivedata, time), specieslist, initialconditions
 end
 
+function read_usersettings(settings_dict::Dict{String, Any})
+    # This version of the function takes a dictionary. It is mostly for testing
+    settings = Dict(
+        "portionelite" => 0.1,
+        "reactionprobabilities" => [.1, .4, .4, .1],
+        "p_rateconstantmutation" => .6,                         # Probability of changning rate constant vs reaction
+        "rateconstantrange" => [0.1, 50.0],
+        "percent_rateconstant_change" => 0.2,
+        "p_picknewrateconstant" => 0.15,
+        "populationsize" => 100,
+        "ngenerations" => 800,
+        "nreactions" => 5,
+        "max_offspring_portion" => 0.1,
+        "writeout_threshold" => 0.05,
+        "p_crossover" => 0,
+        "p_mutation" => 1,
+        "exclusive_crossover_mutation" => false,
+        "drop_portion" => 0.1,
+        "seed" => -1,
+        "starting_delta" => 0.65,
+        "delta_step" => 0.1,
+        "parameter_distance_weight" => 0.0,
+        "target_num_species" => 10,
+        "use_seed_network" => false,
+        "seed_network_path" => "",
+        "randomize_seednetwork_rates" => true,
+        "tournamentselect" => false,
+        "specieslist" => ["S0", "S1", "S2"],
+        "initialconditions" => [1.0, 5.0, 9.0],
+        "objectivedatapath" => "DEFAULT",
+        "match_objectivefunction_species" => true,
+        "enable_speciation" => true,
+        "track_metadata" => true,
+        "average_fitness" => false,
+        "same_fitness_crossover" => false,
+        "fitness_range_same_fitness_crossover" => 0.05,
+        "lenient_crossover" => false,
+        "note"=>""
+        )
+
+    # Set values to those supplied in settings_dict, otherwise set to default
+    for k in keys(settings_dict)
+        if k in keys(settings)
+            settings[k] = settings_dict[k]
+        elseif k ∉ keys(settings)
+            error("$k not found in settings")
+        end
+    end
+
+    reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
+
+    usersettings = Settings(settings["portionelite"], 
+                reactionprobabilities,
+                settings["p_rateconstantmutation"],
+                settings["rateconstantrange"],
+                settings["percent_rateconstant_change"],
+                settings["p_picknewrateconstant"],
+                settings["populationsize"],
+                settings["ngenerations"],
+                settings["nreactions"],
+                settings["max_offspring_portion"],
+                settings["writeout_threshold"],
+                settings["p_crossover"],
+                settings["p_mutation"],
+                settings["exclusive_crossover_mutation"],
+                settings["drop_portion"],
+                settings["seed"],
+                settings["starting_delta"],
+                settings["delta_step"],
+                settings["parameter_distance_weight"],
+                settings["target_num_species"],
+                settings["use_seed_network"],
+                settings["seed_network_path"],
+                settings["randomize_seednetwork_rates"],
+                settings["tournamentselect"],
+                settings["specieslist"],
+                settings["initialconditions"],
+                settings["objectivedatapath"],
+                settings["match_objectivefunction_species"],
+                settings["enable_speciation"],
+                settings["track_metadata"],
+                settings["average_fitness"],
+                settings["same_fitness_crossover"],
+                settings["fitness_range_same_fitness_crossover"],
+                settings["lenient_crossover"],
+                settings["note"]
+                )
+    return usersettings
+end
+
+
+
+
+
+
 function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1, note::String="")
     settings = Dict(
         "portionelite" => 0.1,

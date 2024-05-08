@@ -147,22 +147,6 @@ function generate_random_reaction(ng::NetworkGenerator)
         subs = selectedspecies[1:2]
         prods = selectedspecies[3:4]
     end
-
-    # subs = [selectedspecies[1]]
-    # prods = [selectedspecies[2]]
-
-    # p_unibi = ng.reactionprobabilities.uniuni + ng.reactionprobabilities.unibi
-    # p_biuni = p_unibi + ng.reactionprobabilities.biuni
-
-    # #NOTE - there is nothing to prevent this from creating pointless reactions, eg. A -> A
-    # if ng.reactionprobabilities.uniuni < p && p <= p_unibi # unibi
-    #     push!(prods, selectedspecies[3]) # Add a product
-    # elseif p_unibi < p && p <= p_biuni # biuni
-    #     push!(subs, selectedspecies[3]) # Add a substrate
-    # elseif p_biuni < p # bibi
-    #     push!(subs, selectedspecies[3]) # Add a substrate
-    #     push!(prods, selectedspecies[4]) # Add a product
-    # end
     reaction = Reaction(subs, prods, k)
     return reaction
 end
