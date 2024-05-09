@@ -3,6 +3,49 @@ using Sundials
 
 include("reaction_network.jl")
 
+
+function test_ode_funct(du::Array{Float64}, u::Array{Float64}, network::ReactionNetwork, t::Float64)
+    # This is the same function as ode_func! but it returns du for testing purposes
+    specieslist = network.specieslist
+    
+    # Reset du
+    for i = 1:length(specieslist)
+        du[i] = 0.0
+    end
+
+    for key in keys(network.reactionlist)
+        reaction = network.reactionlist[key]
+        if !reaction.isactive
+            continue
+        end
+        # Get the relevant concentrations
+        dspecies = 1 # Is there a case where this would be wrong?
+        for s in reaction.substrate
+            idx = findfirst(item -> item == s, specieslist)
+            dspecies *= u[idx]
+        end
+        # Multiply by the rate constant to get the rate for *this* reaction
+        dspecies *= reaction.rateconstant
+        # Subtract this rate for substrates
+        for s in reaction.substrate
+            idx = findfirst(item -> item == s, specieslist)
+            du[idx] -= dspecies
+        end
+        # Add this rate for products
+        for p in reaction.product
+            idx = findfirst(item -> item == p, specieslist)
+            du[idx] += dspecies
+        end
+    end
+    # for boundary species, reset the rate of change to 0
+    for s in network.boundaryspecies
+        idx = findfirst(item -> item == s, specieslist)
+        du[idx] = 0.0
+    end
+    return du
+end
+
+
 function ode_funct!(du::Array{Float64}, u::Array{Float64}, network::ReactionNetwork, t::Float64)
     specieslist = network.specieslist
     

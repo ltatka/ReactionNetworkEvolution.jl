@@ -288,7 +288,8 @@ end
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
     population = Vector{ReactionNetwork}(undef, settings.populationsize)
     if settings.use_seed_network
-        seednetwork = convert_from_antimony(settings.seed_network_path, settings)
+        seednetwork_str = load_antimony_file(settings.seed_network_path)
+        seednetwork = convert_from_antimony(seednetwork_str)
         for i in 1:settings.populationsize
             network = deepcopy(seednetwork)
             if settings.randomize_seednetwork_rates

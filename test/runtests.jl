@@ -80,11 +80,11 @@ using Test
 	k10 = 34.6814381533787;
 
 	"""
-	network1 = NetEvolve.convert_from_antimony_string(network1_str, settings)
+	network1 = NetEvolve.convert_from_antimony(network1_str)
 	@test [["S0"], ["S0", "S0"]] ∈ keys(network1.reactionlist)
 	@test network1.reactionlist[[["S0"], ["S0", "S0"]]].rateconstant == 33.3878793205463
 
-	network2 = NetEvolve.convert_from_antimony_string(network2_str, settings)
+	network2 = NetEvolve.convert_from_antimony(network2_str)
 	myset2 = Set([network1, network2])
 	@test length(myset2) == 1
 
@@ -92,8 +92,13 @@ using Test
 	@test ng.numreactions == 5
 
 	population = NetEvolve.generate_network_population(settings, ng)
-	@test length(population) == 100
+	println(length(population) == 100)
 	@test typeof(population) == Vector{NetEvolve.ReactionNetwork}
+
+	
+end
+
+@test "solver tests" begin
 
 	settings_dict = Dict{String, Any}(
     "specieslist" => ["A", "B"],
@@ -104,13 +109,34 @@ using Test
 	k1 = 2
 	A = 10
 	B = 0"""
-	smallnetwork = NetEvolve.convert_from_antimony_string(smallnetwork_str, settings)
+	smallnetwork = NetEvolve.convert_from_antimony(smallnetwork_str)
 	tspan = (0.0, 5.0)
 	sol = NetEvolve.solve_ode(smallnetwork, tspan)
 	# Get rate of change for A at t = 0
 	rateofchange = (sol.u[2][1] - sol.u[1][1])/sol.t[2]
 	@test abs(rateofchange + 20) < 0.00001
 
+	settings, objfunct = NetEvolve.read_usersettings("DEFAULT")
+	astr="""
+	S0 + S1 -> S2; k1*S0*S1
+	S2 + S2 -> S2; k2*S2*S2
+	S1 -> S0; k3*S1
+	S2 -> S1 + S0; k4*S2
+
+	k1 = 1
+	k2 = 3
+	k3 = 0.5
+	k4 = 1
+
+	S0 = 1
+	S1 = 5
+	S2 = 9
+	"""
+	network = NetEvolve.convert_from_antimony(astr)
+	# Check initial rates of change
+	du = NetEvolve.test_ode_funct([0.,0.,0.], [1., 5., 9.], network, 0.1)
+	println(du)
+	@test du == [6.5, 1.5, -13]
 end
 
 @testset "Network mutations" begin
@@ -130,7 +156,7 @@ end
 	S1 = 5
 	S2 = 9
 	"""
-	network = NetEvolve.convert_from_antimony_string(astr, settings)
+	network = NetEvolve.convert_from_antimony(astr)
 	network = NetEvolve.mutaterateconstant(network, settings)
 	keyslist = [[["S0", "S1"], ["S2"]],
 				[["S2", "S2"], ["S2"]],
