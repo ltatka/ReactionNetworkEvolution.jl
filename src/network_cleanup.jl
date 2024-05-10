@@ -244,55 +244,12 @@ function get_initialcondition_values(specieslist, initialconditions, sublist)
     return sublist_initialconditions
 end
 
-# function convert_from_antimony(astr::String, settings::Settings)
-#     # THis is mostly for me so I can copy/paste antimony strings and get out network objectivespecies
-#     reactionlines = []
-#     rateconstantlines = []
-#     initialconditionlines = []
-#     astr_list = split(astr, "\n")
-#     for line in astr_list
-#         if occursin("->", line)
-#             push!(reactionlines, line)
-#         elseif occursin("k", line)
-#             push!(rateconstantlines, line)
-#         elseif occursin("S", line)
-#             push!(initialconditionlines, line)
-#         end
-#     end
-#     specieslist = settings.specieslist
-#     floatingspecies = settings.specieslist
-#     boundaryspecies = []
-    
-#     all_initialconditions = settings.initialconditions #process_initialcondition_lines(initialconditionlines)
-#     floating_initialcondtions = all_initialconditions
-#     boundary_initialconditions = Vector{Float64}[]
-#     # floating_initialcondtions = get_initialcondition_values(specieslist, all_initialconditions, floatingspecies)
-#     # boundary_initialconditions = get_initialcondition_values(specieslist, all_initialconditions, boundaryspecies)
-#     # Get reactions and rate constants
-#     reactions_by_ratesymbol = process_reaction_lines(reactionlines)
-#     rates_by_ratesymbol = process_rateconstant_lines(rateconstantlines)
-#     reactionlist = assign_rates_to_reaction(reactions_by_ratesymbol, rates_by_ratesymbol)
-#     # Construct the ReactionNetwork
-#     network = ReactionNetwork(specieslist, all_initialconditions, reactionlist, floatingspecies,
-#         boundaryspecies, floating_initialcondtions, boundary_initialconditions, 0, "seedmodel", "species")
-#     return network
-# end
-
 
 function load_antimony_file(filepath::String)
     rawanstr = read(filepath, String)
     return rawanstr
 end
 
-# function convert_from_antimony(filepath::String, settings::Settings)
-#     # This will only work with very specifically formatted antimony strings.
-#     # I did this because RoadRunner.jl just doesn't fucking work at all. 
-#     rawanstr = read(filepath, String)
-#     return convert_from_antimony_string(rawanstr, settings)
-# end
-
-
- 
 function convert_from_antimony(rawantstr::String)
     # Converts an antimony string into a ReactionNetwork structure
     r = RoadRunner.loada(rawantstr)

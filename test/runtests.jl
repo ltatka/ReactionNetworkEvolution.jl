@@ -98,7 +98,7 @@ using Test
 	
 end
 
-@test "solver tests" begin
+@testset "solver tests" begin
 
 	settings_dict = Dict{String, Any}(
     "specieslist" => ["A", "B"],
@@ -113,7 +113,9 @@ end
 	tspan = (0.0, 5.0)
 	sol = NetEvolve.solve_ode(smallnetwork, tspan)
 	# Get rate of change for A at t = 0
+	
 	rateofchange = (sol.u[2][1] - sol.u[1][1])/sol.t[2]
+	println(rateofchange)
 	@test abs(rateofchange + 20) < 0.00001
 
 	settings, objfunct = NetEvolve.read_usersettings("DEFAULT")
