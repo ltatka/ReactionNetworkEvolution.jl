@@ -6,6 +6,7 @@ import JSON
 import Dates
 
 include("evo_utils.jl")
+inlclude("process_output.jl")
 
 function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings, objfunct::ObjectiveFunction)
 
