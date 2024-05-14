@@ -9,18 +9,6 @@ function has_oscillator_eigens(eigen_array)
     return false
 end
 
-function get_reaction_lines(astr::String)
-    # isolate the antimony lines that are chemical reactions
-    reactions = Vector{Substring{String}}()
-    astr_lines = split(astr, "\n")
-    for line in astr_lines
-        if occursin("->", line)
-            push!(reactions, line)
-        end
-    end
-    return reactions
-end
-
 function fix_broken_oscillator(astr::String)
     # Sometimes models that have oscillator Eigen values but negative steady state concentrations
     # can be fixed by removing a single reaction
