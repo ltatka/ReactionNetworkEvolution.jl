@@ -1,9 +1,3 @@
-using RoadRunner
-using Dates
-
-include("network_cleanup.jl")
-include("reaction_network.jl")
-
 function has_oscillator_eigens(eigen_array)
     for i in 1:size(eigen_array)[1]
         real = eigen_array[i, 1]
