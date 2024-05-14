@@ -169,8 +169,6 @@ function run_evolution(;
         mkdir(path)
     end
 
-    println("Writing output to $path")
-
     # If no path to settings is supplied, use default settings
     if pathtosettings == ""
         pathtosettings = "DEFAULT"
@@ -184,9 +182,11 @@ function run_evolution(;
 
     if settings.process_output_oscillators
         process_oscillators(outputpath)
+    else
+        println("Output written to $path")
     end
 
-    print("done")
+    println("Done")
 end
 
 end #module
