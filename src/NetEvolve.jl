@@ -6,7 +6,7 @@ import JSON
 import Dates
 
 include("evo_utils.jl")
-inlclude("process_output.jl")
+include("process_output.jl")
 
 function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings, objfunct::ObjectiveFunction)
 
@@ -180,6 +180,10 @@ function run_evolution(;
 
     for i in 1:nbatches
         evolve_networks(i, path, settings, objectivefunction)
+    end
+
+    if settings.process_output_oscillators
+        process_oscillators(outputpath)
     end
 
     print("done")

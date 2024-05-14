@@ -1,5 +1,5 @@
 using RoadRunner
-using Random
+using Dates
 
 include("network_cleanup.jl")
 include("reaction_network.jl")
@@ -15,13 +15,58 @@ function has_oscillator_eigens(eigen_array)
     return false
 end
 
+function get_reaction_lines(astr::String)
+    # isolate the antimony lines that are chemical reactions
+    reactions = Vector{Substring{String}}()
+    astr_lines = split(astr, "\n")
+    for line in astr_lines
+        if occursin("->", line)
+            push!(reactions, line)
+        end
+    end
+    return reactions
+end
+
+function fix_broken_oscillator(astr::String)
+    # Sometimes models that have oscillator Eigen values but negative steady state concentrations
+    # can be fixed by removing a single reaction
+    astr_lines = split(astr, "\n") 
+    for (i, line) in enumerate(astr_lines)
+        # comment out reaction
+        if occursin("->", line)
+            astr_lines[i] = "#" * astr_lines[i]
+            new_astr = join(astr_lines, "\n")
+            if is_oscillator(new_astr)
+                return new_astr #???
+            end
+            # If that didn't work, change it back
+            astr_lines[i] = astr_lines[i][2:end]
+        end
+    end
+    return "FAIL"
+end
+
+function is_broken_oscillator(astr::String)
+    # Sometimes models that have oscillator Eigen values but negative steady state concentrations
+    # can be fixed by removing a single reaction
+    r = RoadRunner.loada(astr)
+    try
+        RoadRunner.steadyState(r) # WTF
+        eigens = RoadRunner.getEigenvalues(r)
+        concentrations = RoadRunner.getFloatingSpeciesConcentrations(r)
+        # If it has the correct eigens and positive concentrations, return true
+        return has_oscillator_eigens(eigens) && !all(>=(0), concentrations)
+    catch 
+    end
+    return false
+end
+
 function is_oscillator(astr::String)
     r = RoadRunner.loada(astr)
     try
         RoadRunner.steadyState(r) # WTF
         eigens = RoadRunner.getEigenvalues(r)
         concentrations = RoadRunner.getFloatingSpeciesConcentrations(r)
-        
         # If it has the correct eigens and positive concentrations, return true
         return has_oscillator_eigens(eigens) && all(>=(0), concentrations)
     catch 
@@ -72,23 +117,25 @@ function is_oscillator(astr::String)
     end
 end
 
-function dummy_is_oscillator(astr::String)
-    return rand() < 0.5
-end
-
 function make_output_dirs(outputpath::String)
-    if !isdir(joinpath(outputpath, "SUCCESS"))
-        mkdir(joinpath(outputpath, "SUCCESS"))
+    timestamp = Dates.format(now(), "YYYYmmdd_HHMMSS")
+    results_parent_dir = joinpath(outputpath, "results_$timestamp")
+    if !isdir(results_parent_dir)
+        mkdir(results_parent_dir)
     end
-    if !isdir(joinpath(outputpath, "FAIL"))
-        mkdir(joinpath(outputpath, "FAIL"))
+    if !isdir(joinpath(results_parent_dir, "SUCCESS"))
+        mkdir(joinpath(results_parent_dir, "SUCCESS"))
     end
+    if !isdir(joinpath(results_parent_dir, "FAIL"))
+        mkdir(joinpath(results_parent_dir, "FAIL"))
+    end
+    return results_parent_dir
 end
 
 function process_oscillators(outputpath::String)
-    make_output_dirs(outputpath)
+    results_parent_dir = make_output_dirs(outputpath)
     for directory in readdir(outputpath)
-        if directory != "SUCCESS" && directory != "FAIL" # Ignore output folders
+        if !startswith(directory, "results") # Ignore results folders
             # Navigate to the inner directories that contain final_models, datatracker.json, and settings.json
             for model_directory in readdir(joinpath(outputpath, directory))
                 # Check if there's a final_models directory
@@ -101,63 +148,36 @@ function process_oscillators(outputpath::String)
                         continue
                     end
                     astr = load_antimony_file(joinpath(outputpath, directory, model_directory, "final_models", model_file))
-                    is_oscillator_model = dummy_is_oscillator(astr)
+                    is_oscillator_model = is_oscillator(astr)
+                    # If it's an oscillator, move it to the SUCCESS dir
                     if is_oscillator_model
-                        destination = joinpath(outputpath, "SUCCESS", model_directory)
+                        destination = joinpath(results_parent_dir, "SUCCESS", model_directory)
                     else
-                        destination = joinpath(outputpath, "FAIL", model_directory)
+                        # Try to fix it 
+                        if is_broken_oscillator(astr)
+                            astr = fix_broken_oscillator(astr)
+                            if astr != "FAIL" # If fixing it worked, overwrite file
+                                model_file_path = joinpath(outputpath, directory, model_directory, "final_models", model_file)
+                                rm(model_file_path) # Remove the old filepath
+                                open(model_file_path, "w") do file
+                                    write(file, astr)    
+                                end
+                                # Fixed file will be moved to the successful results directory
+                                destination = joinpath(results_parent_dir, "SUCCESS", model_directory)
+                            end
+                        end
+                        destination = joinpath(results_parent_dir, "FAIL", model_directory)
                     end
                     mv(joinpath(outputpath, directory, model_directory), destination)
                     break
                 end
             end
-        # Delete the (now) empty directory
-        rm(joinpath(outputpath, directory))
+            # Delete the (now) empty directory
+            try
+                rm(joinpath(outputpath, directory))
+            catch e
+                println(e)
+            end
         end
     end
 end
-
-outputpath = "/home/hellsbells/Desktop/evolution_output/test_sort"
-
-process_oscillators(outputpath)
-
-
-
-
-
-# astr = """// Created by libAntimony v2.12.0
-# // Compartments and Species:
-# species S0, S1, S2;
-
-# // Reactions:
-# _J0: S0 -> S0 + S0; k1*S0;
-# _J1: S0 + S1 -> S1; k2*S0*S1;
-# _J2: S0 + S1 -> S1 + S1; k3*S0*S1;
-# _J3: S0 + S2 -> S0 + S0; k4*S0*S2;
-# _J4: S1 -> S0 + S1; k5*S1;
-# _J5: S0 -> S2 + S2; k6*S0;
-# _J6: S2 -> S2; k7*S2;
-# _J7: S1 + S2 -> S2; k8*S1*S2;
-# _J8: S2 -> S1; k9*S2;
-
-# // Species initializations:
-# S0 = 1;
-# S1 = 5;
-# S2 = 9;
-
-# // Variable initializations:
-# k1 = 82.0537175603692;
-# k2 = 1.46247635550851;
-# k3 = 11.0307336282238;
-# k4 = 71.8330483162337;
-# k5 = 0.500520887516744;
-# k6 = 82.8386889676032;
-# k7 = 31.2822563337994;
-# k8 = 25.2435734826658;
-# k9 = 9.24024972949223;
-
-# // Other declarations:
-# const k1, k2, k3, k4, k5, k6, k7, k8, k9;
-# """
-
-# println(is_oscillator(astr))

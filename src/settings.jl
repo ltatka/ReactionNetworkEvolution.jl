@@ -61,6 +61,7 @@ struct Settings
     same_fitness_crossover::Bool
     fitness_range_same_fitness_crossover::Float64
     lenient_crossover::Bool
+    process_output_oscillators::Bool
     note::String # User can add any description or other labels here
    
 end
@@ -132,6 +133,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "same_fitness_crossover" => false,
         "fitness_range_same_fitness_crossover" => 0.05,
         "lenient_crossover" => false,
+        "process_output_oscillators" => true,
         "note"=>""
         )
 
@@ -180,6 +182,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
                 settings["same_fitness_crossover"],
                 settings["fitness_range_same_fitness_crossover"],
                 settings["lenient_crossover"],
+                settings["process_output_oscillators"],
                 settings["note"]
                 )
     return usersettings
@@ -226,6 +229,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "same_fitness_crossover" => false,
         "fitness_range_same_fitness_crossover" => 0.05,
         "lenient_crossover" => false,
+        "process_output_oscillators" => true,
         "note"=>""
         )
     # If a path to settings is supplied:
@@ -329,7 +333,8 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["same_fitness_crossover"],
                    settings["fitness_range_same_fitness_crossover"],
                    settings["lenient_crossover"],
-                   settings["note"]
+                   settings["process_output_oscillators"],
+                   settings["note"],
                    )
     return usersettings, objectivefunction   
 end
