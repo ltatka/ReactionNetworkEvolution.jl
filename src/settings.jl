@@ -1,6 +1,7 @@
 using Random
-using JSON
-using DataFrames
+using JSON: json, parsefile
+using DataFrames: DataFrame
+using CSV: File
 
 struct ReactionProbabilities
     uniuni::Float64
@@ -81,7 +82,7 @@ end
 
 function get_objectivefunction(path::String)
     if path != "DEFAULT"
-        objectivedataframe = DataFrame(CSV.File(path))
+        objectivedataframe = DataFrame(File(path))
         time = objectivedataframe[!, 1]
         objectivedata = objectivedataframe[!, 2:end]
         specieslist = names(objectivedata)
@@ -235,7 +236,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
     # If a path to settings is supplied:
     if path != :"DEFAULT"
         println("Reading settings from $path")
-        j = JSON.parsefile(path)
+        j = parsefile(path)
         # Check for any optional args, use defaults if none 
         # If there are user specified args, replace value 
         for k in keys(j)
@@ -341,7 +342,7 @@ end
 
 function writeout_settings(settings::Settings, filename::String)
     settingsdict = Dict(key=>getfield(settings, key) for key in fieldnames(Settings))
-    stringsettings = JSON.json(settingsdict)
+    stringsettings = json(settingsdict)
     open(filename, "w") do f
         write(f, stringsettings)
     end

@@ -1,9 +1,7 @@
 module NetEvolve
+export run_evolution
 
-import CSV
-import DataFrames
-import JSON
-import Dates
+import Dates: now, format
 
 include("evo_utils.jl")
 include("process_output.jl")
@@ -122,7 +120,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
     end
 
     if settings.track_metadata
-        stringtracker = JSON.json(tracker)
+        stringtracker = json(tracker)
         open(joinpath(starttime, "datatracker.json"), "w") do f
             write(f, stringtracker)
         end

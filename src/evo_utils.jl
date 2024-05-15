@@ -1,15 +1,8 @@
+using Statistics: mean #This is for calculating the mean distance for debugging
+using Combinatorics: combinations # This is for looking at distances 
+
 include("ode_solver.jl")
 include("network_cleanup.jl")
-using Distributions
-using CSV
-
-using Dates
-using Random
-
-using Statistics #This is for calculating the mean distance for debugging
-using Combinatorics # This is for looking at distances again for debugging
-
-
 
 mutable struct Species
     networks::Vector{ReactionNetwork}
@@ -19,8 +12,6 @@ mutable struct Species
     topfitness::Float64
     topnetwork::ReactionNetwork
     numstagnations::Int64
-    
-    #TODO: Now that we've changed the speciate function, these shouldn't all be necessary
 
     function Species(network::ReactionNetwork)
         # Start a new species with a single network
@@ -61,14 +52,14 @@ mutable struct Species
         ID = randstring(12)
         numoffspring = 0
         speciesfitness = 0
-        topnetwork = listofnetworks[1] # Obviously this probably isn't going to be the top network at first
+        topnetwork = listofnetworks[1] # populate with first network, will be changed later
         topfitness = 0
         numstagnations = 0
         return new(networks, ID, numoffspring, speciesfitness, topfitness, topnetwork, numstagnations)
     end
 end
 
-#TODO: Is this necessary? I thought it would be more complicated.
+
 function initialize_species_by_IDs(population::Array{ReactionNetwork})
     """
     This function is for creating the first species list. It takes a population of networks and assigns them 
@@ -200,8 +191,6 @@ function speciate(species_by_IDs::Dict{String, Species},
     return new_species_by_IDs, DELTA
 end
 
-
-
 function getrandomkey(d::Dict{Vector{Vector{String}}, Reaction})
     i = rand(1:length(keys(d)))
     return collect(keys(d))[i]
@@ -209,17 +198,7 @@ end
 
 
 function addreaction(ng::NetworkGenerator, network::ReactionNetwork)
-    # if length(network.reactionlist) >= MAX_NREACTIONS
-    #     return network
-    # end
     reaction = generate_random_reaction(ng)
-    # if reaction.key in keys(current_innovation_num_by_reaction)
-    #     reaction.innovationnumber = current_innovation_num_by_reaction[reaction.key]
-    # else
-    #     reaction.innovationnumber = global_innovation_number
-    #     current_innovation_num_by_reaction[reaction.key] = global_innovation_number
-    #     global_innovation_number += 1
-    # end
     if reaction.key in keys(network.reactionlist)
         network.reactionlist[reaction.key].rateconstant += reaction.rateconstant 
     else
@@ -233,7 +212,7 @@ function deletereaction(network::ReactionNetwork)
         return network
     end
     key = getrandomkey(network.reactionlist)
-    #TODO: should reactions that are already inactive be excluded from this?
+    # If the reaction is already inactive, this wont change anything
     network.reactionlist[key].isactive = false
     return network
 end
@@ -250,13 +229,12 @@ end
 
 
 function mutaterateconstant(network::ReactionNetwork, settings::Settings)
-    # 90% chance of perturbing existing value, 10% chance of new random value
     key = getrandomkey(network.reactionlist) # Decide which reaction to change
     p = rand()
     if p < settings.p_picknewrateconstant # Randomly pick new rate constant
         newrateconstant = rand(Uniform(settings.rateconstantrange[1], settings.rateconstantrange[2]))
         network.reactionlist[key].rateconstant = newrateconstant
-        percentchange = rand(Uniform(.8, 1.2))
+        percentchange = rand(Uniform(1-settings.percent_rateconstant_change, 1+settings.percent_rateconstant_change))
         network.reactionlist[key].rateconstant *= percentchange
     else
         percentchange = rand(Uniform(1-settings.percent_rateconstant_change, 1+settings.percent_rateconstant_change))
@@ -387,7 +365,7 @@ function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fi
     # If speciation is turned off, it will assign give the single species all of the offspring
     
     if !settings.enable_speciation
-        for speciesID in keys(species_by_IDs) #this should only be one thing
+        for speciesID in keys(species_by_IDs) # There should only be 1 speciesID if enable_speciation = false
             species = species_by_IDs[speciesID]
             species.numoffspring = settings.populationsize
         end
@@ -640,7 +618,6 @@ function lenient_crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     newnetwork = deepcopy(morefitnetwork)
     newnetwork.reactionlist = newreactiondict
 
-    #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
     return newnetwork
 
 end
@@ -698,7 +675,6 @@ function same_fitness_crossover(network1::ReactionNetwork, network2::ReactionNet
     end
     newnetwork.reactionlist = newreactiondict
 
-    #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
     return newnetwork
 end
 
@@ -770,7 +746,6 @@ function general_crossover(network1::ReactionNetwork, network2::ReactionNetwork)
     newnetwork = deepcopy(morefitnetwork)
     newnetwork.reactionlist = newreactiondict
 
-    #TODO: should we reset the fitness, keep the old one and then replace it later or doesn't matter?
     return newnetwork
 
 end
@@ -805,23 +780,4 @@ function gettopmodel(species_by_IDs::Dict{String, Species})
     end
     return topnetwork, maxfitness
 end
-
-# function plot_timeseries(objfunct:: ObjectiveFunction, network:: ReactionNetwork; path::String=nothing)
-#     solution = solve_ode(objfunct, network)
-#     plt = plot(solution)
-#     if isnothing(path)
-#         path = dirname(pwd()) * "$(network.ID).png"
-#     end
-#     savefig(plt, path)
-#     return plt
-# end
-
-# function plot_timeseries_from_file(objfunct:: ObjectiveFunction, network_path::String, save_path::String)
-#     network = convert_from_antimony(network_path)
-#     solution = solve_ode(objfunct, network)
-#     plt = Plots.plot(solution)
-#     # save_pa = dirname(pwd()) * "$(network.ID).png"
-#     savefig(plt, save_pathpath)
-#     return plt
-# end
 

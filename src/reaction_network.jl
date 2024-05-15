@@ -1,9 +1,6 @@
-using Distributions
-
-
+using Distributions: Uniform, sample
 
 include("settings.jl")
-
 
 mutable struct Reaction
     substrate::Vector{String}
@@ -178,12 +175,13 @@ end
 
 #TODO: Make this more realistic? Maybe a poisson distribution? Or maybe in real life the user will know what species are boundaries?
 #TODO: maybe the number of possible boundary species depends on how many species are in the network?
+# FOR NOW: I'm just not going to deal with boundary species
 function choose_boundary_species(ng::NetworkGenerator)
     # Decide how many boundary species there will be, 0 to 3, but rarely 3
-    weights = [1, 0, 0]
-    nboundary = wsample(0:2, weights)
+    # weights = [1, 0, 0]
+    # nboundary = wsample(0:2, weights)
     # Decide which will be the boundary species
-    boundaryspecies = sample(ng.specieslist, nboundary, replace=false)
+    boundaryspecies = Vector{String}()#sample(ng.specieslist, nboundary, replace=false)
     floatingspecies = [s for s in ng.specieslist if !(s in boundaryspecies)]
     return floatingspecies, boundaryspecies
 end
