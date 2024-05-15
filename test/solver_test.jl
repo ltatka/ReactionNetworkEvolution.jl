@@ -36,3 +36,8 @@ network = NetEvolve.convert_from_antimony(astr)
 # Check initial rates of change
 du = NetEvolve.test_ode_funct([0.,0.,0.], [1., 5., 9.], network, 0.1)
 @test du == [6.5, 1.5, -247]
+
+# Make sure inactive reactions aren't included in rate of change calculations
+network.reactionlist[[["S1"], ["S0"]]].isactive = false
+du = NetEvolve.test_ode_funct([0.,0.,0.], [1., 5., 9.], network, 0.1)
+@test du == [4, 4, -247]
