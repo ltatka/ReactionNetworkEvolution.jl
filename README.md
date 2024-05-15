@@ -66,7 +66,7 @@ Any settings that are not specified in the JSON file will be set to the default 
   </tr>
   <tr>
     <td>ngenerations</td>
-    <td>400</td>
+    <td>800</td>
     <td>The number of generations</td>
   </tr>
   <tr>
