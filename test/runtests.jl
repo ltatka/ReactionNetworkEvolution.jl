@@ -1,4 +1,4 @@
-using ReactionNetworkEvolution.jl
+using ReactionNetworkEvolution
 using Test
 
 @testset "basic functions" begin
