@@ -1,4 +1,4 @@
-# NetEvolve
+# ReactionNetworkEvolution.jl
 ## Purpose
 This module allows the user to easily run an evolutionary algorithm to create mass-action chemical reaction networks with oscillatory behavior.
 
@@ -7,11 +7,11 @@ This module allows the user to easily run an evolutionary algorithm to create ma
 This module uses the julia programming language. Installation instructions can be found [here](https://julialang.org/downloads/).
 
 ### Quick Start
-1. Either fork or clone this module. Clone via the command ```git clone https://github.com/ltatka/NetEvolve```
-2. Navigate to the directory where you have downloaded the NetEvolve repo: ```cd NetEvolve```
+1. Either fork or clone this module. Clone via the command ```git clone https://github.com/ltatka/ReactionNetworkEvolution.jl```
+2. Navigate to the directory where you have downloaded the ReactionNetworkEvolution.jl repo: ```cd ReactionNetworkEvolution.jl```
 
 #### Command Line
-1. To install the NetEvolve module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
+1. To install the ReactionNetworkEvolution.jl module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
 2. To run evolution with default settings: ```julia --project=. run_evolution.jl``` <br>
 This command also takes optional command line arguments: <br>
 * ```--nbatches```: the number of batches to run (100 by default)
@@ -29,12 +29,12 @@ For example, to change the populationsize to 200 via the command line: <br>
 #### Write your own scripts
 1. Use the run_evolution in a .jl file as follows <br>
 ```
-using NetEvolve
-NetEvolve.run_evolution()
+using ReactionNetworkEvolution.jl
+ReactionNetworkEvolution.jl.run_evolution()
 ```
 
 2. Command line arguments can be specified as keyword arguments in the ```run_evolution``` function.
-For example ```NetEvolve.run_evolution(ngenerations=500)```
+For example ```ReactionNetworkEvolution.jl.run_evolution(ngenerations=500)```
 
 
 ## Additional Custom Settings
@@ -43,7 +43,7 @@ Additional settings can be specified in a JSON file. <br>
 When using the command line or bash script, the path can be supplied as a flag argument:
 ```julia --project=. evscript.jl --pathtosettings="/home/name/path/to/your/settings.json"```
 
-When using the NetEvolve module in a .jl script:
+When using the ReactionNetworkEvolution.jl module in a .jl script:
 ```run_evolution(pathtosettings="/home/name/path/to/your/settings.json")```
 
 An example of a JSON file specifying custom settings: <br>
@@ -202,7 +202,7 @@ Any settings that are not specified in the JSON file will be set to the default 
   <tr>
     <td>objectivedatapath</td>
     <td></td>
-    <td>If generating networks to fit data, path to .csv file with data to fit - if no path is given, NetEvolve will attempt to generate oscillators</td>
+    <td>If generating networks to fit data, path to .csv file with data to fit - if no path is given, ReactionNetworkEvolution.jl will attempt to generate oscillators</td>
   </tr>
   <tr>
     <td>track_metadata</td>
