@@ -254,7 +254,7 @@ julia --project=. run_evolution.jl --pathtosettings="/path/to/settingsfile.json"
 2. Supply the network topology as an antimony file. 
 3. Create a JSON file with at least the following settings:
 
-````
+```
 {"objectivedatapath": "/path/to/timeseries_data.csv",
 "process_output_oscillators": false,
 "seed_network_path": "/path/to/antimonyfile.txt",
