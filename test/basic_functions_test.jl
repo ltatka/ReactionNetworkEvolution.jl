@@ -1,9 +1,9 @@
-r1 = NetEvolve.Reaction(["S2", "S1"], ["S3", "S4"], 5.0)
-r2 = NetEvolve.Reaction(["S1", "S2"], ["S4", "S3"], 1.3)
+r1 = ReactionNetworkEvolution.jl.Reaction(["S2", "S1"], ["S3", "S4"], 5.0)
+r2 = ReactionNetworkEvolution.jl.Reaction(["S1", "S2"], ["S4", "S3"], 1.3)
 myset = Set([r1, r2])
 @test length(myset) == 1
 
-settings, objfunct = NetEvolve.read_usersettings("DEFAULT")
+settings, objfunct = ReactionNetworkEvolution.jl.read_usersettings("DEFAULT")
 
 network1_str = """// Created by libAntimony v2.12.0
 // Compartments and Species:
@@ -74,16 +74,16 @@ k9 = 7.05280598345276;
 k10 = 34.6814381533787;
 
 """
-network1 = NetEvolve.convert_from_antimony(network1_str)
+network1 = ReactionNetworkEvolution.jl.convert_from_antimony(network1_str)
 @test [["S0"], ["S0", "S0"]] ∈ keys(network1.reactionlist)
 @test network1.reactionlist[[["S0"], ["S0", "S0"]]].rateconstant == 33.3878793205463
 
-network2 = NetEvolve.convert_from_antimony(network2_str)
+network2 = ReactionNetworkEvolution.jl.convert_from_antimony(network2_str)
 myset2 = Set([network1, network2])
 @test length(myset2) == 1
 
-ng = NetEvolve.get_networkgenerator(settings)
+ng = ReactionNetworkEvolution.jl.get_networkgenerator(settings)
 @test ng.numreactions == 5
 
-population = NetEvolve.generate_network_population(settings, ng)
-@test typeof(population) == Vector{NetEvolve.ReactionNetwork}
+population = ReactionNetworkEvolution.jl.generate_network_population(settings, ng)
+@test typeof(population) == Vector{ReactionNetworkEvolution.jl.ReactionNetwork}

@@ -1,4 +1,4 @@
-module NetEvolve
+module ReactionNetworkEvolution.jl
 export run_evolution
 
 import Dates: now, format
@@ -148,7 +148,7 @@ function run_evolution(;
         nbatches = 100
     end
     if outputpath == ""
-        # Create a directory outside of the NetEvolve dir to store output
+        # Create a directory outside of the ReactionNetworkEvolution.jl dir to store output
         parent = dirname(pwd())
         outputpath = joinpath(parent, "evolution_output")
     end

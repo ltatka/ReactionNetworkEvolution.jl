@@ -1,4 +1,4 @@
-using NetEvolve
+using ReactionNetworkEvolution.jl
 using Test
 
 @testset "basic functions" begin

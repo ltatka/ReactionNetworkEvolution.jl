@@ -32,7 +32,7 @@ k9 = 9.24024972949223;
 // Other declarations:
 const k1, k2, k3, k4, k5, k6, k7, k8, k9;
 """
-@test NetEvolve.is_oscillator(astr)
+@test ReactionNetworkEvolution.jl.is_oscillator(astr)
 
 broken_astr = """// Created by libAntimony v2.12.0
 // Compartments and Species:
@@ -69,8 +69,8 @@ k9 = 50.3741152852779;
 const k1, k2, k3, k4, k5, k6, k7, k8, k9;
 
 #fitness: 0.015460235793677475"""
-@test !NetEvolve.is_oscillator(broken_astr)
-@test NetEvolve.is_broken_oscillator(broken_astr)
+@test !ReactionNetworkEvolution.jl.is_oscillator(broken_astr)
+@test ReactionNetworkEvolution.jl.is_broken_oscillator(broken_astr)
 
 fixed_astr = """// Created by libAntimony v2.12.0
 // Compartments and Species:
@@ -108,5 +108,5 @@ const k1, k2, k3, k4, k5, k6, k7, k8, k9;
 
 #fitness: 0.015460235793677475"""
 
-test_fixed_astr = NetEvolve.fix_broken_oscillator(broken_astr)
+test_fixed_astr = ReactionNetworkEvolution.jl.fix_broken_oscillator(broken_astr)
 @test startswith(test_fixed_astr, fixed_astr)

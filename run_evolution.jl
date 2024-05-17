@@ -1,4 +1,4 @@
-using NetEvolve
+using ReactionNetworkEvolution.jl
 using ArgParse
 
 s = ArgParseSettings()
@@ -29,7 +29,7 @@ end
 
 parsed_args = parse_args(ARGS, s)
 
-NetEvolve.run_evolution(ngenerations=parsed_args["ngenerations"],
+ReactionNetworkEvolution.jl.run_evolution(ngenerations=parsed_args["ngenerations"],
               nbatches=parsed_args["ntrials"],
               populationsize=parsed_args["populationsize"],
               pathtosettings=parsed_args["pathtosettings"],

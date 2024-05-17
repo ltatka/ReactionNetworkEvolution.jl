@@ -1,7 +1,7 @@
 using Test
 
 @testset "network mutations" begin
-    settings, objfunct = NetEvolve.read_usersettings("DEFAULT")
+    settings, objfunct = ReactionNetworkEvolution.jl.read_usersettings("DEFAULT")
     astr="""
     S0 + S1 -> S2; k1*S0*S1
     S2 + S2 -> S2; k2*S2*S2
@@ -17,8 +17,8 @@ using Test
     S1 = 5
     S2 = 9
     """
-    network = NetEvolve.convert_from_antimony(astr)
-    network = NetEvolve.mutaterateconstant(network, settings)
+    network = ReactionNetworkEvolution.jl.convert_from_antimony(astr)
+    network = ReactionNetworkEvolution.jl.mutaterateconstant(network, settings)
     keyslist = [[["S0", "S1"], ["S2"]],
                 [["S2", "S2"], ["S2"]],
                 [["S1"], ["S0"]],
@@ -31,11 +31,11 @@ using Test
         end
     end
     @test ismutated
-    ng = NetEvolve.get_networkgenerator(settings)
-    network = NetEvolve.addreaction(ng, network)
+    ng = ReactionNetworkEvolution.jl.get_networkgenerator(settings)
+    network = ReactionNetworkEvolution.jl.addreaction(ng, network)
     @test length(keys(network.reactionlist)) == 5
 
-    network = NetEvolve.deletereaction(network)
+    network = ReactionNetworkEvolution.jl.deletereaction(network)
     @test length(keys(network.reactionlist)) == 5
     inactive_count = 0
     for key in keys(network.reactionlist)
