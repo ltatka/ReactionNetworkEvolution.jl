@@ -1,4 +1,4 @@
-module ReactionNetworkEvolution.jl
+module ReactionNetworkEvolution
 export run_evolution
 
 import Dates: now, format
