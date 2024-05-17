@@ -74,16 +74,16 @@ k9 = 7.05280598345276;
 k10 = 34.6814381533787;
 
 """
-network1 = reactionNetworkEvolution.convert_from_antimony(network1_str)
+network1 = ReactionNetworkEvolution.convert_from_antimony(network1_str)
 @test [["S0"], ["S0", "S0"]] ∈ keys(network1.reactionlist)
 @test network1.reactionlist[[["S0"], ["S0", "S0"]]].rateconstant == 33.3878793205463
 
-network2 = reactionNetworkEvolution.convert_from_antimony(network2_str)
+network2 = ReactionNetworkEvolution.convert_from_antimony(network2_str)
 myset2 = Set([network1, network2])
 @test length(myset2) == 1
 
-ng = reactionNetworkEvolution.get_networkgenerator(settings)
+ng = ReactionNetworkEvolution.get_networkgenerator(settings)
 @test ng.numreactions == 5
 
-population = reactionNetworkEvolution.generate_network_population(settings, ng)
-@test typeof(population) == Vector{reactionNetworkEvolution.ReactionNetwork}
+population = ReactionNetworkEvolution.generate_network_population(settings, ng)
+@test typeof(population) == Vector{ReactionNetworkEvolution.ReactionNetwork}

@@ -2,21 +2,21 @@ settings_dict = Dict{String, Any}(
     "specieslist" => ["A", "B"],
     "initialconditions" => [10, 0],
     )
-settings = reactionNetworkEvolution.read_usersettings(settings_dict)
+settings = ReactionNetworkEvolution.read_usersettings(settings_dict)
 smallnetwork_str = """A -> B; k1*A 
     k1 = 2
     A = 10
     B = 0
     """
-smallnetwork = reactionNetworkEvolution.convert_from_antimony(smallnetwork_str)
+smallnetwork = ReactionNetworkEvolution.convert_from_antimony(smallnetwork_str)
 tspan = (0.0, 5.0)
-sol = reactionNetworkEvolution.solve_ode(smallnetwork, tspan)
+sol = ReactionNetworkEvolution.solve_ode(smallnetwork, tspan)
 # Get rate of change for A at t = 0
 
 rateofchange = (sol.u[2][1] - sol.u[1][1])/sol.t[2]
 @test abs(rateofchange + 20) < 0.00001
 
-settings, objfunct = reactionNetworkEvolution.read_usersettings("DEFAULT")
+settings, objfunct = ReactionNetworkEvolution.read_usersettings("DEFAULT")
 astr="""
     S0 + S1 -> S2; k1*S0*S1
     S2 + S2 -> S2; k2*S2*S2
@@ -32,12 +32,12 @@ astr="""
     S1 = 5
     S2 = 9
     """
-network = reactionNetworkEvolution.convert_from_antimony(astr)
+network = ReactionNetworkEvolution.convert_from_antimony(astr)
 # Check initial rates of change
-du = reactionNetworkEvolution.test_ode_funct([0.,0.,0.], [1., 5., 9.], network, 0.1)
+du = ReactionNetworkEvolution.test_ode_funct([0.,0.,0.], [1., 5., 9.], network, 0.1)
 @test du == [6.5, 1.5, -247]
 
 # Make sure inactive reactions aren't included in rate of change calculations
 network.reactionlist[[["S1"], ["S0"]]].isactive = false
-du = reactionNetworkEvolution.test_ode_funct([0.,0.,0.], [1., 5., 9.], network, 0.1)
+du = ReactionNetworkEvolution.test_ode_funct([0.,0.,0.], [1., 5., 9.], network, 0.1)
 @test du == [4, 4, -247]
