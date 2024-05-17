@@ -1,6 +1,12 @@
 # ReactionNetworkEvolution.jl
 ## Purpose
-This module allows the user to easily run an evolutionary algorithm to create mass-action chemical reaction networks with oscillatory behavior.
+This module allows the user to easily run an evolutionary algorithm to create mass-action chemical reaction networks with specific behaviors or to match time series data. It is intended as a research tool for computational systems biology.
+
+There are three primary use cases for this packge:
+1. Evolving reaction networks with specific behaviors. The default is oscillation, but other behaviors may be added in the future. Additionally, users can input time series that reflect those desired behaviors.
+2. Evolving reaction networks (or ensemble models) to fit time series data. Often systems biologist will have timeseries data from experiments and will want to search for a reaction network (or group of them) that can recapitulate the time series data. This is useful for building models, informing future experiments or looking at output models for common reaction themes which may indicate the presence of those reactions in the ground truth.
+3. Parameter (rate constants) fitting. In the case where model topology is known (for example, the biologist has already built the model from first principles) and wants to generate parameter values for those reactions that will recapitulate experimental time series data.
+
 
 ## How to use
 ### Installing Julia
@@ -222,3 +228,45 @@ Any settings that are not specified in the JSON file will be set to the default 
   
 </table>
 
+## Use Cases
+### 1. Evolving reaction networks with specific behaviors
+This package was primarily designed to generate mass-action chemical reaction networks with oscillatory behavior. With the defualt settings, it will generate oscillators with 3 chemical species.
+1. To install the ReactionNetworkEvolution.jl module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
+2. To run evolution with default settings: ```julia --project=. run_evolution.jl``` <br>
+
+### 2. Evolving reaction networks to fit time series data
+1. Supply the time series data as a CSV file. 
+2. Create a JSON file with at least the following setting to direct the package to the time series CSV and disable sorting oscillators
+
+```
+{"objectivedatapath": "/path/to/timeseries_data.csv",
+"process_output_oscillators": false}
+```
+
+3. Run evolution supplying the JSON file:
+
+```
+julia --project=. run_evolution.jl --pathtosettings="/path/to/settingsfile.json"
+```
+
+### 3. Evolve paramters with fixed topology network
+1. Supply the time series data as a CSV file
+2. Supply the network topology as an antimony file. 
+3. Create a JSON file with at least the following settings:
+
+````
+{"objectivedatapath": "/path/to/timeseries_data.csv",
+"process_output_oscillators": false,
+"seed_network_path": "/path/to/antimonyfile.txt",
+"parameter_distance_weight": 1.0,
+"p_rateconstantmutation" 1.0}
+```
+The parameter_distance_weight setting enables the package to consider differences in reaction weight constants when comparing twp networks. This is necessary if all networks have the same topology, although some adjustments to the value may be necessary.
+
+Setting p_rateconstantmutation to 1.0 prevents the algorithm from adding or deleting reactions during evolution.
+
+4. Run evolution supplying the JSON file:
+
+```
+julia --project=. run_evolution.jl --pathtosettings="/path/to/settingsfile.json"
+```
