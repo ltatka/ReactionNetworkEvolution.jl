@@ -3,7 +3,7 @@ r2 = ReactionNetworkEvolution.Reaction(["S1", "S2"], ["S4", "S3"], 1.3)
 myset = Set([r1, r2])
 @test length(myset) == 1
 
-settings, objfunct = reactionNetworkEvolution.read_usersettings("DEFAULT")
+settings, objfunct = ReactionNetworkEvolution.read_usersettings("DEFAULT")
 
 network1_str = """// Created by libAntimony v2.12.0
 // Compartments and Species:
