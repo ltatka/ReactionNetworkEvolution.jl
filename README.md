@@ -25,6 +25,8 @@ This module uses the julia programming language. Installation instructions can b
    import ReactionNetworkEvolution as rne
    rne.run_evolution()
    ```
+
+   **NOTE:** If an output directory is not supplied, then one will  be created in the current working directory. Make sure that the working directory allows new directories to be made.
 3. **Customize Evolution (optional)**
    The run_evolution() function takes several optional keyword arguments:
   * ```nbatches```: the number of batches to run (100 by default)
