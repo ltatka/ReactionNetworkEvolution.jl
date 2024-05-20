@@ -29,7 +29,7 @@ This module uses the julia programming language. Installation instructions can b
    **NOTE:** If an output directory is not supplied, then one will  be created in the current working directory. Make sure that the working directory allows new directories to be made.
 3. **Customize Evolution (optional)**
    The run_evolution() function takes several optional keyword arguments:
-  * ```nbatches```: the number of batches to run (100 by default)
+  * ```ntrials```: the number of trials to run (100 by default)
   * ```ngenerations```: the number of generations per batch (800 by default)
   * ```populationsize```: the number of networks in a population
   * ```pathtosettings```: path to a json file storing additional custom settings

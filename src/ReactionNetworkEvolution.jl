@@ -148,9 +148,7 @@ function run_evolution(;
         nbatches = 100
     end
     if outputpath == ""
-        # Create a directory outside of the ReactionNetworkEvolution.jl dir to store output
-        parent = dirname(pwd())
-        outputpath = joinpath(parent, "evolution_output")
+        outputpath = joinpath(pwd(), "evolution_output")
     end
     # Create a directory of output of this batch in the data dir
     if !isdir(outputpath)
