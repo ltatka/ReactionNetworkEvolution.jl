@@ -13,43 +13,34 @@ There are three primary use cases for this packge:
 This module uses the julia programming language. Installation instructions can be found [here](https://julialang.org/downloads/).
 
 ### Quick Start
-1. Either fork or clone this module. Clone via the command ```git clone https://github.com/ltatka/ReactionNetworkEvolution.jl```
-2. Navigate to the directory where you have downloaded the ReactionNetworkEvolution.jl repo: ```cd ReactionNetworkEvolution.jl```
-
-#### Command Line
-1. To install the ReactionNetworkEvolution.jl module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
-2. To run evolution with default settings: ```julia --project=. run_evolution.jl``` <br>
-This command also takes optional command line arguments: <br>
-* ```--nbatches```: the number of batches to run (100 by default)
-* ```--ngenerations```: the number of generations per batch (800 by default)
-* ```--populationsize```: the number of networks in a population
-* ```--pathtosettings```: path to a json file storing additional custom settings
-* ```--outputpath```: path to a directory where evolution output will be written
-* ```--seed```: specify a seed for the random number generator
-For example, to change the populationsize to 200 via the command line: <br>
-```julia --project=. run_evolution.jl --populationsize=200```
-
-#### Bash Script
-```./quickstart.sh``` to run evolution with default settings. This script can also be edited to include the command line arguements in the previous section.
-
-#### Write your own scripts
-1. Use the run_evolution in a .jl file as follows <br>
-```
-using ReactionNetworkEvolution.jl
-ReactionNetworkEvolution.jl.run_evolution()
-```
-
-2. Command line arguments can be specified as keyword arguments in the ```run_evolution``` function.
-For example ```ReactionNetworkEvolution.jl.run_evolution(ngenerations=500)```
+1. **Download the package** <br>
+   From a julia console:
+   ```
+   using Pkg
+   Pkg.add("ReactionNetworkEvolution")
+   ```
+2. **Run evolution with default settings**
+   Remaining in the julia console:
+   ```
+   import ReactionNetworkEvolution as rne
+   rne.run_evolution()
+   ```
+3. **Customize Evolution (optional)**
+   The run_evolution() function takes several optional keyword arguments:
+  * ```nbatches```: the number of batches to run (100 by default)
+  * ```ngenerations```: the number of generations per batch (800 by default)
+  * ```populationsize```: the number of networks in a population
+  * ```pathtosettings```: path to a json file storing additional custom settings
+  * ```outputpath```: path to a directory where evolution output will be written
+  * ```seed```: specify a seed for the random number generator
+    
+  For example, to change the populationsize to 200 via the command line: <br>
+  ```rne.run_evolution(populationsize=200)```
 
 
 ## Additional Custom Settings
 #### Specify Additional Settings in a JSON File
-Additional settings can be specified in a JSON file. <br>
-When using the command line or bash script, the path can be supplied as a flag argument:
-```julia --project=. evscript.jl --pathtosettings="/home/name/path/to/your/settings.json"```
-
-When using the ReactionNetworkEvolution.jl module in a .jl script:
+Additional settings can be specified in a JSON file and supplied to the run_evolution() function as a keyword argument. <br>
 ```run_evolution(pathtosettings="/home/name/path/to/your/settings.json")```
 
 An example of a JSON file specifying custom settings: <br>
@@ -231,8 +222,18 @@ Any settings that are not specified in the JSON file will be set to the default 
 ## Use Cases
 ### 1. Evolving reaction networks with specific behaviors
 This package was primarily designed to generate mass-action chemical reaction networks with oscillatory behavior. With the defualt settings, it will generate oscillators with 3 chemical species.
-1. To install the ReactionNetworkEvolution.jl module and all dependencies: ```julia --project=. -e 'using Pkg; Pkg.instantiate()'```
-2. To run evolution with default settings: ```julia --project=. run_evolution.jl``` <br>
+1. **Download the package** <br>
+   From a julia console:
+   ```
+   using Pkg
+   Pkg.add("ReactionNetworkEvolution")
+   ```
+2. **Run evolution with default settings**
+   Remaining in the julia console:
+   ```
+   import ReactionNetworkEvolution as rne
+   rne.run_evolution()
+   ```
 
 ### 2. Evolving reaction networks to fit time series data
 1. Supply the time series data as a CSV file. 
@@ -245,9 +246,10 @@ This package was primarily designed to generate mass-action chemical reaction ne
 
 3. Run evolution supplying the JSON file:
 
-```
-julia --project=. run_evolution.jl --pathtosettings="/path/to/settingsfile.json"
-```
+ ```
+   import ReactionNetworkEvolution as rne
+   rne.run_evolution(pathtosettings="/path/to/settingsfile.json")
+ ```
 
 ### 3. Evolve paramters with fixed topology network
 1. Supply the time series data as a CSV file
@@ -267,6 +269,7 @@ Setting p_rateconstantmutation to 1.0 prevents the algorithm from adding or dele
 
 4. Run evolution supplying the JSON file:
 
-```
-julia --project=. run_evolution.jl --pathtosettings="/path/to/settingsfile.json"
-```
+ ```
+   import ReactionNetworkEvolution as rne
+   rne.run_evolution(pathtosettings="/path/to/settingsfile.json")
+ ```
