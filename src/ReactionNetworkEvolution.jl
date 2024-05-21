@@ -8,7 +8,7 @@ include("process_output.jl")
 
 function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings, objfunct::ObjectiveFunction)
 
-    starttime = now()
+    starttime = format(now(), "YYYYmmdd_HHMMSS")
     starttime = "$starttime" * randstring(3)  # for race conditions
     starttime = joinpath(parentdir, starttime)
     mkdir(starttime)
