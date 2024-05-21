@@ -133,19 +133,18 @@ end
 
 function run_evolution(;
     ngenerations::Int64=-1,
-    nbatches::Int64=-1,
+    ntrials::Int64=-1,
     populationsize::Int64=-1,
     pathtosettings::String="",
     outputpath::String="",
     seed::Int64=-1,
     note::String="")
 
-    starttime = now()
-    starttime = "$starttime"
+    starttime = format(now(), "yyyy-mm-dd_HHMMSS")
     println("Starting $starttime")
 
-    if nbatches == -1
-        nbatches = 100
+    if ntrials == -1
+        ntrials = 100
     end
     if outputpath == ""
         outputpath = joinpath(pwd(), "evolution_output")
@@ -172,7 +171,7 @@ function run_evolution(;
 
     settings, objectivefunction = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize, seed=seed, note=note)
 
-    for i in 1:nbatches
+    for i in 1:ntrials
         evolve_networks(i, path, settings, objectivefunction)
     end
 
