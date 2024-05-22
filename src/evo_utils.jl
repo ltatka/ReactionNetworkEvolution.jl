@@ -681,9 +681,9 @@ end
 function network_fitness_is_similar(network1::ReactionNetwork, network2::ReactionNetwork, range::Float64)
     # Determines if two networks have similar fitness or not
     if network1.fitness > network2.fitness
-        return network2.fitness >= (1-range)*network1.fitness && network2.fitness <= (1+range)*network1.fitness
+        return network2.fitness >= (1-range/100)*network1.fitness && network2.fitness <= (1+range/100)*network1.fitness
     elseif network1.fitness < network2.fitness 
-        return network1.fitness >= (1-range)*network2.fitness && network1.fitness <= (1+range)*network2.fitness
+        return network1.fitness >= (1-range/100)*network2.fitness && network1.fitness <= (1+range/100)*network2.fitness
     else # networks have the same fitness
         return true
     end

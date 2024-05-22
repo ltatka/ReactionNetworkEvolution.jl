@@ -105,7 +105,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "reaction_probabilities" => [.1, .4, .4, .1],
         "p_rateconstant_mutation" => .6,                         # Probability of changning rate constant vs reaction
         "rateconstant_range" => [0.1, 50.0],
-        "percent_rateconstant_change" => 0.2,
+        "percent_rateconstant_change" => 20,
         "p_new_rateconstant" => 0.15,
         "population_size" => 100,
         "ngenerations" => 800,
@@ -133,7 +133,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "track_metadata" => true,
         "average_fitness" => false,
         "same_fitness_crossover" => false,
-        "same_fitness_percent_range" => 0.05,
+        "same_fitness_percent_range" => 5,
         "lenient_crossover" => false,
         "process_output_oscillators" => true,
         "verbose" => true,
@@ -193,17 +193,13 @@ function read_usersettings(settings_dict::Dict{String, Any})
 end
 
 
-
-
-
-
 function read_usersettings(path::String; ngenerations::Int64=-1, population_size::Int64=-1, seed::Int64=-1, note::String="")
     settings = Dict(
         "portion_elite" => 0.1,
         "reaction_probabilities" => [.1, .4, .4, .1],
         "p_rateconstant_mutation" => .6,                         # Probability of changning rate constant vs reaction
         "rateconstant_range" => [0.1, 50.0],
-        "percent_rateconstant_change" => 0.2,
+        "percent_rateconstant_change" => 20,
         "p_new_rateconstant" => 0.15,
         "population_size" => 100,
         "ngenerations" => 800,
@@ -231,12 +227,38 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
         "track_metadata" => true,
         "average_fitness" => false,
         "same_fitness_crossover" => false,
-        "same_fitness_percent_range" => 0.05,
+        "same_fitness_percent_range" => 5,
         "lenient_crossover" => false,
         "process_output_oscillators" => true,
         "verbose" => true,
         "note"=>""
         )
+
+    # Get the package directory
+    println(pathof(ReactionNetworkEvolution))
+    package_dir = dirname(dirname(pathof(ReactionNetworkEvolution)))
+    use_settings_json = false
+    # If theres a settings.json file there AND no other settings file is supplied, read it
+    if isfile(joinpath(package_dir, "settings.json")) && path == :"DEFAULT"
+        
+        j = parsefile(joinpath(package_dir, "settings.json"))
+        for k in keys(j)
+            if k in keys(settings)
+                if settings[k] != j[k]
+                    settings[k] = j[k]
+                    println("setting $k is different")
+                    use_settings_json = true # If a non-default setting was read from this file, note it
+                end
+            elseif k ∉ keys(settings)
+                error("$k not found in settings")
+            end
+        end
+        if use_settings_json
+            println("Reading settings from $(joinpath(package_dir, "settings.json"))")
+        end
+    end
+
+
     # If a path to settings is supplied:
     if path != :"DEFAULT"
         println("Reading settings from $path")
@@ -250,7 +272,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
                 error("$k not found in settings")
             end
         end
-    else
+    elseif !use_settings_json
         println("Using default settings")
     end
     # If seed is given as an optional arg, use it and save it to settings. 
