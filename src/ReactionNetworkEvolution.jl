@@ -1,5 +1,6 @@
 module ReactionNetworkEvolution
 export run_evolution
+export process_oscillators
 
 import Dates: now, format
 
