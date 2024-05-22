@@ -46,7 +46,7 @@ end
 function is_oscillator(astr::String)
     r = RoadRunner.loada(astr)
     try
-        RoadRunner.steadyState(r) # WTF
+        RoadRunner.steadyState(r) 
         eigens = RoadRunner.getEigenvalues(r)
         concentrations = RoadRunner.getFloatingSpeciesConcentrations(r)
         # If it has the correct eigens and positive concentrations, return true
@@ -100,7 +100,7 @@ function is_oscillator(astr::String)
 end
 
 function make_output_dirs(outputpath::String)
-    timestamp = Dates.format(now(), "YYYYmmdd_HHMMSS")
+    timestamp = format(now(), "YYYYmmdd_HHMMSS")
     results_parent_dir = joinpath(outputpath, "results_$timestamp")
     if !isdir(results_parent_dir)
         mkdir(results_parent_dir)
