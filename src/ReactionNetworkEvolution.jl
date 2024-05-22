@@ -134,7 +134,7 @@ end
 function run_evolution(;
     ngenerations::Int64=-1,
     ntrials::Int64=-1,
-    populationsize::Int64=-1,
+    population_size::Int64=-1,
     pathtosettings::String="",
     outputpath::String="",
     seed::Int64=-1,
@@ -169,7 +169,7 @@ function run_evolution(;
         pathtosettings = "DEFAULT"
     end
 
-    settings, objectivefunction = read_usersettings(pathtosettings, ngenerations=ngenerations, populationsize=populationsize, seed=seed, note=note)
+    settings, objectivefunction = read_usersettings(pathtosettings, ngenerations=ngenerations, population_size=population_size, seed=seed, note=note)
 
     for i in 1:ntrials
         evolve_networks(i, path, settings, objectivefunction)

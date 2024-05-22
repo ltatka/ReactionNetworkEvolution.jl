@@ -33,7 +33,7 @@ struct Settings
     rateconstant_range::Vector{Float64}
     percent_rateconstant_change::Float64 # Uniform sampling across this range to change rate constant
     p_new_rateconstant::Float64 # Probability of picking new rate constant during mutation vs slight change
-    populationsize::Int
+    population_size::Int
     ngenerations::Int
     nreactions::Int
     max_offspring_portion::Float64 # The maximum portion of offspring a single species can have
@@ -106,7 +106,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "rateconstant_range" => [0.1, 50.0],
         "percent_rateconstant_change" => 0.2,
         "p_new_rateconstant" => 0.15,
-        "populationsize" => 100,
+        "population_size" => 100,
         "ngenerations" => 800,
         "nreactions" => 5,
         "max_offspring_portion" => 0.1,
@@ -155,7 +155,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
                 settings["rateconstant_range"],
                 settings["percent_rateconstant_change"],
                 settings["p_new_rateconstant"],
-                settings["populationsize"],
+                settings["population_size"],
                 settings["ngenerations"],
                 settings["nreactions"],
                 settings["max_offspring_portion"],
@@ -194,7 +194,7 @@ end
 
 
 
-function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1, note::String="")
+function read_usersettings(path::String; ngenerations::Int64=-1, population_size::Int64=-1, seed::Int64=-1, note::String="")
     settings = Dict(
         "portion_elite" => 0.1,
         "reaction_probabilities" => [.1, .4, .4, .1],
@@ -202,7 +202,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "rateconstant_range" => [0.1, 50.0],
         "percent_rateconstant_change" => 0.2,
         "p_new_rateconstant" => 0.15,
-        "populationsize" => 100,
+        "population_size" => 100,
         "ngenerations" => 800,
         "nreactions" => 5,
         "max_offspring_portion" => 0.1,
@@ -296,8 +296,8 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
     if ngenerations == -1
         ngenerations = settings["ngenerations"]
     end
-    if populationsize == -1
-        populationsize = settings["populationsize"]
+    if population_size == -1
+        population_size = settings["population_size"]
     end
 
     usersettings = Settings(settings["portion_elite"], 
@@ -306,7 +306,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["rateconstant_range"],
                    settings["percent_rateconstant_change"],
                    settings["p_new_rateconstant"],
-                   populationsize,
+                   population_size,
                    ngenerations,
                    settings["nreactions"],
                    settings["max_offspring_portion"],

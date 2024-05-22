@@ -31,13 +31,13 @@ This module uses the julia programming language. Installation instructions can b
    The run_evolution() function takes several optional keyword arguments:
   * ```ntrials```: the number of trials to run (100 by default)
   * ```ngenerations```: the number of generations per batch (800 by default)
-  * ```populationsize```: the number of networks in a population
+  * ```population_size```: the number of networks in a population
   * ```pathtosettings```: path to a json file storing additional custom settings
   * ```outputpath```: path to a directory where evolution output will be written
   * ```seed```: specify a seed for the random number generator
     
-  For example, to change the populationsize to 200 via the command line: <br>
-  ```rne.run_evolution(populationsize=200)```
+  For example, to change the population_size to 200 via the command line: <br>
+  ```rne.run_evolution(population_size=200)```
 
 
 ## Additional Custom Settings
@@ -51,7 +51,7 @@ An example of a JSON file specifying custom settings: <br>
 "initial_concentrations": [5.0, 3.0, 6.0],
 "reaction_probabilities": [0.2, 0.3, 0.3, 0.2],
 "ngenerations": 500,
-"populationsize": 200,
+"population_size": 200,
 }
 ```
 Any settings that are not specified in the JSON file will be set to the default value.
@@ -69,7 +69,7 @@ Any settings that are not specified in the JSON file will be set to the default 
     <td>The number of generations</td>
   </tr>
   <tr>
-    <td>populationsize</td>
+    <td>population_size</td>
     <td>100</td>
     <td>The number of reaction networks in the population</td>
   </tr>

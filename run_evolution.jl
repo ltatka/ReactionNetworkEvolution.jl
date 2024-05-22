@@ -10,7 +10,7 @@ s = ArgParseSettings()
     "--ntrials"
         arg_type = Int
         default = -1
-    "--populationsize"
+    "--population_size"
         arg_type = Int
         default = -1
     "--pathtosettings"
@@ -31,7 +31,7 @@ parsed_args = parse_args(ARGS, s)
 
 ReactionNetworkEvolution.run_evolution(ngenerations=parsed_args["ngenerations"],
               ntrials=parsed_args["ntrials"],
-              populationsize=parsed_args["populationsize"],
+              population_size=parsed_args["population_size"],
               pathtosettings=parsed_args["pathtosettings"],
               outputpath=parsed_args["outputpath"],
               seed=parsed_args["seed"],

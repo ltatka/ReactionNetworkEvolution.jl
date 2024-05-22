@@ -264,11 +264,11 @@ function randomize_reaction_rates(network::ReactionNetwork, rateconstant_range::
 end
 
 function generate_network_population(settings::Settings, ng::NetworkGenerator)
-    population = Vector{ReactionNetwork}(undef, settings.populationsize)
+    population = Vector{ReactionNetwork}(undef, settings.population_size)
     if settings.use_seed_network
         seednetwork_str = load_antimony_file(settings.seed_network_path)
         seednetwork = convert_from_antimony(seednetwork_str)
-        for i in 1:settings.populationsize
+        for i in 1:settings.population_size
             network = deepcopy(seednetwork)
             if settings.randomize_seed_network_rates
                 network = randomize_reaction_rates(network, settings.rateconstant_range)
@@ -276,7 +276,7 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
             population[i] = network
         end
     else
-        for i in 1:settings.populationsize
+        for i in 1:settings.population_size
            population[i] = generate_random_network(ng)
         end
     end
@@ -367,12 +367,12 @@ function calculate_num_offspring(species_by_IDs::Dict{String, Species}, total_fi
     if !settings.enable_speciation
         for speciesID in keys(species_by_IDs) # There should only be 1 speciesID if enable_speciation = false
             species = species_by_IDs[speciesID]
-            species.numoffspring = settings.populationsize
+            species.numoffspring = settings.population_size
         end
-        return species_by_IDs, settings.populationsize
+        return species_by_IDs, settings.population_size
     end
 
-    total = settings.populationsize
+    total = settings.population_size
     total_offspring = 0 #This is how many offspring we calculate here, for debugging
 
     # NEW: cap number of offspring to 10% of population
