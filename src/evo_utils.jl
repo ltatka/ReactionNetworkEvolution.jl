@@ -82,7 +82,7 @@ function get_intraspecies_distances(species_by_IDs::Dict{String, Species}, setti
             for combo in combo_indices
                 network1 = species.networks[combo[1]]
                 network2 = species.networks[combo[2]]
-                d = calculate_distance(network1, network2, settings.parameter_distance_weight)
+                d = calculate_distance(network1, network2, settings.rateconstant_distance_weight)
                 push!(distances, d)
             end
             push!(avg_distances, mean(distances))
@@ -105,7 +105,7 @@ function get_diversity_stats(species_by_IDs::Dict{String, Species}, settings::Se
     for combo in combo_indices
         network1 = species_by_IDs[all_species[combo[1]]].topnetwork
         network2 = species_by_IDs[all_species[combo[2]]].topnetwork
-        d = calculate_distance(network1, network2, settings.parameter_distance_weight)
+        d = calculate_distance(network1, network2, settings.rateconstant_distance_weight)
         push!(distances, d)
     end
     try
@@ -122,7 +122,7 @@ function get_diversity_stats_from_list(networklist::Array{ReactionNetwork}, sett
     for combo in combo_indices
         network1 = networklist[combo[1]]
         network2 = networklist[combo[2]]
-        d = calculate_distance(network1, network2, settings.parameter_distance_weight)
+        d = calculate_distance(network1, network2, settings.rateconstant_distance_weight)
         push!(distances, d)
         if d == 0
             push!(duplicates, combo[2])
@@ -159,7 +159,7 @@ function speciate(species_by_IDs::Dict{String, Species},
         species_assigned = false
         for speciesID in keys(species_by_IDs)
             network2 = species_by_IDs[speciesID].topnetwork# rand(species_by_IDs[speciesID].networks)
-            distance = calculate_distance(network, network2, settings.parameter_distance_weight)
+            distance = calculate_distance(network, network2, settings.rateconstant_distance_weight)
             if distance <= DELTA
                 network.ID = speciesID
                 # If we've already assigned a network to this species, just add it to the list 
@@ -231,13 +231,13 @@ end
 function mutaterateconstant(network::ReactionNetwork, settings::Settings)
     key = getrandomkey(network.reactionlist) # Decide which reaction to change
     p = rand()
-    if p < settings.p_picknewrateconstant # Randomly pick new rate constant
-        newrateconstant = rand(Uniform(settings.rateconstantrange[1], settings.rateconstantrange[2]))
+    if p < settings.p_new_rateconstant # Randomly pick new rate constant
+        newrateconstant = rand(Uniform(settings.rateconstant_range[1], settings.rateconstant_range[2]))
         network.reactionlist[key].rateconstant = newrateconstant
-        percentchange = rand(Uniform(1-settings.percent_rateconstant_change, 1+settings.percent_rateconstant_change))
+        percentchange = rand(Uniform(1-settings.percent_rateconstant_change/100, 1+settings.percent_rateconstant_change/100))
         network.reactionlist[key].rateconstant *= percentchange
     else
-        percentchange = rand(Uniform(1-settings.percent_rateconstant_change, 1+settings.percent_rateconstant_change))
+        percentchange = rand(Uniform(1-settings.percent_rateconstant_change/100, 1+settings.percent_rateconstant_change/100))
         network.reactionlist[key].rateconstant *= percentchange
     end
     return network
@@ -245,7 +245,7 @@ end
 
 function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::ReactionNetwork)
     p = rand()
-    if p > settings.p_rateconstantmutation
+    if p > settings.p_rateconstant_mutation
         network = adddeletereaction(ng, network)
     else
         mutaterateconstant(network, settings)
@@ -253,12 +253,12 @@ function mutatenetwork!(settings::Settings, ng::NetworkGenerator, network::React
     return network
 end
 
-function randomize_reaction_rates(network::ReactionNetwork, rateconstantrange::Vector{Float64})
+function randomize_reaction_rates(network::ReactionNetwork, rateconstant_range::Vector{Float64})
     # Randomize the reaction rates for a given reaction network. Pick from uniform distribution 
     # within the ranges provided.
     for reactionkey in keys(network.reactionlist)
         reaction = network.reactionlist[reactionkey]
-        reaction.rateconstant = rand(Uniform(rateconstantrange[1], rateconstantrange[2]))
+        reaction.rateconstant = rand(Uniform(rateconstant_range[1], rateconstant_range[2]))
     end
     return network
 end
@@ -270,8 +270,8 @@ function generate_network_population(settings::Settings, ng::NetworkGenerator)
         seednetwork = convert_from_antimony(seednetwork_str)
         for i in 1:settings.populationsize
             network = deepcopy(seednetwork)
-            if settings.randomize_seednetwork_rates
-                network = randomize_reaction_rates(network, settings.rateconstantrange)
+            if settings.randomize_seed_network_rates
+                network = randomize_reaction_rates(network, settings.rateconstant_range)
             end
             population[i] = network
         end
@@ -442,8 +442,8 @@ function reproduce_networks(species_by_IDs, settings::Settings,
             offspring_index += 1
         elseif totaloffspring > 1 # Total offspring greater than 1
             # Calculate number elite
-            num_elite = Int64(round(totaloffspring*settings.portionelite))
-            if num_elite == 0 && settings.portionelite != 0.0 # Set minimum number of elites to 1, unless the user has specifically set this value to 0
+            num_elite = Int64(round(totaloffspring*settings.portion_elite))
+            if num_elite == 0 && settings.portion_elite != 0.0 # Set minimum number of elites to 1, unless the user has specifically set this value to 0
                 num_elite = 1
             end
             # By basing the number of elites to copy over on the size of the subsequent generation, in some cases the number of elites to copy over
@@ -459,14 +459,14 @@ function reproduce_networks(species_by_IDs, settings::Settings,
                 offspring_index += 1
             end
             # Get rid of the worst networks in the species
-            num_to_remove = Int64(floor(length(networks)*settings.drop_portion))
+            num_to_remove = Int64(floor(length(networks)*settings.portion_delete))
             networks = networks[1:end - num_to_remove] 
             # For the rest of the new population:
             offspring_to_add = totaloffspring - num_elite
             for i in 1:offspring_to_add
-                if settings.tournamentselect
-                    network = tournamentselect(species)
-                    network2 = tournamentselect(species)
+                if settings.tournament_select
+                    network = tournament_select(species)
+                    network2 = tournament_select(species)
                 else
                     idx1, idx2 = rand(1:length(networks), 2) #TODO: this does NOT prevent same network from being selected twice, which might be good if we only have one more slot to fill
                     network = networks[idx1]
@@ -506,12 +506,12 @@ function reproduce_networks(species_by_IDs, settings::Settings,
 end
 
 
-function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork, parameter_distance_weight::Float64)
+function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork, rateconstant_distance_weight::Float64)
     # If every single reaction is different, then the distance will be 1
     num_diff = 0
     num_same = 0
     sum_differences = 0
-    # parameter_distance_weight = 1
+    # rateconstant_distance_weight = 1
     # c1 = 1 # Value from paper
     # c2 = 0.4 # Value from paper (as C3 in the paper) 
     if length(network1.reactionlist) >= length(network2.reactionlist)
@@ -533,11 +533,11 @@ function calculate_distance(network1::ReactionNetwork, network2::ReactionNetwork
         end
     end
 
-    distance = num_diff/N + (parameter_distance_weight*(sum_differences/num_same))
+    distance = num_diff/N + (rateconstant_distance_weight*(sum_differences/num_same))
     return distance
 end
 
-function tournamentselect(species::Species)
+function tournament_select(species::Species)
     # Select a network from a species via tournament, returns the (unmodifed) selected network
     networks = species.networks
     idx1, idx2 = rand(1:length(networks), 2)
@@ -690,7 +690,7 @@ function network_fitness_is_similar(network1::ReactionNetwork, network2::Reactio
 end
 
 function crossover(network1::ReactionNetwork, network2::ReactionNetwork, settings::Settings)
-    if settings.same_fitness_crossover && network_fitness_is_similar(network1, network2, settings.fitness_range_same_fitness_crossover)
+    if settings.same_fitness_crossover && network_fitness_is_similar(network1, network2, settings.same_fitness_percent_range)
         return same_fitness_crossover(network1, network2)
     elseif settings.lenient_crossover
         return lenient_crossover(network1, network2)

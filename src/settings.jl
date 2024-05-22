@@ -27,12 +27,12 @@ struct ReactionProbabilities
 end
 
 struct Settings
-    portionelite::Float64
-    reactionprobabilities::ReactionProbabilities
-    p_rateconstantmutation::Float64
-    rateconstantrange::Vector{Float64}
+    portion_elite::Float64
+    reaction_probabilities::ReactionProbabilities
+    p_rateconstant_mutation::Float64
+    rateconstant_range::Vector{Float64}
     percent_rateconstant_change::Float64 # Uniform sampling across this range to change rate constant
-    p_picknewrateconstant::Float64 # Probability of picking new rate constant during mutation vs slight change
+    p_new_rateconstant::Float64 # Probability of picking new rate constant during mutation vs slight change
     populationsize::Int
     ngenerations::Int
     nreactions::Int
@@ -41,26 +41,26 @@ struct Settings
     p_crossover::Float64 # Probability of p_crossover
     p_mutation::Float64 # Probability of mutation (does not need to sum to 1 with p_crossover)
     excluisve_crossover_mutation::Bool # If true, either crossover OR mutation, never both
-    drop_portion::Float64 # Portion of worst networks to drop in each species
+    portion_delete::Float64 # Portion of worst networks to drop in each species
     seed::Float64
     starting_delta::Float64
     delta_step::Float64
-    parameter_distance_weight::Float64
+    rateconstant_distance_weight::Float64
     target_num_species::Int64
     use_seed_network::Bool # Start with a seed network
     seed_network_path::String
-    randomize_seednetwork_rates::Bool
-    tournamentselect::Bool
-    specieslist::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
-    initialconditions::Vector{Float64}
-    objectivedatapath::String
+    randomize_seed_network_rates::Bool
+    tournament_select::Bool
+    chemical_species_names::Vector{String} # TODO: Maybe they don't need to define this if it's in the data?
+    initial_concentrations::Vector{Float64}
+    objective_data_path::String
     match_objectivefunction_species::Bool
     enable_speciation::Bool
     track_metadata::Bool
     #objectivespecies::Vector{String}
     average_fitness::Bool
     same_fitness_crossover::Bool
-    fitness_range_same_fitness_crossover::Float64
+    same_fitness_percent_range::Float64
     lenient_crossover::Bool
     process_output_oscillators::Bool
     note::String # User can add any description or other labels here
@@ -85,27 +85,27 @@ function get_objectivefunction(path::String)
         objectivedataframe = DataFrame(File(path))
         time = objectivedataframe[!, 1]
         objectivedata = objectivedataframe[!, 2:end]
-        specieslist = names(objectivedata)
-        initialconditions = rowtovec(objectivedata, 1)
+        chemical_species_names = names(objectivedata)
+        initial_concentrations = rowtovec(objectivedata, 1)
         objectivedata = Matrix(objectivedata)
     else
         time = collect(range(0, 1.25, length=11))
         objectivedata = [5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0]
-        specieslist = ["S0", "S1", "S2"]
-        initialconditions = [0., 0., 0.]
+        chemical_species_names = ["S0", "S1", "S2"]
+        initial_concentrations = [0., 0., 0.]
     end
-    return ObjectiveFunction(objectivedata, time), specieslist, initialconditions
+    return ObjectiveFunction(objectivedata, time), chemical_species_names, initial_concentrations
 end
 
 function read_usersettings(settings_dict::Dict{String, Any})
     # This version of the function takes a dictionary. It is mostly for testing
     settings = Dict(
-        "portionelite" => 0.1,
-        "reactionprobabilities" => [.1, .4, .4, .1],
-        "p_rateconstantmutation" => .6,                         # Probability of changning rate constant vs reaction
-        "rateconstantrange" => [0.1, 50.0],
+        "portion_elite" => 0.1,
+        "reaction_probabilities" => [.1, .4, .4, .1],
+        "p_rateconstant_mutation" => .6,                         # Probability of changning rate constant vs reaction
+        "rateconstant_range" => [0.1, 50.0],
         "percent_rateconstant_change" => 0.2,
-        "p_picknewrateconstant" => 0.15,
+        "p_new_rateconstant" => 0.15,
         "populationsize" => 100,
         "ngenerations" => 800,
         "nreactions" => 5,
@@ -114,25 +114,25 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "p_crossover" => 0,
         "p_mutation" => 1,
         "exclusive_crossover_mutation" => false,
-        "drop_portion" => 0.1,
+        "portion_delete" => 0.1,
         "seed" => -1,
         "starting_delta" => 0.65,
         "delta_step" => 0.1,
-        "parameter_distance_weight" => 0.0,
+        "rateconstant_distance_weight" => 0.0,
         "target_num_species" => 10,
         "use_seed_network" => false,
         "seed_network_path" => "",
-        "randomize_seednetwork_rates" => true,
-        "tournamentselect" => false,
-        "specieslist" => ["S0", "S1", "S2"],
-        "initialconditions" => [1.0, 5.0, 9.0],
-        "objectivedatapath" => "DEFAULT",
+        "randomize_seed_network_rates" => true,
+        "tournament_select" => false,
+        "chemical_species_names" => ["S0", "S1", "S2"],
+        "initial_concentrations" => [1.0, 5.0, 9.0],
+        "objective_data_path" => "DEFAULT",
         "match_objectivefunction_species" => true,
         "enable_speciation" => true,
         "track_metadata" => true,
         "average_fitness" => false,
         "same_fitness_crossover" => false,
-        "fitness_range_same_fitness_crossover" => 0.05,
+        "same_fitness_percent_range" => 0.05,
         "lenient_crossover" => false,
         "process_output_oscillators" => true,
         "note"=>""
@@ -147,14 +147,14 @@ function read_usersettings(settings_dict::Dict{String, Any})
         end
     end
 
-    reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
+    reaction_probabilities = ReactionProbabilities(settings["reaction_probabilities"])
 
-    usersettings = Settings(settings["portionelite"], 
-                reactionprobabilities,
-                settings["p_rateconstantmutation"],
-                settings["rateconstantrange"],
+    usersettings = Settings(settings["portion_elite"], 
+                reaction_probabilities,
+                settings["p_rateconstant_mutation"],
+                settings["rateconstant_range"],
                 settings["percent_rateconstant_change"],
-                settings["p_picknewrateconstant"],
+                settings["p_new_rateconstant"],
                 settings["populationsize"],
                 settings["ngenerations"],
                 settings["nreactions"],
@@ -163,25 +163,25 @@ function read_usersettings(settings_dict::Dict{String, Any})
                 settings["p_crossover"],
                 settings["p_mutation"],
                 settings["exclusive_crossover_mutation"],
-                settings["drop_portion"],
+                settings["portion_delete"],
                 settings["seed"],
                 settings["starting_delta"],
                 settings["delta_step"],
-                settings["parameter_distance_weight"],
+                settings["rateconstant_distance_weight"],
                 settings["target_num_species"],
                 settings["use_seed_network"],
                 settings["seed_network_path"],
-                settings["randomize_seednetwork_rates"],
-                settings["tournamentselect"],
-                settings["specieslist"],
-                settings["initialconditions"],
-                settings["objectivedatapath"],
+                settings["randomize_seed_network_rates"],
+                settings["tournament_select"],
+                settings["chemical_species_names"],
+                settings["initial_concentrations"],
+                settings["objective_data_path"],
                 settings["match_objectivefunction_species"],
                 settings["enable_speciation"],
                 settings["track_metadata"],
                 settings["average_fitness"],
                 settings["same_fitness_crossover"],
-                settings["fitness_range_same_fitness_crossover"],
+                settings["same_fitness_percent_range"],
                 settings["lenient_crossover"],
                 settings["process_output_oscillators"],
                 settings["note"]
@@ -196,12 +196,12 @@ end
 
 function read_usersettings(path::String; ngenerations::Int64=-1, populationsize::Int64=-1, seed::Int64=-1, note::String="")
     settings = Dict(
-        "portionelite" => 0.1,
-        "reactionprobabilities" => [.1, .4, .4, .1],
-        "p_rateconstantmutation" => .6,                         # Probability of changning rate constant vs reaction
-        "rateconstantrange" => [0.1, 50.0],
+        "portion_elite" => 0.1,
+        "reaction_probabilities" => [.1, .4, .4, .1],
+        "p_rateconstant_mutation" => .6,                         # Probability of changning rate constant vs reaction
+        "rateconstant_range" => [0.1, 50.0],
         "percent_rateconstant_change" => 0.2,
-        "p_picknewrateconstant" => 0.15,
+        "p_new_rateconstant" => 0.15,
         "populationsize" => 100,
         "ngenerations" => 800,
         "nreactions" => 5,
@@ -210,25 +210,25 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         "p_crossover" => 0,
         "p_mutation" => 1,
         "exclusive_crossover_mutation" => false,
-        "drop_portion" => 0.1,
+        "portion_delete" => 0.1,
         "seed" => -1,
         "starting_delta" => 0.65,
         "delta_step" => 0.1,
-        "parameter_distance_weight" => 0.0,
+        "rateconstant_distance_weight" => 0.0,
         "target_num_species" => 10,
         "use_seed_network" => false,
         "seed_network_path" => "",
-        "randomize_seednetwork_rates" => true,
-        "tournamentselect" => false,
-        "specieslist" => ["S0", "S1", "S2"],
-        "initialconditions" => [1.0, 5.0, 9.0],
-        "objectivedatapath" => "DEFAULT",
+        "randomize_seed_network_rates" => true,
+        "tournament_select" => false,
+        "chemical_species_names" => ["S0", "S1", "S2"],
+        "initial_concentrations" => [1.0, 5.0, 9.0],
+        "objective_data_path" => "DEFAULT",
         "match_objectivefunction_species" => true,
         "enable_speciation" => true,
         "track_metadata" => true,
         "average_fitness" => false,
         "same_fitness_crossover" => false,
-        "fitness_range_same_fitness_crossover" => 0.05,
+        "same_fitness_percent_range" => 0.05,
         "lenient_crossover" => false,
         "process_output_oscillators" => true,
         "note"=>""
@@ -274,25 +274,25 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
     # if settings["exclusive_crossover_mutation"] && (settings["p_crossover"] + settings["p_mutation"] > 1)
     #     error("p_crossover + p_mutation must be less than or equal to 1")
     # end
-    # if sum(settings["reactionprobabilities"]) != 1
-    #     error("reactionprobabilities must sum to 1")
+    # if sum(settings["reaction_probabilities"]) != 1
+    #     error("reaction_probabilities must sum to 1")
     # end
 
     # Get the objective function and species IDs 
-    objectivefunction, floatingspeciesIDs, initialconditions = get_objectivefunction(settings["objectivedatapath"])
-    settings["specieslist"] = floatingspeciesIDs
+    objectivefunction, floatingspeciesIDs, initial_concentrations = get_objectivefunction(settings["objective_data_path"])
+    settings["chemical_species_names"] = floatingspeciesIDs
     # If the initial conditions were read from the objective data, them put them in the settings, dict.
     # If the intital conditions are returend as [0., 0., 0.], then use either default or user-supplied
-    if initialconditions != [0., 0., 0.,] 
-        settings["initialconditions"] = initialconditions
+    if initial_concentrations != [0., 0., 0.,] 
+        settings["initial_concentrations"] = initial_concentrations
     end
-    if length(initialconditions) != length(floatingspeciesIDs)
+    if length(initial_concentrations) != length(floatingspeciesIDs)
         error("number of initial conditions does not match number of floating species")
     end
 
 
     # Create settings object
-    reactionprobabilities = ReactionProbabilities(settings["reactionprobabilities"])
+    reaction_probabilities = ReactionProbabilities(settings["reaction_probabilities"])
     if ngenerations == -1
         ngenerations = settings["ngenerations"]
     end
@@ -300,12 +300,12 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
         populationsize = settings["populationsize"]
     end
 
-    usersettings = Settings(settings["portionelite"], 
-                   reactionprobabilities,
-                   settings["p_rateconstantmutation"],
-                   settings["rateconstantrange"],
+    usersettings = Settings(settings["portion_elite"], 
+                   reaction_probabilities,
+                   settings["p_rateconstant_mutation"],
+                   settings["rateconstant_range"],
                    settings["percent_rateconstant_change"],
-                   settings["p_picknewrateconstant"],
+                   settings["p_new_rateconstant"],
                    populationsize,
                    ngenerations,
                    settings["nreactions"],
@@ -314,25 +314,25 @@ function read_usersettings(path::String; ngenerations::Int64=-1, populationsize:
                    settings["p_crossover"],
                    settings["p_mutation"],
                    settings["exclusive_crossover_mutation"],
-                   settings["drop_portion"],
+                   settings["portion_delete"],
                    settings["seed"],
                    settings["starting_delta"],
                    settings["delta_step"],
-                   settings["parameter_distance_weight"],
+                   settings["rateconstant_distance_weight"],
                    settings["target_num_species"],
                    settings["use_seed_network"],
                    settings["seed_network_path"],
-                   settings["randomize_seednetwork_rates"],
-                   settings["tournamentselect"],
-                   settings["specieslist"],
-                   settings["initialconditions"],
-                   settings["objectivedatapath"],
+                   settings["randomize_seed_network_rates"],
+                   settings["tournament_select"],
+                   settings["chemical_species_names"],
+                   settings["initial_concentrations"],
+                   settings["objective_data_path"],
                    settings["match_objectivefunction_species"],
                    settings["enable_speciation"],
                    settings["track_metadata"],
                    settings["average_fitness"],
                    settings["same_fitness_crossover"],
-                   settings["fitness_range_same_fitness_crossover"],
+                   settings["same_fitness_percent_range"],
                    settings["lenient_crossover"],
                    settings["process_output_oscillators"],
                    settings["note"],

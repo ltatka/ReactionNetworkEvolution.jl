@@ -6,10 +6,10 @@ include("reaction_network.jl")
 
 function test_ode_funct(du::Array{Float64}, u::Array{Float64}, network::ReactionNetwork, t::Float64)
     # This is the same function as ode_func! but it returns du for testing purposes
-    specieslist = network.specieslist
+    chemical_species_names = network.chemical_species_names
     
     # Reset du
-    for i = 1:length(specieslist)
+    for i = 1:length(chemical_species_names)
         du[i] = 0.0
     end
 
@@ -21,25 +21,25 @@ function test_ode_funct(du::Array{Float64}, u::Array{Float64}, network::Reaction
         # Get the relevant concentrations
         dspecies = 1 # Is there a case where this would be wrong?
         for s in reaction.substrate
-            idx = findfirst(item -> item == s, specieslist)
+            idx = findfirst(item -> item == s, chemical_species_names)
             dspecies *= u[idx]
         end
         # Multiply by the rate constant to get the rate for *this* reaction
         dspecies *= reaction.rateconstant
         # Subtract this rate for substrates
         for s in reaction.substrate
-            idx = findfirst(item -> item == s, specieslist)
+            idx = findfirst(item -> item == s, chemical_species_names)
             du[idx] -= dspecies
         end
         # Add this rate for products
         for p in reaction.product
-            idx = findfirst(item -> item == p, specieslist)
+            idx = findfirst(item -> item == p, chemical_species_names)
             du[idx] += dspecies
         end
     end
     # for boundary species, reset the rate of change to 0
     for s in network.boundaryspecies
-        idx = findfirst(item -> item == s, specieslist)
+        idx = findfirst(item -> item == s, chemical_species_names)
         du[idx] = 0.0
     end
     return du
@@ -47,10 +47,10 @@ end
 
 
 function ode_funct!(du::Array{Float64}, u::Array{Float64}, network::ReactionNetwork, t::Float64)
-    specieslist = network.specieslist
+    chemical_species_names = network.chemical_species_names
     
     # Reset du
-    for i = 1:length(specieslist)
+    for i = 1:length(chemical_species_names)
         du[i] = 0.0
     end
 
@@ -62,25 +62,25 @@ function ode_funct!(du::Array{Float64}, u::Array{Float64}, network::ReactionNetw
         # Get the relevant concentrations
         dspecies = 1 # Is there a case where this would be wrong?
         for s in reaction.substrate
-            idx = findfirst(item -> item == s, specieslist)
+            idx = findfirst(item -> item == s, chemical_species_names)
             dspecies *= u[idx]
         end
         # Multiply by the rate constant to get the rate for *this* reaction
         dspecies *= reaction.rateconstant
         # Subtract this rate for substrates
         for s in reaction.substrate
-            idx = findfirst(item -> item == s, specieslist)
+            idx = findfirst(item -> item == s, chemical_species_names)
             du[idx] -= dspecies
         end
         # Add this rate for products
         for p in reaction.product
-            idx = findfirst(item -> item == p, specieslist)
+            idx = findfirst(item -> item == p, chemical_species_names)
             du[idx] += dspecies
         end
     end
     # for boundary species, reset the rate of change to 0
     for s in network.boundaryspecies
-        idx = findfirst(item -> item == s, specieslist)
+        idx = findfirst(item -> item == s, chemical_species_names)
         du[idx] = 0.0
     end
 end
@@ -116,7 +116,7 @@ function evaluate_fitness(objfunct:: ObjectiveFunction, network::ReactionNetwork
         if length(sol.t) != length(objfunct.time) # If the time points are unequal, then simulation has failed.
             return 0
         end
-        if settings.objectivedatapath == "DEFAULT"
+        if settings.objective_data_path == "DEFAULT"
             fitness = zeros(length(network.floatingspecies))
             for (i, row) in enumerate(sol.u)
                 for j in 1:length(network.floatingspecies)

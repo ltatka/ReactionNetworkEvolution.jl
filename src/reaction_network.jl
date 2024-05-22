@@ -55,7 +55,7 @@ end
 
 
 mutable struct ReactionNetwork
-    specieslist::Vector{String}
+    chemical_species_names::Vector{String}
     initialcondition::Vector{Float64}
     reactionlist::Dict{Vector{Vector{String}},Reaction}
     floatingspecies::Vector{String}
@@ -67,8 +67,8 @@ mutable struct ReactionNetwork
     ID::String
     species::String
 
-    # function ReactionNetwork(specieslist::Vector{String},initialcondition::Vector{Float64},reactionlist::Vector{Reaction},floatingspecies::Vector{String},boundaryspecies::Vector{String},float_initialcondition::Vector{Float64},boundary_initialcondition::Vector{Float64})
-    #     return new(specieslist, initialcondition, floatingspecies, boundaryspecies, float_initialcondition,boundary_initialcondition, 1.0E8)
+    # function ReactionNetwork(chemical_species_names::Vector{String},initialcondition::Vector{Float64},reactionlist::Vector{Reaction},floatingspecies::Vector{String},boundaryspecies::Vector{String},float_initialcondition::Vector{Float64},boundary_initialcondition::Vector{Float64})
+    #     return new(chemical_species_names, initialcondition, floatingspecies, boundaryspecies, float_initialcondition,boundary_initialcondition, 1.0E8)
     # end
 end
 
@@ -94,29 +94,29 @@ end
 
 #TODO: floating and boundary species
 struct NetworkGenerator
-    specieslist::Vector{String}
+    chemical_species_names::Vector{String}
     initialcondition::Vector{Float64}
     numreactions::Int
-    reactionprobabilities::ReactionProbabilities
-    rateconstantrange::Vector{Float64}
+    reaction_probabilities::ReactionProbabilities
+    rateconstant_range::Vector{Float64}
     # seedmodel::Nothing # Change this if you want to use seed models #::Union{ReactionNetwork, Nothing}
 
     
-    function NetworkGenerator(specieslist::Vector{String}, initialcondition::Vector{Float64}, numreactions::Int, reactionprobabilities::ReactionProbabilities, rateconstantrange::Vector{Float64})#; seed=nothing)
-        new(specieslist, initialcondition, numreactions, reactionprobabilities, rateconstantrange)
+    function NetworkGenerator(chemical_species_names::Vector{String}, initialcondition::Vector{Float64}, numreactions::Int, reaction_probabilities::ReactionProbabilities, rateconstant_range::Vector{Float64})#; seed=nothing)
+        new(chemical_species_names, initialcondition, numreactions, reaction_probabilities, rateconstant_range)
     end
 
     
 end
 
 function get_networkgenerator(settings::Settings; seed=Nothing)#::NetworkGenerator
-    specieslist = settings.specieslist
-    initialconditions = settings.initialconditions
+    chemical_species_names = settings.chemical_species_names
+    initial_concentrations = settings.initial_concentrations
     nreactions = settings.nreactions
-    reactionprobabilities = settings.reactionprobabilities
-    rateconstantrange = settings.rateconstantrange
+    reaction_probabilities = settings.reaction_probabilities
+    rateconstant_range = settings.rateconstant_range
 
-    return NetworkGenerator(specieslist, initialconditions, nreactions, reactionprobabilities, rateconstantrange)#, seed=seed)
+    return NetworkGenerator(chemical_species_names, initial_concentrations, nreactions, reaction_probabilities, rateconstant_range)#, seed=seed)
    
 end
 
@@ -127,17 +127,17 @@ end
 #TODO: prevent pointless reactions and ensure connectivity
 function generate_random_reaction(ng::NetworkGenerator)
     p = rand()
-    k = rand(Uniform(ng.rateconstantrange[1], ng.rateconstantrange[2]))
+    k = rand(Uniform(ng.rateconstant_range[1], ng.rateconstant_range[2]))
     
-    selectedspecies = sample(ng.specieslist,4)
+    selectedspecies = sample(ng.chemical_species_names,4)
 
-    if p <= ng.reactionprobabilities.uniuni #uniuni reaction
+    if p <= ng.reaction_probabilities.uniuni #uniuni reaction
         subs = [selectedspecies[1]]
         prods = [selectedspecies[2]]
-    elseif p > ng.reactionprobabilities.uniuni && p <= (ng.reactionprobabilities.uniuni + ng.reactionprobabilities.unibi) # unibi
+    elseif p > ng.reaction_probabilities.uniuni && p <= (ng.reaction_probabilities.uniuni + ng.reaction_probabilities.unibi) # unibi
         subs = [selectedspecies[1]]
         prods = selectedspecies[2:3]
-    elseif p > (ng.reactionprobabilities.uniuni + ng.reactionprobabilities.unibi) && p <= 1 - ng.reactionprobabilities.bibi #biuni
+    elseif p > (ng.reaction_probabilities.uniuni + ng.reaction_probabilities.unibi) && p <= 1 - ng.reaction_probabilities.bibi #biuni
         subs = selectedspecies[1:2]
         prods = [selectedspecies[3]]
     else #bibi
@@ -181,21 +181,21 @@ function choose_boundary_species(ng::NetworkGenerator)
     # weights = [1, 0, 0]
     # nboundary = wsample(0:2, weights)
     # Decide which will be the boundary species
-    boundaryspecies = Vector{String}()#sample(ng.specieslist, nboundary, replace=false)
-    floatingspecies = [s for s in ng.specieslist if !(s in boundaryspecies)]
+    boundaryspecies = Vector{String}()#sample(ng.chemical_species_names, nboundary, replace=false)
+    floatingspecies = [s for s in ng.chemical_species_names if !(s in boundaryspecies)]
     return floatingspecies, boundaryspecies
 end
 
 #TODO: Might not need to do this for the floats?
-function get_initialconditions(ng::NetworkGenerator, floatingspecies::Vector{String}, boundaryspecies::Vector{String})
+function get_initial_concentrations(ng::NetworkGenerator, floatingspecies::Vector{String}, boundaryspecies::Vector{String})
     float_initialcondition = Vector{Float64}()
     boundary_initialcondition = Vector{Float64}()
     for species in floatingspecies
-        idx = findfirst(item -> item == species, ng.specieslist)
+        idx = findfirst(item -> item == species, ng.chemical_species_names)
         push!(float_initialcondition, ng.initialcondition[idx])
     end
     for species in boundaryspecies
-        idx = findfirst(item -> item == species, ng.specieslist)
+        idx = findfirst(item -> item == species, ng.chemical_species_names)
         push!(boundary_initialcondition, ng.initialcondition[idx])
     end
     return float_initialcondition, boundary_initialcondition
@@ -203,8 +203,8 @@ end
 
 function generate_random_network(ng::NetworkGenerator)
     floatingspecies, boundaryspecies = choose_boundary_species(ng)
-    float_initialcondition, boundary_initialcondition = get_initialconditions(ng, floatingspecies, boundaryspecies)
+    float_initialcondition, boundary_initialcondition = get_initial_concentrations(ng, floatingspecies, boundaryspecies)
     reactionlist = generate_reactionlist(ng)
     ID = randstring(10)
-    return ReactionNetwork(ng.specieslist, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, 0, ID, "0")
+    return ReactionNetwork(ng.chemical_species_names, ng.initialcondition, reactionlist, floatingspecies, boundaryspecies, float_initialcondition, boundary_initialcondition, 0, ID, "0")
 end

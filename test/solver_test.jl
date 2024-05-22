@@ -1,6 +1,6 @@
 settings_dict = Dict{String, Any}(
-    "specieslist" => ["A", "B"],
-    "initialconditions" => [10, 0],
+    "chemical_species_names" => ["A", "B"],
+    "initial_concentrations" => [10, 0],
     )
 settings = ReactionNetworkEvolution.read_usersettings(settings_dict)
 smallnetwork_str = """A -> B; k1*A 

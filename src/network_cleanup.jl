@@ -60,7 +60,7 @@ end
 function convert_to_antimony(network::ReactionNetwork)
     reactions = ""
     rateconstants = ""
-    initialconditions = ""
+    initial_concentrations = ""
     i = 1 # This will keep track of the reaction number for the purposes of naming the rate constants, e.g. k1
     for k in keys(network.reactionlist)
         reaction = network.reactionlist[k]
@@ -91,8 +91,8 @@ function convert_to_antimony(network::ReactionNetwork)
     end
     
     # Now look at the species list and initial conditions to create a string of initial conditions
-    for (i, s) in enumerate(network.specieslist)
-        initialconditions *= "$s = $(network.initialcondition[i])\n"
+    for (i, s) in enumerate(network.chemical_species_names)
+        initial_concentrations *= "$s = $(network.initialcondition[i])\n"
     end
     if length(network.boundaryspecies) > 0
         boundarystr = "const "
@@ -101,9 +101,9 @@ function convert_to_antimony(network::ReactionNetwork)
         end
         #remove the extra ", " from the String
         boundarystr = chop(boundarystr, tail=2)
-        initialconditions *= boundarystr
+        initial_concentrations *= boundarystr
     end
-    astr = reactions * rateconstants * initialconditions # Concatenate all strings together
+    astr = reactions * rateconstants * initial_concentrations # Concatenate all strings together
     return astr
 end
 
@@ -154,7 +154,7 @@ end
 
 function process_species_lines(specieslines)
     specieslines = split(specieslines[1], " ")
-    specieslist = Vector{String}()
+    chemical_species_names = Vector{String}()
     boundary = Vector{String}()
     floating = Vector{String}()
     for str in specieslines[2:end] # first item will be "species"
@@ -166,9 +166,9 @@ function process_species_lines(specieslines)
         else
             push!(floating, str)
         end
-        push!(specieslist, str)
+        push!(chemical_species_names, str)
     end
-    return specieslist, boundary, floating
+    return chemical_species_names, boundary, floating
 end
 
 function substring_to_string(substring::Vector{SubString{String}})
@@ -236,13 +236,13 @@ function assign_rates_to_reaction(reactions_by_ratesymbol, rates_by_ratesymbol)
     return reactionlist
 end
 
-function get_initialcondition_values(specieslist, initialconditions, sublist)
-    sublist_initialconditions = Vector{Float64}()
+function get_initialcondition_values(chemical_species_names, initial_concentrations, sublist)
+    sublist_initial_concentrations = Vector{Float64}()
     for s in sublist
-        idx = findfirst(item -> item == s, specieslist)
-        push!(sublist_initialconditions, initialconditions[idx])
+        idx = findfirst(item -> item == s, chemical_species_names)
+        push!(sublist_initial_concentrations, initial_concentrations[idx])
     end
-    return sublist_initialconditions
+    return sublist_initial_concentrations
 end
 
 
@@ -259,17 +259,17 @@ function convert_from_antimony(rawantstr::String)
     component_array = separate_antimony_elements(antstring)
     # Process each category
     # Get species lists and initial concenetration    
-    specieslist, boundaryspecies, floatingspecies = process_species_lines(component_array[1])
-    all_initialconditions = process_initialcondition_lines(component_array[3])
-    floating_initialcondtions = get_initialcondition_values(specieslist, all_initialconditions, floatingspecies)
-    boundary_initialconditions = get_initialcondition_values(specieslist, all_initialconditions, boundaryspecies)
+    chemical_species_names, boundaryspecies, floatingspecies = process_species_lines(component_array[1])
+    all_initial_concentrations = process_initialcondition_lines(component_array[3])
+    floating_initialcondtions = get_initialcondition_values(chemical_species_names, all_initial_concentrations, floatingspecies)
+    boundary_initial_concentrations = get_initialcondition_values(chemical_species_names, all_initial_concentrations, boundaryspecies)
     # Get reactions and rate constants
     reactions_by_ratesymbol = process_reaction_lines(component_array[2])
     rates_by_ratesymbol = process_rateconstant_lines(component_array[4])
     reactionlist = assign_rates_to_reaction(reactions_by_ratesymbol, rates_by_ratesymbol)
     # Construct the ReactionNetwork
-    network = ReactionNetwork(specieslist, all_initialconditions, reactionlist, floatingspecies,
-        boundaryspecies, floating_initialcondtions, boundary_initialconditions, 0.0, "seedmodel", "seedmodel")
+    network = ReactionNetwork(chemical_species_names, all_initial_concentrations, reactionlist, floatingspecies,
+        boundaryspecies, floating_initialcondtions, boundary_initial_concentrations, 0.0, "seedmodel", "seedmodel")
     return network
 end
     
