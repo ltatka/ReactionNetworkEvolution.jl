@@ -63,6 +63,7 @@ struct Settings
     same_fitness_percent_range::Float64
     lenient_crossover::Bool
     process_output_oscillators::Bool
+    verbose::Bool
     note::String # User can add any description or other labels here
    
 end
@@ -135,6 +136,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "same_fitness_percent_range" => 0.05,
         "lenient_crossover" => false,
         "process_output_oscillators" => true,
+        "verbose" => true,
         "note"=>""
         )
 
@@ -184,6 +186,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
                 settings["same_fitness_percent_range"],
                 settings["lenient_crossover"],
                 settings["process_output_oscillators"],
+                settings["verbose"],
                 settings["note"]
                 )
     return usersettings
@@ -231,6 +234,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
         "same_fitness_percent_range" => 0.05,
         "lenient_crossover" => false,
         "process_output_oscillators" => true,
+        "verbose" => true,
         "note"=>""
         )
     # If a path to settings is supplied:
@@ -335,6 +339,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
                    settings["same_fitness_percent_range"],
                    settings["lenient_crossover"],
                    settings["process_output_oscillators"],
+                   settings["verbose"],
                    settings["note"],
                    )
     return usersettings, objectivefunction   

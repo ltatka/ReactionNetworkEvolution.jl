@@ -116,7 +116,7 @@ end
 
 function process_oscillators(outputpath::String)
     results_parent_dir = make_output_dirs(outputpath)
-    println("Output written to $results_parent_dir")
+    
     for directory in readdir(outputpath)
         if !startswith(directory, "results") # Ignore results folders
             # Navigate to the inner directories that contain final_models, datatracker.json, and settings.json
@@ -155,6 +155,7 @@ function process_oscillators(outputpath::String)
                     break
                 end
             end
+            
             # Delete the (now) empty directory
             try
                 rm(joinpath(outputpath, directory))
@@ -163,4 +164,5 @@ function process_oscillators(outputpath::String)
             end
         end
     end
+    println("Output written to $results_parent_dir")
 end

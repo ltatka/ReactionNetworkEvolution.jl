@@ -59,9 +59,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
         species_by_IDs, total_fitness = evaluate_population_fitness(objfunct, species_by_IDs, settings)
         species_by_IDs, total_offspring = calculate_num_offspring(species_by_IDs, total_fitness, settings, writeoutdir=joinpath(starttime, "stalled_models"))
 
-
         bestnetwork, maxfitness = gettopmodel(species_by_IDs)
-
 
         if settings.track_metadata
             push!(tracker["top_individual_fitness"],maxfitness)
@@ -69,10 +67,7 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
             push!(tracker["num_best_network"], bestnetwork_count)
         end
 
-
-        if maxfitness > settings.writeout_threshold #0.05
-            """It is possible to have oscillators with a lower fitness than this, 
-            but seems that any network with this fitness or higher is certainly an oscillator"""
+        if maxfitness > settings.writeout_threshold 
             break 
         end
 
@@ -108,7 +103,6 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
         push!(tracker["avg_intraspecies_distance"], get_intraspecies_distances(species_by_IDs, settings))
     end
 
-
     writeoutnetwork(bestnetwork, "bestmodel_$(bestnetwork.ID)", directory=joinpath(starttime,"final_models"))
     
     for ID in keys(species_by_IDs)
@@ -129,8 +123,6 @@ function evolve_networks(batchnum::Int64, parentdir::String, settings::Settings,
     writeout_settings(settings, joinpath(starttime, "settings.json"))
 end
 
-
-
 function run_evolution(;
     ngenerations::Int64=-1,
     ntrials::Int64=-1,
@@ -140,8 +132,8 @@ function run_evolution(;
     seed::Int64=-1,
     note::String="")
 
-    starttime = format(now(), "yyyy-mm-dd_HHMMSS")
-    println("Starting $starttime")
+    
+    println("Starting $(format(now(), "yyyy-mm-dd HH:MM:SS"))")
 
     if ntrials == -1
         ntrials = 100
@@ -158,6 +150,8 @@ function run_evolution(;
         end
     end
 
+    println("Writing output to $outputpath")
+    starttime = format(now(), "yyyy-mm-dd_HHMMSS")
     path = joinpath(outputpath, "batch_$starttime" * randstring(3)) # randstring is for race conditions
 
     if !isdir(path)
@@ -171,11 +165,19 @@ function run_evolution(;
 
     settings, objectivefunction = read_usersettings(pathtosettings, ngenerations=ngenerations, population_size=population_size, seed=seed, note=note)
 
+    println("Beginning $ntrials trials with $(settings.ngenerations) generations each")
+
     for i in 1:ntrials
+        if settings.verbose && (i%10 == 0 || i == ntrials)
+            println(". trial $i")
+        elseif settings.verbose
+            print(".")
+        end
         evolve_networks(i, path, settings, objectivefunction)
     end
 
     if settings.process_output_oscillators
+        println("Sorting oscillators...")
         process_oscillators(outputpath)
     else
         println("Output written to $path")
