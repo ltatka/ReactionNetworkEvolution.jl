@@ -1,3 +1,5 @@
+using Pkg
+Pkg.activate(".")
 using ReactionNetworkEvolution
 using ArgParse
 
@@ -29,7 +31,7 @@ end
 
 parsed_args = parse_args(ARGS, s)
 
-ReactionNetworkEvolution.run_evolution(ngenerations=parsed_args["ngenerations"],
+@time ReactionNetworkEvolution.run_evolution(ngenerations=parsed_args["ngenerations"],
               ntrials=parsed_args["ntrials"],
               population_size=parsed_args["population_size"],
               pathtosettings=parsed_args["pathtosettings"],

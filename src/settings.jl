@@ -235,7 +235,6 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
         )
 
     # Get the package directory
-    println(pathof(ReactionNetworkEvolution))
     package_dir = dirname(dirname(pathof(ReactionNetworkEvolution)))
     use_settings_json = false
     # If theres a settings.json file there AND no other settings file is supplied, read it
