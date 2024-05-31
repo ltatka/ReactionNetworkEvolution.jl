@@ -204,7 +204,7 @@ Any settings that are not specified in the JSON file will be set to the default 
     <td>If generating networks to fit data, path to .csv file with data to fit - if no path is given, ReactionNetworkEvolution.jl will attempt to generate oscillators</td>
   </tr>
   <tr>
-    <td>track_metadata</td>
+    <td>track_fitness</td>
     <td>true</td>
     <td>Track information about evolution such as top fitness, number of species, etc for each generation</td>
   </tr>

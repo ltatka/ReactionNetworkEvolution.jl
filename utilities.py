@@ -76,7 +76,7 @@ def is_oscillator(r, fitness=None, writeoutpath=None):
 
 
 #--------------------------------------------------
-# Plotting Utilities
+# Plotting Timeseries Data
 #-------------------------------------------------
 def get_best_dimensions(n):
     # Find the best dimensions for a subplot grid to plot n subplots
@@ -172,3 +172,6 @@ def plot_timeseries(input, start=0, end=1, numpoints=200, savepath=None):
     else: # antimony string for single model or single roadrunner model
         plot_single_model(input, start, end, numpoints, savepath)
 
+#--------------------------------------------------
+# Plotting Fitness Data
+#-------------------------------------------------

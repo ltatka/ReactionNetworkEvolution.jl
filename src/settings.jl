@@ -56,7 +56,7 @@ struct Settings
     objective_data_path::String
     match_objectivefunction_species::Bool
     enable_speciation::Bool
-    track_metadata::Bool
+    track_fitness::Bool
     #objectivespecies::Vector{String}
     average_fitness::Bool
     same_fitness_crossover::Bool
@@ -130,7 +130,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "objective_data_path" => "DEFAULT",
         "match_objectivefunction_species" => true,
         "enable_speciation" => true,
-        "track_metadata" => true,
+        "track_fitness" => true,
         "average_fitness" => false,
         "same_fitness_crossover" => false,
         "same_fitness_percent_range" => 5,
@@ -180,7 +180,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
                 settings["objective_data_path"],
                 settings["match_objectivefunction_species"],
                 settings["enable_speciation"],
-                settings["track_metadata"],
+                settings["track_fitness"],
                 settings["average_fitness"],
                 settings["same_fitness_crossover"],
                 settings["same_fitness_percent_range"],
@@ -224,7 +224,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
         "objective_data_path" => "DEFAULT",
         "match_objectivefunction_species" => true,
         "enable_speciation" => true,
-        "track_metadata" => true,
+        "track_fitness" => true,
         "average_fitness" => false,
         "same_fitness_crossover" => false,
         "same_fitness_percent_range" => 5,
@@ -354,7 +354,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
                    settings["objective_data_path"],
                    settings["match_objectivefunction_species"],
                    settings["enable_speciation"],
-                   settings["track_metadata"],
+                   settings["track_fitness"],
                    settings["average_fitness"],
                    settings["same_fitness_crossover"],
                    settings["same_fitness_percent_range"],
