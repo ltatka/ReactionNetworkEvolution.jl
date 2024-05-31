@@ -5,6 +5,53 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
+
+def gather_best_models(path, destination):
+    """
+    Get models from numerous subdirectories and put all the antimony filse in one place.
+    Useful if the models were generated using the previous default write out which put final models under several
+    layers of subdirectories
+    :param path: (str) Path to the parent directory containing subdirectories for each model.
+        E.g. batch_2024-05-31_122344xyz or results_20240531_122344
+    :param destination: (str) Path to directory where models will be moved
+    :return: None
+    """
+    if not os.path.exists(destination):
+        os.makedirs(destination)
+    if os.path.basename(path).startswith("batch"):
+        fullpath = path
+        # if os.path.isdir(os.path.join(path, dir, dir)):
+        #     fullpath = os.path.join(path, dir, dir)
+        # else:
+        #     fullpath = os.path.join(path, dir)
+    elif os.path.basename(path).startswith("results"):
+        fullpath = os.path.join(path, "SUCCESS")
+    rename_and_move_models(fullpath, destination)
+
+def rename_and_move_models(fullpath, destination):
+    """
+    Private function to help in gathering the best models
+    :param path: (str) path with final_models directory two layers below it.
+        eg. batch_2024-05-31_122344xyz for batch_2024-05-31_122344xyz/batch_2024-05-31_122344xyz/final_models
+        or results_20240531_122344 for results_20240531_122344/20240522_121431rK3/final_models
+    :param destination: (str) path to directory where models will be moved.
+    :return: None
+    """
+    for dir in os.listdir(fullpath):
+        try:
+            model_dir = os.path.join(fullpath, dir, "final_models")
+            for model in os.listdir(model_dir):
+                if model.startswith("bestmodel"):
+                    name = model.split("_")[1]  # Remove "bestmodel" from name
+                    if not model.endswith(".ant"):
+                        name += ".ant"  # add the antimony extension if not there already
+                    os.rename(os.path.join(model_dir, model), os.path.join(destination, name))
+                    # os.replace(os.path.join(model_dir, name), os.path.join(destination, name))
+                    break
+        except FileNotFoundError:
+            pass
+
+
 def load_model(path):
     '''
     Loads a RoadRunner model from an antimony file.
@@ -150,7 +197,6 @@ def is_oscillator_preprocessed(r):
     try:
         s = r.steadyState()
         change = r.getRatesOfChange()
-        print(change)
         eigens = r.getFullEigenValues()
         hasgoodvals = check_eigens(eigens)
     except:
@@ -197,7 +243,6 @@ def is_oscillator(r):
     try:
         s = r.steadyState()
         change = r.getRatesOfChange()
-        print(change)
         eigens = r.getFullEigenValues()
         hasgoodvals = check_eigens(eigens)
     except:
