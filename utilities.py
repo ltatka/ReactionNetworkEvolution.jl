@@ -2,6 +2,7 @@ import tellurium as te
 import math
 import os
 import matplotlib
+
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
@@ -27,6 +28,7 @@ def gather_best_models(path, destination):
     elif os.path.basename(path).startswith("results"):
         fullpath = os.path.join(path, "SUCCESS")
     rename_and_move_models(fullpath, destination)
+
 
 def rename_and_move_models(fullpath, destination):
     """
@@ -58,11 +60,11 @@ def load_model(path):
     :param path (str): Path to the antimony text file containing the mdoel
     :return: r (RoadRunner model): RoadRunner model of the antimony string
     '''
-    f = open(path, "r")
-    astr = f.read()
-    f.close()
+    with open(path, "r") as f:
+        astr = f.read()
     r = te.loada(astr)
     return r
+
 
 #--------------------------------------------------
 # Network Sorting
@@ -74,13 +76,13 @@ def get_model_fitness_from_file(path):
     :param path: (str) Path to the antimony text file containing the mdoel
     :return: fitness (float) Fitness of the model
     '''
-    f = open(path, "r")
-    astr = f.read()
-    f.close()
+    with open(path, "r") as f:
+        astr = f.read()
     for line in astr.split("\n"):
         if line.startswith("#fitness"):
             fitness = line.split(" ")[1]
             return float(fitness)
+
 
 def get_model_fitness_from_antimony(astr):
     '''
@@ -93,6 +95,7 @@ def get_model_fitness_from_antimony(astr):
             fitness = line.split(" ")[1]
             return float(fitness)
 
+
 def get_model_fitness(input):
     '''
     Extracts the fitness of a model
@@ -103,6 +106,7 @@ def get_model_fitness(input):
         return get_model_fitness_from_antimony(astr)
     else:
         return get_model_fitness_from_file(input)
+
 
 def fix_model(astr, fitness=None):
     '''
@@ -118,7 +122,7 @@ def fix_model(astr, fitness=None):
             split_astr[i] = "#" + split_astr[i]
             newastr = "\n".join(split_astr)
             r = te.loada(newastr)
-            if is_eigen_oscillator(r):
+            if is_oscillator(r):
                 if fitness:
                     newastr.append(f"\n# fitness: {fitness}")
                 return True, newastr
@@ -128,6 +132,7 @@ def fix_model(astr, fitness=None):
     if fitness:
         newastr.append(f"\n# fitness: {fitness}")
     return False, astr
+
 
 def check_eigens(eigen_array):
     '''
@@ -139,6 +144,7 @@ def check_eigens(eigen_array):
         if num.real >= 0 and num.imag != 0:
             return True
     return False
+
 
 def is_broken_oscillator(r):
     """
@@ -167,6 +173,7 @@ def is_broken_oscillator(r):
     except:
         pass
     return is_good_oscillator, is_broken
+
 
 def is_oscillator_preprocessed(r):
     """
@@ -204,6 +211,7 @@ def is_oscillator_preprocessed(r):
     # And if that doesn't work then it's definitely (?) not an oscillator
     return hasgoodvals and all(i >= 0 for i in r.getFloatingSpeciesConcentrations())
 
+
 def is_oscillator(r):
     """
     This is intended to be the "public" function. Given a roadrunner model, perform all tests for oscillation.
@@ -217,7 +225,7 @@ def is_oscillator(r):
         eigens = r.getFullEigenValues()
         hasgoodvals = check_eigens(eigens)
         if hasgoodvals and all(i >= 0 for i in r.getFloatingSpeciesConcentrations()):
-           return True
+            return True
     except:
         pass
     # If that didn't work, simulate for a bit
@@ -249,6 +257,7 @@ def is_oscillator(r):
         pass
     # And if that doesn't work then it's definitely (?) not an oscillator
     return hasgoodvals and all(i >= 0 for i in r.getFloatingSpeciesConcentrations())
+
 
 def evaluate_oscillators(path):
     """
@@ -287,8 +296,9 @@ def evaluate_oscillators(path):
                     if "fail" not in file:
                         os.rename(os.path.join(path, file), os.path.join(path, f"fail_{file}"))
     print(f"Processed {total_count} models and found {success_count} oscillators.")
-    print(f"Success rate: {(success_count/total_count)*100}%")
+    print(f"Success rate: {(success_count / total_count) * 100}%")
     return success_count, total_count
+
 
 def sort_by_fitness(path, reverse=True):
     """
@@ -297,7 +307,7 @@ def sort_by_fitness(path, reverse=True):
     :param reverse: (bool, optional) If True, models will be sorted best to worst
     :return: None
     """
-    model_list=[]
+    model_list = []
     for file in os.listdir(path):
         fitness = get_model_fitness(os.path.join(path, file))
         model_list.append((fitness, file))
@@ -305,6 +315,7 @@ def sort_by_fitness(path, reverse=True):
     for i, item in enumerate(model_list):
         os.rename(os.path.join(path, item[1]), os.path.join(path, f"{i}_{item[1]}"))
     print(f"Sorted models in {path} by fitness")
+
 
 def evaluate_fitness_cutoff(path, cutoff):
     """
@@ -328,7 +339,7 @@ def evaluate_fitness_cutoff(path, cutoff):
         elif fitness < cutoff:
             if "fail" not in file:
                 os.rename(os.path.join(path, file), os.path.join(path, f"fail_{file}"))
-        else: # If no fitness value is present, ignore it
+        else:  # If no fitness value is present, ignore it
             no_fitness_count += 1
     print(f"Processed models in {path} by fitness cutoff of {cutoff}")
     if no_fitness_count == 1:
@@ -337,6 +348,7 @@ def evaluate_fitness_cutoff(path, cutoff):
         print(f"{no_fitness_count} models did not have fitness values and were ignored")
     print(f"{success_count} out of {total_count} models met fitness cutoff")
     return success_count, total_count
+
 
 #--------------------------------------------------
 # Plotting Timeseries Data
@@ -347,15 +359,16 @@ def get_best_dimensions(n):
     :param n: (int) the number of models to plot
     :return: (int, int) The number of rows and columns for the subplots
     """
-    sqrt = n**0.5
-    closest_2 = [math.floor(sqrt)**2, math.ceil(sqrt)**2]
+    sqrt = n ** 0.5
+    closest_2 = [math.floor(sqrt) ** 2, math.ceil(sqrt) ** 2]
     differences = [abs(x - n) for x in closest_2]
     closest = closest_2[differences.index(min(differences))]
-    best = int(closest**0.5)
+    best = int(closest ** 0.5)
     if closest >= n:
         return best, best
     else:
         return best, best + 1
+
 
 def plot_timeseries_path(path, start, end, numpoints, savepath):
     """
@@ -397,7 +410,8 @@ def plot_timeseries_path(path, start, end, numpoints, savepath):
     else:
         plt.show()
 
-def plot_timeseries_model_list(model_list,  start, end, numpoints, savepath):
+
+def plot_timeseries_model_list(model_list, start, end, numpoints, savepath):
     """
     Private function for plotting time series data given a list of models
     :param path: list(str) OR list(RoadRunnermodels) models to plot
@@ -408,7 +422,7 @@ def plot_timeseries_model_list(model_list,  start, end, numpoints, savepath):
     :return: None
     """
     plt.clf()
-    if isinstance(model_list[0], str): # If it's a list of antimony strings:
+    if isinstance(model_list[0], str):  # If it's a list of antimony strings:
         models = []
         for astr in model_list:
             r = te.loada(astr)
@@ -440,6 +454,7 @@ def plot_timeseries_model_list(model_list,  start, end, numpoints, savepath):
     else:
         plt.show()
 
+
 def plot_single_model(model, start, end, numpoints, savepath):
     """
     Private function, plot a single model
@@ -451,12 +466,13 @@ def plot_single_model(model, start, end, numpoints, savepath):
     :return: None
     """
     plt.clf()
-    if isinstance(model, str): # if it's an antimony model
+    if isinstance(model, str):  # if it's an antimony model
         r = te.loada(model)
-    else: #  If it's already a roadrunner model
+    else:  #  If it's already a roadrunner model
         r = model
     m = r.simulate(start, end, numpoints)
     r.plot(savefig=savepath)
+
 
 def plot_timeseries(input, start=0, end=1, numpoints=200, savepath=None):
     """
@@ -473,10 +489,11 @@ def plot_timeseries(input, start=0, end=1, numpoints=200, savepath=None):
     """
     if isinstance(input, str) and "->" not in input:  # If we're given a path
         plot_timeseries_path(input, start, end, numpoints, savepath)
-    elif isinstance(input, list): # List of models, either as antimony strings, or roadrunner models
+    elif isinstance(input, list):  # List of models, either as antimony strings, or roadrunner models
         plot_timeseries_model_list(input, start, end, numpoints, savepath)
-    else: # antimony string for single model or single roadrunner model
+    else:  # antimony string for single model or single roadrunner model
         plot_single_model(input, start, end, numpoints, savepath)
+
 
 #--------------------------------------------------
 # Plotting Fitness Data
@@ -490,10 +507,10 @@ def load_fitness_values(path):
     """
     if not path.endswith(".json"):
         raise ValueError("file type must be .json")
-    f = open(path)
-    data = json.load(f)
-    f.close()
+    with open(path, "r") as f:
+        data = json.load(f)
     return data["top_individual_fitness"]
+
 
 def load_many_fitness_values(path):
     """
@@ -507,6 +524,7 @@ def load_many_fitness_values(path):
             many_fitness_values.append(load_fitness_values(os.path.join(path, file)))
     return many_fitness_values
 
+
 def plot_fitness(path, savepath=None):
     """
     Plot the fitness over time of one or more models
@@ -518,7 +536,6 @@ def plot_fitness(path, savepath=None):
         plot_fitness_dir(path, savepath=savepath)
     else:
         plot_individual_fitness(path, savepath=savepath)
-
 
 
 def plot_individual_fitness(path, savepath=None):
@@ -540,6 +557,7 @@ def plot_individual_fitness(path, savepath=None):
     else:
         plt.show()
 
+
 def plot_fitness_dir(path, savepath=None):
     """
     Private function. Plot the fitness over time for several models
@@ -559,3 +577,52 @@ def plot_fitness_dir(path, savepath=None):
         plt.close()
     else:
         plt.show()
+
+
+#------------------------------------------------------------------
+# Model Cleanup
+#------------------------------------------------------------------
+
+def prune_antimony_model(astr):
+    """
+    Remove reactions that don't contribute to oscillation
+    :param astr: (str) an antimony string
+    :param fitness: optional (float), append the ORIGINAL fitness value to the new antimony string
+    :return: (int, str), The number of reactions removed and the new antimony string
+    """
+    reactions_pruned = 0
+    split_astr = astr.split("\n")
+    for i in range(len(split_astr)):
+        if "->" in split_astr[i]:
+            split_astr[i] = "#" + split_astr[i]
+            newastr = "\n".join(split_astr)
+            r = te.loada(newastr)
+            if not is_oscillator(r):
+                # If removing the reaction broke the oscillator, put it back
+                split_astr[i] = split_astr[i][1:]
+            else:
+                # If the model is still an oscillator, keep the comment and count the removed reaction
+                reactions_pruned += 1
+    return reactions_pruned, "\n".join(split_astr)
+
+
+def prune_models(path):
+    """
+    Remove unnecessary reactions from antimony models in a directory
+    :param path: (str) Path to a directory containing antimony files
+    :return: None
+    """
+    total_reactions_removed = 0
+    total_models_evaluated = 0
+    for file in os.listdir(path):
+        if file.endswith(".ant"):
+            total_models_evaluated += 1
+            with open(os.path.join(path, file), "r") as f:
+                astr = f.read()
+            reactions_pruned, new_astr = prune_antimony_model(astr)
+            if reactions_pruned > 0:
+                total_reactions_removed += 1
+                with open(os.path.join(path, file), "w") as f:
+                    f.write(new_astr)
+    print(f"Removed {total_reactions_removed} reactions from {total_models_evaluated} models")
+    print(f"Average reactions removed per model = {total_reactions_removed / total_models_evaluated}")
