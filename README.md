@@ -216,7 +216,7 @@ Any settings that are not specified in the JSON file will be set to the default 
   <tr>
     <td>process_output_oscillators</td>
     <td>true</td>
-    <td>If true, utomatically test if evolved networks are oscillators or not</td>
+    <td>If true, automatically test if evolved networks are oscillators or not</td>
   </tr>
   
 </table>
