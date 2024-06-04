@@ -97,7 +97,6 @@ function is_oscillator(astr::String)
     try
         s = RoadRunner.steadyState(r)
         change = RoadRunner.getRatesOfChange(r)
-        println(change)
         eigens = RoadRunner.getEigenvalues(r)
         concentrations = RoadRunner.getFloatingSpeciesConcentrations(r)
         return has_oscillator_eigens(eigens) && all(>=(0), concentrations)
@@ -109,72 +108,70 @@ function is_oscillator(astr::String)
 end
 
 function make_output_dirs(outputpath::String)
-    timestamp = format(now(), "YYYYmmdd_HHMMSS")
-    results_parent_dir = joinpath(outputpath, "results_$timestamp")
-    if !isdir(results_parent_dir)
-        mkdir(results_parent_dir)
+    if !isdir(joinpath(outputpath, "SUCCESS"))
+        mkdir(joinpath(outputpath, "SUCCESS"))
     end
-    if !isdir(joinpath(results_parent_dir, "SUCCESS"))
-        mkdir(joinpath(results_parent_dir, "SUCCESS"))
+    if !isdir(joinpath(outputpath, "FAIL"))
+        mkdir(joinpath(outputpath, "FAIL"))
     end
-    if !isdir(joinpath(results_parent_dir, "FAIL"))
-        mkdir(joinpath(results_parent_dir, "FAIL"))
-    end
-    return results_parent_dir
 end
 
-function process_oscillators(outputpath::String)
-    results_parent_dir = make_output_dirs(outputpath)
+function process_oscillators(outputpath::String; track_fitness::Bool=false)
+    make_output_dirs(outputpath)
     for model_file in readdir(outputpath)
-        if !startswith(directory, "results") # Ignore results folders
+        if !startswith(model_file, "SUCCESS") &&  !startswith(model_file, "FAIL") && !endswith(model_file, ".json") # Ignore results folders and json files
             astr = load_antimony_file(joinpath(outputpath,  model_file))
             is_oscillator_model = is_oscillator(astr)
             # If it's an oscillator, move it to the SUCCESS dir
             if is_oscillator_model
-                destination = joinpath(results_parent_dir, "SUCCESS", model_directory)
+                destination = joinpath(outputpath, "SUCCESS")
             else
                 # Try to fix it 
                 if is_broken_oscillator(astr)
                     astr = fix_broken_oscillator(astr)
                     if astr != "FAIL" # If fixing it worked, overwrite file
-                        model_file_path = joinpath(outputpath, directory, model_directory, "final_models", model_file)
+                        model_file_path = joinpath(outputpath, model_file)
                         rm(model_file_path) # Remove the old filepath
                         open(model_file_path, "w") do file
                             write(file, astr)    
                         end
                         # Fixed file will be moved to the successful results directory
-                        destination = joinpath(results_parent_dir, "SUCCESS", model_directory)
+                        destination = joinpath(outputpath, "SUCCESS")
                     end
                 end
-                destination = joinpath(results_parent_dir, "FAIL", model_directory)
+                destination = joinpath(outputpath, "FAIL")
             end
-            mv(joinpath(outputpath, directory, model_directory), destination)
+            mv(joinpath(outputpath, model_file), joinpath(destination, model_file), force=true)
+            if track_fitness # also move the associated json fitness tracking file
+                fitness_file = model_file[1:end-4] * "_fitness.json" # replace .ant with .json
+                mv(joinpath(outputpath, fitness_file), joinpath(destination, fitness_file), force=true)
+            end
         end
     end
-    println("Output written to $results_parent_dir")
+    println("Output written to $outputpath")
 end
 
 
-astr = "species S1, S0, S2;
+# astr = "species S1, S0, S2;
 
-// Reactions:
-_J0: S1 -> S1 + S1; k1*S1;
-_J1: S0 + S2 -> S2; k2*S0*S2;
-_J2: S0 + S1 -> S0 + S0; k3*S0*S1;
+# // Reactions:
+# _J0: S1 -> S1 + S1; k1*S1;
+# _J1: S0 + S2 -> S2; k2*S0*S2;
+# _J2: S0 + S1 -> S0 + S0; k3*S0*S1;
 
-// Species initializations:
-S1 = 5;
-S0 = 1;
-S2 = 9;
+# // Species initializations:
+# S1 = 5;
+# S0 = 1;
+# S2 = 9;
 
-// Variable initializations:
-k1 = 12.4542964046187;
-k2 = 15.3768991659621;
-k3 = 7.31188654436819;
+# // Variable initializations:
+# k1 = 12.4542964046187;
+# k2 = 15.3768991659621;
+# k3 = 7.31188654436819;
 
-// Other declarations:
-const k1, k2, k3;
+# // Other declarations:
+# const k1, k2, k3;
 
-#fitness: 0.03963733850562187"
+# #fitness: 0.03963733850562187"
 
-println(is_oscillator(astr))
+# println(is_oscillator(astr))

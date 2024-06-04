@@ -31,7 +31,7 @@ end
 
 parsed_args = parse_args(ARGS, s)
 
-@time ReactionNetworkEvolution.run_evolution(ngenerations=parsed_args["ngenerations"],
+ReactionNetworkEvolution.run_evolution(ngenerations=parsed_args["ngenerations"],
               ntrials=parsed_args["ntrials"],
               population_size=parsed_args["population_size"],
               pathtosettings=parsed_args["pathtosettings"],

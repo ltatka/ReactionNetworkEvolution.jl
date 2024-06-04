@@ -135,7 +135,7 @@ function read_usersettings(settings_dict::Dict{String, Any})
         "same_fitness_crossover" => false,
         "same_fitness_percent_range" => 5,
         "lenient_crossover" => false,
-        "process_output_oscillators" => true,
+        "process_output_oscillators" => false,
         "verbose" => true,
         "note"=>""
         )
@@ -229,7 +229,7 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
         "same_fitness_crossover" => false,
         "same_fitness_percent_range" => 5,
         "lenient_crossover" => false,
-        "process_output_oscillators" => true,
+        "process_output_oscillators" => false,
         "verbose" => true,
         "note"=>""
         )

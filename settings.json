@@ -29,5 +29,6 @@
 "average_fitness": false,				
 "same_fitness_crossover": false,			
 "same_fitness_percent_range": 5,		
-"process_output_oscillators": true,			
+"process_output_oscillators": false,
+"objective_data_path": "",			
 "note": ""}						

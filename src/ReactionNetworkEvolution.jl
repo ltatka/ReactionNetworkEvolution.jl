@@ -58,7 +58,7 @@ function evolve_networks(parentdir::String, settings::Settings, objfunct::Object
         push!(tracker["top_individual_fitness"],maxfitness)
     end
 
-    writeoutnetwork(bestnetwork, "$(bestnetwork.ID).ant", directory=joinpath(parentdir,"final_models"))
+    writeoutnetwork(bestnetwork, "$(bestnetwork.ID).ant", parentdir)
 
     if settings.track_fitness
         stringtracker = json(tracker)
@@ -113,7 +113,7 @@ function run_evolution(;
 
     println("Beginning $ntrials trials with $(settings.ngenerations) generations each")
 
-    for i in 1:ntrials
+    @time for i in 1:ntrials
         if settings.verbose && (i%10 == 0 || i == ntrials)
             println(". trial $i")
         elseif settings.verbose
@@ -126,7 +126,7 @@ function run_evolution(;
 
     if settings.process_output_oscillators
         println("Sorting oscillators...")
-        process_oscillators(outputpath)
+        process_oscillators(path, track_fitness=settings.track_fitness)
     else
         println("Output written to $path")
     end
@@ -135,3 +135,4 @@ function run_evolution(;
 end
 
 end #module
+

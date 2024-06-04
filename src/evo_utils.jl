@@ -750,7 +750,7 @@ function general_crossover(network1::ReactionNetwork, network2::ReactionNetwork)
 
 end
 
-function writeoutnetwork(network::ReactionNetwork, filename::String; directory::String="stalled_models")
+function writeoutnetwork(network::ReactionNetwork, filename::String, directory::String)
     astr = convert_to_antimony(network)
     astr *= "\n#fitness: $(network.fitness)"
 

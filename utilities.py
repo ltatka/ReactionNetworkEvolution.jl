@@ -2,6 +2,7 @@ import tellurium as te
 import math
 import os
 import matplotlib
+import json
 
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -259,7 +260,7 @@ def is_oscillator(r):
     return hasgoodvals and all(i >= 0 for i in r.getFloatingSpeciesConcentrations())
 
 
-def evaluate_oscillators(path):
+def evaluate_oscillators(path: str):
     """
     Evaluate models in a directly and label them as oscillators (success) or non-oscillators (fail). Repair will be
     attempted for broken oscillators.
@@ -525,15 +526,16 @@ def load_many_fitness_values(path):
     return many_fitness_values
 
 
-def plot_fitness(path, savepath=None):
+def plot_fitness(path, limit=None, savepath=None):
     """
     Plot the fitness over time of one or more models
     :param path: (str) Either the path to a single json file or the path to a directory containing several json files
+    :param limit: (int) The maximum number of time series to plot. None by default
     :param savepath: optional (str), path to save the figure
     :return: None
     """
     if os.path.isdir(path):
-        plot_fitness_dir(path, savepath=savepath)
+        plot_fitness_dir(path, limit=limit, savepath=savepath)
     else:
         plot_individual_fitness(path, savepath=savepath)
 
@@ -550,6 +552,7 @@ def plot_individual_fitness(path, savepath=None):
     plt.plot(fitness_values)
     plt.ylabel("Fitness")
     plt.xlabel("Generation")
+    plt.title("Top Fitness Trajectory")
     if savepath:
         plt.savefig(savepath)
         print(f"Plots saved to {savepath}")
@@ -558,7 +561,7 @@ def plot_individual_fitness(path, savepath=None):
         plt.show()
 
 
-def plot_fitness_dir(path, savepath=None):
+def plot_fitness_dir(path, limit=None, savepath=None):
     """
     Private function. Plot the fitness over time for several models
     :param path: (str) Path to the directory containing the json files
@@ -567,10 +570,18 @@ def plot_fitness_dir(path, savepath=None):
     """
     plt.clf()
     fitness_values_list = load_many_fitness_values(path)
+    count = 0
     for values in fitness_values_list:
         plt.plot(values)
+        count += 1
+        if limit is not None and count >= limit:
+            break
     plt.ylabel("Fitness")
     plt.xlabel("Generation")
+    if len(fitness_values_list) == 1:
+        plt.title("Top Fitness Trajectory")
+    else:
+        plt.title("Top Fitness Trajectories")
     if savepath:
         plt.savefig(savepath)
         print(f"Plots saved to {savepath}")
@@ -626,3 +637,4 @@ def prune_models(path):
                     f.write(new_astr)
     print(f"Removed {total_reactions_removed} reactions from {total_models_evaluated} models")
     print(f"Average reactions removed per model = {total_reactions_removed / total_models_evaluated}")
+    return total_reactions_removed, total_models_evaluated
