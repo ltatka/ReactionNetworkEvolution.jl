@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 def gather_best_models(path, destination):
     """
-    Get models from numerous subdirectories and put all the antimony filse in one place.
+    Get models from numerous subdirectories and put all the antimony files in one place.
     Useful if the models were generated using the previous default write out which put final models under several
     layers of subdirectories
     :param path: (str) Path to the parent directory containing subdirectories for each model.
