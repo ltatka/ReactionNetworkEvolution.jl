@@ -82,6 +82,7 @@ function rowtovec(df::DataFrame, row::Int)
 end
 
 function get_objectivefunction(path::String)
+    # If the user supplies a path for the objective timeseries, read it and get the chemical names from it
     if path != "DEFAULT"
         objectivedataframe = DataFrame(File(path))
         time = objectivedataframe[!, 1]
@@ -90,10 +91,11 @@ function get_objectivefunction(path::String)
         initial_concentrations = rowtovec(objectivedata, 1)
         objectivedata = Matrix(objectivedata)
     else
+    # If no path is supplied, use the default oscillator time points
         time = collect(range(0, 1.25, length=11))
         objectivedata = [5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0, 30.0, 5.0]
-        chemical_species_names = ["S0", "S1", "S2"]
-        initial_concentrations = [0., 0., 0.]
+        chemical_species_names = [""]
+        initial_concentrations = [0.]
     end
     return ObjectiveFunction(objectivedata, time), chemical_species_names, initial_concentrations
 end
@@ -235,7 +237,15 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
         )
 
     # Get the package directory
-    package_dir = dirname(dirname(pathof(ReactionNetworkEvolution)))
+    package_dir = ""
+    try
+        # If using it as a package, ie location is in the julia folder
+        package_dir = dirname(dirname(pathof(ReactionNetworkEvolution)))
+    catch
+        # Otherwise it's probably being run from a separate ReactionNetworkEvolution.jl directory
+        package_dir = pwd()
+    end
+
     use_settings_json = false
     # If theres a settings.json file there AND no other settings file is supplied, read it
     if isfile(joinpath(package_dir, "settings.json")) && path == :"DEFAULT"
@@ -295,20 +305,16 @@ function read_usersettings(path::String; ngenerations::Int64=-1, population_size
         settings["note"] = note
     end
 
-    # # Check probability values
-    # if settings["exclusive_crossover_mutation"] && (settings["p_crossover"] + settings["p_mutation"] > 1)
-    #     error("p_crossover + p_mutation must be less than or equal to 1")
-    # end
-    # if sum(settings["reaction_probabilities"]) != 1
-    #     error("reaction_probabilities must sum to 1")
-    # end
 
     # Get the objective function and species IDs 
     objectivefunction, floatingspeciesIDs, initial_concentrations = get_objectivefunction(settings["objective_data_path"])
-    settings["chemical_species_names"] = floatingspeciesIDs
+    if floatingspeciesIDs != [""]
+        # If using user defined objective data, get the chemical species names from there
+        settings["chemical_species_names"] = floatingspeciesIDs
+    end
     # If the initial conditions were read from the objective data, them put them in the settings, dict.
-    # If the intital conditions are returend as [0., 0., 0.], then use either default or user-supplied
-    if initial_concentrations != [0., 0., 0.,] 
+    # If the intital conditions are returned as [0.], then use either default or user-supplied
+    if initial_concentrations != [0.] 
         settings["initial_concentrations"] = initial_concentrations
     end
     if length(initial_concentrations) != length(floatingspeciesIDs)
