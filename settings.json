@@ -5,7 +5,8 @@
 "percent_rateconstant_change": 20,			
 "p_new_rateconstant": 0.15,				
 "population_size": 100,						
-"ngenerations": 800,					
+"ngenerations": 800,
+"nspecies": 3,					
 "nreactions": 5,					
 "max_offspring_portion": 0.1,				
 "writeout_threshold": 0.05,				
@@ -30,5 +31,5 @@
 "same_fitness_crossover": false,			
 "same_fitness_percent_range": 5,		
 "process_output_oscillators": false,
-"objective_data_path": "",			
+"objective_data_path": "DEFAULT",			
 "note": ""}						

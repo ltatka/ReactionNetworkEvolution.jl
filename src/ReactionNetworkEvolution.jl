@@ -72,6 +72,8 @@ end
 function run_evolution(;
     ngenerations::Int64=-1,
     ntrials::Int64=-1,
+    nspecies::Int64=3,
+    initial_concentrations::Vector{Float64}=[1., 5., 9.],
     population_size::Int64=-1,
     pathtosettings::String="",
     outputpath::String="",
@@ -109,7 +111,7 @@ function run_evolution(;
         pathtosettings = "DEFAULT"
     end
 
-    settings, objectivefunction = read_usersettings(pathtosettings, ngenerations=ngenerations, population_size=population_size, seed=seed, note=note)
+    settings, objectivefunction = read_usersettings(pathtosettings, ngenerations=ngenerations, nspecies=nspecies, initial_concentrations=initial_concentrations, population_size=population_size, seed=seed, note=note)
 
     println("Beginning $ntrials trials with $(settings.ngenerations) generations each")
 
