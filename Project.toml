@@ -1,7 +1,7 @@
 name = "ReactionNetworkEvolution"
 uuid = "61220d1e-4cdb-4fc3-9e6c-02bd7f830b85"
 authors = ["really-lilly <tatkalillian@gmail.com>"]
-version = "0.1.4"
+version = "0.1.5"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
